@@ -878,6 +878,10 @@ class MainActivity : ComponentActivity() {
                     return@launch
                 }
 
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "DEBUG: Extracted UPI: ${payload.upi_ref}", Toast.LENGTH_LONG).show()
+                }
+
                 val resp = RetrofitClient.apiService.ingestSms("Bearer $token", payload)
                 runOnUiThread {
                     if (resp.code() == 401) {
