@@ -95,6 +95,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.material)
+    implementation(libs.work.runtime.ktx)
     
     // Firebase
     implementation(platform(libs.firebase.bom))

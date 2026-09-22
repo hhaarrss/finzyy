@@ -8,7 +8,7 @@ import com.smartspend.app.sms.SmsTransactionParser
  * also benefit from the full on-device regex parsing rules.
  */
 object SmsParser {
-    fun parse(rawSms: String, sender: String): SmsPayload? {
-        return SmsTransactionParser.parse(rawSms, sender)?.toSmsPayload()
+    fun parse(rawSms: String, sender: String, timestampMillis: Long = System.currentTimeMillis()): SmsPayload? {
+        return SmsTransactionParser.parse(rawSms, sender, timestampMillis)?.toSmsPayload()
     }
 }

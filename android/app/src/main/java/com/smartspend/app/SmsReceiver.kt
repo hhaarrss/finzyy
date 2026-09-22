@@ -11,11 +11,12 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.smartspend.app.sms.BankSenderWhitelist
 import com.smartspend.app.sms.SmsTransactionParser
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.UUID
+import kotlin.math.abs
 
 /**
  * BroadcastReceiver that intercepts incoming SMS messages from whitelisted bank senders,
@@ -23,189 +24,259 @@ import org.json.JSONObject
  *
  * Raw SMS text is never transmitted or stored.
  *
- * Includes an Offline Queue to retry failed SMS syncs when internet connectivity restores,
- * and posts a native status bar Notification on successful sync.
+ * The receiver never talks to the network itself: a broadcast only gets a few seconds of
+ * execution, and when the app has been closed for a while the phone is usually in Doze
+ * (no network) and the backend may be cold-starting. Instead, every parsed transaction is
+ * written to a durable on-device queue and SmsSyncWorker (WorkManager) uploads it as soon as
+ * the network is available — even if the app process is killed in between.
  */
 class SmsReceiver : BroadcastReceiver() {
 
-    private val scope = CoroutineScope(Dispatchers.IO)
-
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
-            val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
-            for (sms in messages) {
-                val sender = sms.originatingAddress ?: continue
-                val messageBody = sms.messageBody ?: continue
-                val timestamp = System.currentTimeMillis()
+        if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
 
-                Log.d("SmsReceiver", "Received SMS from: $sender")
+        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
+        val now = System.currentTimeMillis()
 
-                if (!BankSenderWhitelist.isWhitelisted(sender)) {
-                    Log.d("SmsReceiver", "SMS ignored (sender not in bank whitelist): $sender")
-                    continue
-                }
-
-                val parsed = SmsTransactionParser.parse(messageBody, sender, timestamp)
-                if (parsed != null) {
-                    Log.d("SmsReceiver", "Transactional SMS detected! Forwarding structured payload on-device...")
-                    sendToBackend(context, parsed.toSmsPayload())
-                } else {
-                    Log.d("SmsReceiver", "SMS ignored because parsing did not produce a valid transaction")
-                }
-            }
-        }
-    }
-
-    private fun isTransactionalSms(sender: String, body: String): Boolean =
-        BankSenderWhitelist.isWhitelisted(sender) && SmsTransactionParser.parse(body, sender) != null
-
-    private fun sendToBackend(context: Context, payload: SmsPayload) {
-        val sharedPrefs = context.getSharedPreferences("smart_spend_prefs", Context.MODE_PRIVATE)
-        val token = sharedPrefs.getString("jwt_token", "") ?: ""
-
-        if (token.isEmpty()) {
-            Log.e("SmsReceiver", "No JWT token found, cannot ingest SMS")
-            return
+        // Long bank SMS arrive as several PDUs in a single intent. Join the parts per sender so the
+        // amount, account and UPI ref (which are often in different parts) are parsed together.
+        val bySender = LinkedHashMap<String, Pair<StringBuilder, Long>>()
+        for (sms in messages) {
+            val sender = sms.originatingAddress ?: continue
+            val part = sms.messageBody ?: continue
+            val entry = bySender.getOrPut(sender) { StringBuilder() to sms.timestampMillis }
+            entry.first.append(part)
         }
 
-        val service = RetrofitClient.apiService
-        val pendingResult = goAsync()
+        var queuedAny = false
+        for ((sender, entry) in bySender) {
+            Log.d(TAG, "Received SMS from: $sender")
 
-        scope.launch {
-            try {
-                val response = service.ingestSms("Bearer $token", payload)
-                if (response.isSuccessful) {
-                    val respBody = response.body()
-                    if (respBody != null && (respBody.success || respBody.message == "Duplicate transaction detected")) {
-                        val tx = respBody.transaction
-                        Log.d("SmsReceiver", "Successfully ingested SMS or was duplicate! Transaction ID: ${tx?.id}")
-                        sharedPrefs.edit().apply {
-                            putString("last_sms", "${payload.transaction_type} ${payload.amount} from ${payload.bank_sender_id}")
-                            putInt("total_synced", sharedPrefs.getInt("total_synced", 0) + 1)
-                            commit() // Use commit() for synchronous write before process dies
-                        }
-                        showSyncNotification(context, tx?.amount ?: payload.amount, tx?.merchant ?: payload.merchant_raw, tx?.category)
-                    } else {
-                        Log.w("SmsReceiver", "Backend rejected SMS: ${respBody?.message ?: "Unknown error"}")
-                        queueOfflineSms(context, payload)
-                    }
-                } else if (response.code() == 401) {
-                    Log.w("SmsReceiver", "Received 401 Unauthorized — clearing stored token")
-                    sharedPrefs.edit().remove("jwt_token").remove("user_email").commit()
-                } else {
-                    Log.e("SmsReceiver", "Server error ${response.code()} — queuing SMS for retry")
-                    queueOfflineSms(context, payload)
-                }
-            } catch (e: Exception) {
-                Log.e("SmsReceiver", "Network error ingesting SMS — queuing offline", e)
-                queueOfflineSms(context, payload)
-            } finally {
-                pendingResult.finish()
+            if (!BankSenderWhitelist.isWhitelisted(sender)) {
+                Log.d(TAG, "SMS ignored (sender not in bank whitelist): $sender")
+                continue
+            }
+
+            val timestamp = stableSmsTimestamp(entry.second, now)
+            val parsed = SmsTransactionParser.parse(entry.first.toString(), sender, timestamp)
+            if (parsed != null) {
+                Log.d(TAG, "Transactional SMS detected! Queuing structured payload for sync...")
+                queueOfflineSms(context, parsed.toSmsPayload())
+                queuedAny = true
+            } else {
+                Log.d(TAG, "SMS ignored because parsing did not produce a valid transaction")
             }
         }
-    }
 
-    private fun showSyncNotification(context: Context, amount: Double?, merchant: String?, category: String?) {
-        try {
-            val channelId = "smartspend_sms_sync"
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                    channelId,
-                    "SMS Auto-Sync Notifications",
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = "Notifies when a payment SMS is auto-synced to SmartSpend"
-                }
-                notificationManager.createNotificationChannel(channel)
-            }
-
-            val amtStr = if (amount != null) "₹%.2f".format(amount) else "Payment"
-            val merchStr = merchant ?: "Merchant"
-            val catStr = category ?: "General"
-
-            val notification = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("💳 Payment Auto-Synced!")
-                .setContentText("Synced $amtStr to $merchStr ($catStr)")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .build()
-
-            notificationManager.notify(System.currentTimeMillis().toInt(), notification)
-        } catch (e: Exception) {
-            Log.e("SmsReceiver", "Failed to show notification", e)
+        if (queuedAny) {
+            SmsSyncWorker.enqueueNow(context)
         }
     }
 
     companion object {
-        fun queueOfflineSms(context: Context, payload: SmsPayload) {
-            val sharedPrefs = context.getSharedPreferences("smart_spend_prefs", Context.MODE_PRIVATE)
-            val queueJsonStr = sharedPrefs.getString("offline_sms_queue", "[]") ?: "[]"
-            try {
-                val queueArray = JSONArray(queueJsonStr)
-                val item = JSONObject().apply {
-                    put("amount", payload.amount)
-                    put("transaction_type", payload.transaction_type)
-                    put("merchant_raw", payload.merchant_raw)
-                    put("bank_sender_id", payload.bank_sender_id)
-                    put("account_last4", payload.account_last4)
-                    put("date", payload.date)
-                    put("upi_ref", payload.upi_ref)
-                    put("timestamp", System.currentTimeMillis())
+        private const val TAG = "SmsReceiver"
+        private const val PREFS = "smart_spend_prefs"
+        private const val QUEUE_KEY = "offline_sms_queue"
+
+        /** Guards read-modify-write of the queue in SharedPreferences. */
+        private val queueLock = Any()
+
+        /** Only one flush may run at a time (worker + MainActivity.onResume can overlap). */
+        private val flushMutex = Mutex()
+
+        /**
+         * Picks the timestamp used as the transaction date and in the backend fingerprint.
+         *
+         * The SMSC "sent" timestamp is identical whether we read the SMS from the live broadcast
+         * (SmsMessage.timestampMillis) or later from the inbox (Telephony.Sms.DATE_SENT), so the
+         * same SMS always produces the same fingerprint, while two different ₹1 payments never do.
+         * Falls back to the device receive time if the SMSC clock is missing or clearly wrong.
+         */
+        fun stableSmsTimestamp(sentMillis: Long, receivedMillis: Long): Long =
+            if (sentMillis > 0 && abs(sentMillis - receivedMillis) < 24 * 60 * 60 * 1000L) sentMillis
+            else receivedMillis
+
+        private fun dedupKey(obj: JSONObject): String {
+            val ref = optNullableString(obj, "upi_ref")
+            if (ref != null) return "upi:${ref.lowercase()}"
+            return "fb:${obj.optDouble("amount")}:${optNullableString(obj, "account_last4")}:${obj.optString("date")}"
+        }
+
+        /**
+         * Adds a parsed transaction to the durable queue. Returns false if the identical
+         * transaction is already waiting in the queue.
+         */
+        fun queueOfflineSms(context: Context, payload: SmsPayload): Boolean {
+            val sharedPrefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            synchronized(queueLock) {
+                try {
+                    val queueArray = JSONArray(sharedPrefs.getString(QUEUE_KEY, "[]") ?: "[]")
+                    val item = JSONObject().apply {
+                        put("id", UUID.randomUUID().toString())
+                        put("amount", payload.amount)
+                        put("transaction_type", payload.transaction_type)
+                        put("merchant_raw", payload.merchant_raw)
+                        put("bank_sender_id", payload.bank_sender_id)
+                        put("account_last4", payload.account_last4)
+                        put("date", payload.date)
+                        put("upi_ref", payload.upi_ref)
+                        put("timestamp", System.currentTimeMillis())
+                    }
+                    val key = dedupKey(item)
+                    for (i in 0 until queueArray.length()) {
+                        if (dedupKey(queueArray.getJSONObject(i)) == key) {
+                            Log.d(TAG, "Transaction already queued, skipping")
+                            return false
+                        }
+                    }
+                    queueArray.put(item)
+                    sharedPrefs.edit().putString(QUEUE_KEY, queueArray.toString()).commit() // Use commit() to ensure disk write
+                    Log.d(TAG, "Queued structured SMS payload. Queue size: ${queueArray.length()}")
+                    return true
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to queue SMS payload", e)
+                    return false
                 }
-                queueArray.put(item)
-                sharedPrefs.edit().putString("offline_sms_queue", queueArray.toString()).commit() // Use commit() to ensure disk write
-                Log.d("SmsReceiver", "Queued structured SMS payload offline. Queue size: ${queueArray.length()}")
-            } catch (e: Exception) {
-                Log.e("SmsReceiver", "Failed to queue offline SMS payload", e)
             }
         }
 
-        suspend fun flushOfflineQueue(context: Context, token: String) {
-            val sharedPrefs = context.getSharedPreferences("smart_spend_prefs", Context.MODE_PRIVATE)
-            val queueJsonStr = sharedPrefs.getString("offline_sms_queue", "[]") ?: "[]"
-            if (queueJsonStr == "[]") return
+        fun hasQueuedSms(context: Context): Boolean {
+            val sharedPrefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            synchronized(queueLock) {
+                return try {
+                    JSONArray(sharedPrefs.getString(QUEUE_KEY, "[]") ?: "[]").length() > 0
+                } catch (e: Exception) {
+                    false
+                }
+            }
+        }
 
-            try {
-                val queueArray = JSONArray(queueJsonStr)
-                if (queueArray.length() == 0) return
+        private fun itemId(obj: JSONObject): String = obj.optString("id").ifEmpty { obj.toString() }
 
-                Log.d("SmsReceiver", "Flushing ${queueArray.length()} offline queued SMS...")
-                val remainingQueue = JSONArray()
+        /**
+         * Uploads every queued transaction. Items that fail with a server/network error stay in
+         * the queue; items added by the receiver while this flush is running are never lost.
+         *
+         * @return true if the queue is empty afterwards.
+         */
+        suspend fun flushOfflineQueue(context: Context, token: String, notify: Boolean = false): Boolean =
+            flushMutex.withLock {
+                val sharedPrefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                val snapshot = synchronized(queueLock) {
+                    try {
+                        JSONArray(sharedPrefs.getString(QUEUE_KEY, "[]") ?: "[]")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Corrupt offline SMS queue, resetting", e)
+                        sharedPrefs.edit().putString(QUEUE_KEY, "[]").commit()
+                        JSONArray()
+                    }
+                }
+                if (snapshot.length() == 0) return@withLock true
+
+                Log.d(TAG, "Flushing ${snapshot.length()} queued SMS...")
+                val done = HashSet<String>()
                 val service = RetrofitClient.apiService
 
-                for (i in 0 until queueArray.length()) {
-                    val obj = queueArray.getJSONObject(i)
-                    val payload = SmsPayload(
-                        amount = obj.getDouble("amount"),
-                        transaction_type = obj.getString("transaction_type"),
-                        merchant_raw = optNullableString(obj, "merchant_raw"),
-                        bank_sender_id = optNullableString(obj, "bank_sender_id"),
-                        account_last4 = optNullableString(obj, "account_last4"),
-                        date = obj.getString("date"),
-                        upi_ref = optNullableString(obj, "upi_ref")
-                    )
+                for (i in 0 until snapshot.length()) {
+                    val obj = snapshot.getJSONObject(i)
+                    val payload = try {
+                        SmsPayload(
+                            amount = obj.getDouble("amount"),
+                            transaction_type = obj.getString("transaction_type"),
+                            merchant_raw = optNullableString(obj, "merchant_raw"),
+                            bank_sender_id = optNullableString(obj, "bank_sender_id"),
+                            account_last4 = optNullableString(obj, "account_last4"),
+                            date = obj.getString("date"),
+                            upi_ref = optNullableString(obj, "upi_ref")
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Dropping malformed queued SMS", e)
+                        done.add(itemId(obj))
+                        continue
+                    }
 
                     try {
                         val response = service.ingestSms("Bearer $token", payload)
-                        if (response.isSuccessful && (response.body()?.success == true || response.body()?.message == "Duplicate transaction detected")) {
-                            Log.d("SmsReceiver", "Flushed offline SMS successfully")
-                            val newCount = sharedPrefs.getInt("total_synced", 0) + 1
-                            sharedPrefs.edit().putInt("total_synced", newCount).commit()
+                        val body = response.body()
+                        if (response.isSuccessful && body != null && (body.success || body.message == "Duplicate transaction detected")) {
+                            done.add(itemId(obj))
+                            if (body.success) {
+                                Log.d(TAG, "Synced SMS transaction ${body.transaction?.id}")
+                                sharedPrefs.edit().apply {
+                                    putString("last_sms", "${payload.transaction_type} ${payload.amount} from ${payload.bank_sender_id}")
+                                    putInt("total_synced", sharedPrefs.getInt("total_synced", 0) + 1)
+                                    commit()
+                                }
+                                if (notify) {
+                                    val tx = body.transaction
+                                    showSyncNotification(context, tx?.amount ?: payload.amount, tx?.merchant ?: payload.merchant_raw, tx?.category)
+                                }
+                            } else {
+                                Log.d(TAG, "SMS transaction was already on the server")
+                            }
                         } else if (response.code() == 401) {
+                            Log.w(TAG, "Received 401 Unauthorized — clearing stored token, keeping queue")
+                            sharedPrefs.edit().remove("jwt_token").remove("user_email").commit()
                             break
+                        } else if (response.code() in 400..499 && response.code() != 408 && response.code() != 429) {
+                            // The server will never accept this payload; retrying forever would block the queue.
+                            Log.w(TAG, "Backend rejected SMS permanently (${response.code()}), dropping")
+                            done.add(itemId(obj))
                         } else {
-                            remainingQueue.put(obj)
+                            Log.w(TAG, "Server error ${response.code()} / ${body?.message} — will retry")
                         }
                     } catch (e: Exception) {
-                        remainingQueue.put(obj)
+                        Log.w(TAG, "Network error syncing SMS — will retry", e)
                     }
                 }
-                sharedPrefs.edit().putString("offline_sms_queue", remainingQueue.toString()).commit()
+
+                synchronized(queueLock) {
+                    val current = try {
+                        JSONArray(sharedPrefs.getString(QUEUE_KEY, "[]") ?: "[]")
+                    } catch (e: Exception) {
+                        JSONArray()
+                    }
+                    val remaining = JSONArray()
+                    for (i in 0 until current.length()) {
+                        val obj = current.getJSONObject(i)
+                        if (itemId(obj) !in done) remaining.put(obj)
+                    }
+                    sharedPrefs.edit().putString(QUEUE_KEY, remaining.toString()).commit()
+                    remaining.length() == 0
+                }
+            }
+
+        fun showSyncNotification(context: Context, amount: Double?, merchant: String?, category: String?) {
+            try {
+                val channelId = "smartspend_sms_sync"
+                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val channel = NotificationChannel(
+                        channelId,
+                        "SMS Auto-Sync Notifications",
+                        NotificationManager.IMPORTANCE_HIGH
+                    ).apply {
+                        description = "Notifies when a payment SMS is auto-synced to SmartSpend"
+                    }
+                    notificationManager.createNotificationChannel(channel)
+                }
+
+                val amtStr = if (amount != null) "₹%.2f".format(amount) else "Payment"
+                val merchStr = merchant ?: "Merchant"
+                val catStr = category ?: "General"
+
+                val notification = NotificationCompat.Builder(context, channelId)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle("💳 Payment Auto-Synced!")
+                    .setContentText("Synced $amtStr to $merchStr ($catStr)")
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .build()
+
+                notificationManager.notify(System.nanoTime().toInt(), notification)
             } catch (e: Exception) {
-                Log.e("SmsReceiver", "Error flushing offline SMS queue", e)
+                Log.e(TAG, "Failed to show notification", e)
             }
         }
 

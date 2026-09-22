@@ -145,6 +145,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Keeps bank SMS syncing (and retrying) in the background while the app is closed.
+        SmsSyncWorker.schedulePeriodic(this)
+
         if (BuildConfig.DEV_SKIP_AUTH) {
             // The dev-stub backend (AUTH_STUB=true) ignores the token's contents and always
             // resolves to the seeded stub user, but every client call — including SmsReceiver's
@@ -925,7 +928,7 @@ class MainActivity : ComponentActivity() {
             try {
                 val cursor = contentResolver.query(
                     Telephony.Sms.CONTENT_URI,
-                    arrayOf(Telephony.Sms.ADDRESS, Telephony.Sms.BODY),
+                    arrayOf(Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.DATE, Telephony.Sms.DATE_SENT),
                     null, null, Telephony.Sms.DATE + " DESC"
                 )
 
@@ -934,13 +937,18 @@ class MainActivity : ComponentActivity() {
                 cursor?.use {
                     val addressIdx = it.getColumnIndex(Telephony.Sms.ADDRESS)
                     val bodyIdx = it.getColumnIndex(Telephony.Sms.BODY)
+                    val dateIdx = it.getColumnIndex(Telephony.Sms.DATE)
+                    val sentIdx = it.getColumnIndex(Telephony.Sms.DATE_SENT)
 
                     while (it.moveToNext() && scanned < 100) {
                         scanned++
                         val sender = it.getString(addressIdx) ?: ""
                         val body = it.getString(bodyIdx) ?: ""
 
-                        val payload = SmsParser.parse(body, sender)
+                        // Use the SMS's own timestamp (not "now") so each historical transaction keeps its
+                        // real date and matches the fingerprint of the same SMS synced by the receiver.
+                        val ts = SmsReceiver.stableSmsTimestamp(it.getLong(sentIdx), it.getLong(dateIdx))
+                        val payload = SmsParser.parse(body, sender, ts)
                         if (payload != null) {
                             val response = RetrofitClient.apiService.ingestSms("Bearer $token", payload)
                             if (response.isSuccessful && response.body()?.success == true) {
