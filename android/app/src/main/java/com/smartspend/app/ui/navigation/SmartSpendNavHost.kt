@@ -26,6 +26,11 @@ import com.smartspend.app.ui.categories.CategoryDetailScreen
 import com.smartspend.app.ui.home.HomeScreen
 import com.smartspend.app.ui.insights.InsightsScreen
 import com.smartspend.app.ui.permission.SmsConsentScreen
+import com.smartspend.app.RetrofitClient
+import com.smartspend.app.UserData
+import com.smartspend.app.ui.auth.LinkPhoneScreen
+import com.smartspend.app.ui.auth.ProfileSetupScreen
+import androidx.compose.runtime.produceState
 import com.smartspend.app.ui.search.SearchScreen
 import com.smartspend.app.ui.trends.TrendsScreen
 
@@ -146,7 +151,29 @@ fun SmartSpendNavHost(
             AccountScreen(
                 onBack = { navController.back() },
                 onLogout = onSignedOut,
-                onEnableAutoSync = { navController.navigateTo(Destination.SmsConsent.route) }
+                onEnableAutoSync = { navController.navigateTo(Destination.SmsConsent.route) },
+                onEditProfile = { navController.navigateTo(Destination.EditProfile.route) },
+                onAddPhone = { navController.navigateTo(Destination.AddPhone.route) }
+            )
+        }
+
+        composable(Destination.EditProfile.route) {
+            val profile by produceState<UserData?>(null) {
+                value = runCatching { RetrofitClient.apiService.getMyProfile().body() }.getOrNull()
+            }
+            ProfileSetupScreen(
+                initial = profile,
+                editing = true,
+                onSaved = { navController.back() },
+                onBack = { navController.back() }
+            )
+        }
+
+        composable(Destination.AddPhone.route) {
+            LinkPhoneScreen(
+                onLinked = { navController.back() },
+                onSkip = null,
+                onBack = { navController.back() }
             )
         }
 

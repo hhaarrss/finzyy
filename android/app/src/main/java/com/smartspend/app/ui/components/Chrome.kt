@@ -367,7 +367,8 @@ fun SecondaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    leading: (@Composable () -> Unit)? = null
 ) {
     OutlinedButton(
         onClick = onClick,
@@ -380,6 +381,9 @@ fun SecondaryButton(
         if (icon != null) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
+        } else if (leading != null) {
+            leading()
+            Spacer(Modifier.width(10.dp))
         }
         Text(label, style = MaterialTheme.typography.titleMedium)
     }

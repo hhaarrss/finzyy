@@ -6,16 +6,18 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
-from sqlalchemy import delete
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from models.budget import BudgetLimit
+from models.budget import BudgetLimit, OverallBudgetLimit
 from models.budget_alert_log import BudgetAlertLog
 from models.merchant_mapping import MerchantMapping
 from models.transaction import Transaction
 from models.user import User
 from schemas.account import DeleteAccountRequest, DeleteAccountResponse
+from schemas.user import ProfileUpdate, UserResponse
+from services.accounts import build_user_response, get_overall_budget
 from utils.auth import verify_password
 from utils.dependencies import get_current_user
 
@@ -44,6 +46,67 @@ async def update_fcm_token(
     current_user.fcm_token = payload.fcm_token
     await db.commit()
     return {"message": "FCM device token registered successfully"}
+
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    summary="Get the signed-in user's profile",
+)
+async def get_my_profile(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    """Returns the profile, including whether profile setup has been completed."""
+    return await build_user_response(db, current_user)
+
+
+@router.put(
+    "/me/profile",
+    response_model=UserResponse,
+    summary="Create or update the signed-in user's profile",
+)
+async def update_my_profile(
+    payload: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    """
+    Saves the details from the profile setup / edit screen and marks the profile complete.
+    The monthly budget is stored as the user's overall budget, so the Budget screen is set up
+    straight away.
+    """
+    if payload.email is not None:
+        email = payload.email.lower()
+        result = await db.execute(
+            select(User).where(func.lower(User.email) == email, User.id != current_user.id)
+        )
+        if result.scalars().first() is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This email is already used by another account.",
+            )
+        current_user.email = email
+
+    current_user.full_name = payload.full_name.strip()
+    current_user.date_of_birth = payload.date_of_birth
+    current_user.gender = payload.gender
+    current_user.city = payload.city.strip() if payload.city else None
+    current_user.occupation = payload.occupation.strip() if payload.occupation else None
+    current_user.monthly_income = payload.monthly_income
+    if current_user.profile_completed_at is None:
+        current_user.profile_completed_at = datetime.now(timezone.utc)
+
+    if payload.monthly_budget is not None:
+        budget = await get_overall_budget(db, current_user.id)
+        if budget is None:
+            db.add(OverallBudgetLimit(user_id=current_user.id, monthly_limit=payload.monthly_budget))
+        else:
+            budget.monthly_limit = payload.monthly_budget
+
+    await db.commit()
+    await db.refresh(current_user)
+    return await build_user_response(db, current_user)
 
 
 @router.delete(

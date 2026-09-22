@@ -60,8 +60,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.smartspend.app.AuthSession
 import com.smartspend.app.BuildConfig
 import com.smartspend.app.RetrofitClient
+import com.smartspend.app.UserData
+import com.smartspend.app.ui.auth.formatIndianNumber
 import com.smartspend.app.sms.HistoricalSmsSync
 import com.smartspend.app.ui.components.Block
 import com.smartspend.app.ui.components.Eyebrow
@@ -89,16 +92,22 @@ const val PREF_NOTIFICATIONS_ENABLED = "pref_notifications_enabled"
 fun AccountScreen(
     onBack: () -> Unit,
     onLogout: () -> Unit,
-    onEnableAutoSync: () -> Unit
+    onEnableAutoSync: () -> Unit,
+    onEditProfile: () -> Unit,
+    onAddPhone: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val prefs = remember { context.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
 
-    val email = remember { prefs.getString("user_email", null) }
-    var name by remember { mutableStateOf<String?>(null) }
-    val phone = remember { prefs.getString("user_phone", null)?.takeIf { it.isNotBlank() } }
-    val phoneVerified = remember { prefs.getBoolean("user_phone_verified", false) }
+    var profile by remember { mutableStateOf<UserData?>(null) }
+    val cachedEmail = remember { prefs.getString("user_email", null) }
+    val cachedName = remember { prefs.getString("user_name", null) }
+    val cachedPhone = remember { prefs.getString("user_phone", null)?.takeIf { it.isNotBlank() } }
+    val email = profile?.email ?: cachedEmail
+    val name = profile?.full_name?.takeIf { it.isNotBlank() } ?: cachedName
+    val phone = profile?.phone_number ?: cachedPhone
+    val phoneVerified = phone != null
 
     var notifications by remember { mutableStateOf(prefs.getBoolean(PREF_NOTIFICATIONS_ENABLED, true)) }
     var syncing by remember { mutableStateOf(false) }
@@ -106,7 +115,8 @@ fun AccountScreen(
     var showDelete by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        name = runCatching { RetrofitClient.apiService.getMyProfile("").body()?.full_name }.getOrNull()
+        profile = runCatching { RetrofitClient.apiService.getMyProfile().body() }.getOrNull()
+        profile?.let { AuthSession.update(context, it) }
     }
 
     fun toast(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
@@ -159,7 +169,12 @@ fun AccountScreen(
 
             // ── Profile ──────────────────────────────────────────────────
             Block(modifier = Modifier.padding(horizontal = ScreenGutter), padding = PaddingValues(0.dp)) {
-                Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier
+                        .clickable(role = Role.Button, onClickLabel = "Edit profile", onClick = onEditProfile)
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         Modifier
                             .size(56.dp)
@@ -180,17 +195,21 @@ fun AccountScreen(
                         if (email != null) {
                             Text(email, style = MaterialTheme.typography.bodySmall, color = SmartSpendTheme.colors.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
+                        Text("Edit profile", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     }
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = SmartSpendTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
                 }
                 RowDivider()
                 SettingRow(
                     icon = Icons.Default.Phone,
-                    title = phone ?: "Phone number",
+                    title = phone?.let(::formatIndianNumber) ?: "Add phone number",
                     subtitle = when {
-                        phone == null -> "Added when you sign in with your phone"
-                        phoneVerified -> "Verified"
+                        phone == null -> "Sign in with OTP from next time"
+                        phoneVerified -> "Verified · used to sign in"
                         else -> "Not verified yet"
                     },
+                    onClick = if (phone == null) onAddPhone else null,
+                    chevron = phone == null,
                     trailing = {
                         if (phone != null && phoneVerified) {
                             Icon(Icons.Default.CheckCircle, contentDescription = "Verified", tint = SmartSpendTheme.colors.positive, modifier = Modifier.size(22.dp))

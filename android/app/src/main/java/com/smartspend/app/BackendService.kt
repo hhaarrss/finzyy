@@ -70,11 +70,32 @@ data class SmsPayload(
 )
 
 /**
- * Response model for the /auth/login endpoint.
+ * Response from every sign-in endpoint (/auth/firebase, /auth/login, /auth/register):
+ * the session token plus where the app should go next.
  */
-data class LoginResponse(
+data class AuthResponse(
     val access_token: String,
-    val token_type: String
+    val token_type: String,
+    val is_new_user: Boolean = false,
+    val profile_complete: Boolean = false,
+    val phone_number: String? = null,
+    val email: String? = null,
+    val full_name: String? = null
+)
+
+/** A Firebase ID token from Phone (OTP) or Google sign-in, verified by the backend. */
+data class FirebaseTokenPayload(val id_token: String)
+
+/** Details sent from the profile setup / edit screen. Dates are ISO yyyy-MM-dd. */
+data class ProfilePayload(
+    val full_name: String,
+    val email: String? = null,
+    val date_of_birth: String? = null,
+    val gender: String? = null,
+    val city: String? = null,
+    val occupation: String? = null,
+    val monthly_income: Double? = null,
+    val monthly_budget: Double? = null
 )
 
 /**
@@ -91,8 +112,16 @@ data class RegisterPayload(
  */
 data class UserData(
     val id: Int,
-    val email: String,
-    val full_name: String? = null
+    val email: String? = null,
+    val phone_number: String? = null,
+    val full_name: String? = null,
+    val date_of_birth: String? = null,
+    val gender: String? = null,
+    val city: String? = null,
+    val occupation: String? = null,
+    val monthly_income: Double? = null,
+    val monthly_budget: Double? = null,
+    val profile_complete: Boolean = false
 )
 
 /**
@@ -313,17 +342,28 @@ interface BackendService {
     suspend fun login(
         @Field("username") username: String, // OAuth2 expects 'username' field for email
         @Field("password") password: String
-    ): Response<LoginResponse>
+    ): Response<AuthResponse>
 
     @POST("auth/register")
     suspend fun register(
         @Body payload: RegisterPayload
-    ): Response<LoginResponse>
+    ): Response<AuthResponse>
+
+    /** Exchanges a Firebase ID token (Phone OTP or Google) for a SmartSpend session. */
+    @POST("auth/firebase")
+    suspend fun firebaseLogin(@Body payload: FirebaseTokenPayload): Response<AuthResponse>
+
+    /** Adds an OTP-verified phone number to the signed-in account. */
+    @POST("auth/link-phone")
+    suspend fun linkPhone(@Body payload: FirebaseTokenPayload): Response<UserData>
 
     @GET("users/me")
     suspend fun getMyProfile(
-        @Header("Authorization") token: String
+        @Header("Authorization") token: String = ""
     ): Response<UserData>
+
+    @retrofit2.http.PUT("users/me/profile")
+    suspend fun updateProfile(@Body payload: ProfilePayload): Response<UserData>
 
     /**
      * Send parsed SMS data to the backend for transaction ingestion.
