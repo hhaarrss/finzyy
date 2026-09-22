@@ -8,47 +8,60 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 
+// Primary is the ink itself: filled buttons and selected states are black on stone in
+// light and white on black in dark. The gold sits in secondary for the rare accent.
 private val LightColorScheme = lightColorScheme(
-    primary = Violet,
-    onPrimary = PaperWhite,
-    primaryContainer = VioletContainer,
-    onPrimaryContainer = OnVioletContainer,
-    secondary = Tangerine,
-    onSecondary = PaperWhite,
-    tertiary = Positive,
-    onTertiary = PaperWhite,
-    background = Cream,
-    onBackground = Ink,
-    surface = PaperWhite,
-    onSurface = Ink,
-    surfaceVariant = Sand,
-    onSurfaceVariant = InkMuted,
-    outline = SandBorder,
-    outlineVariant = SandBorder,
-    error = Negative,
-    onError = PaperWhite
+    primary = StoneInk,
+    onPrimary = Paper,
+    primaryContainer = Color(0xFFEAEAE5),
+    onPrimaryContainer = StoneInk,
+    secondary = GoldDeep,
+    onSecondary = Paper,
+    tertiary = MoneyInLight,
+    onTertiary = Paper,
+    background = Stone,
+    onBackground = StoneInk,
+    surface = Paper,
+    onSurface = StoneInk,
+    surfaceVariant = PaperRaised,
+    onSurfaceVariant = StoneSoft,
+    surfaceContainer = Paper,
+    surfaceContainerLow = Paper,
+    surfaceContainerHigh = Paper,
+    surfaceContainerHighest = PaperRaised,
+    outline = StoneLine,
+    outlineVariant = StoneLine,
+    error = OverBudgetLight,
+    onError = Paper,
+    scrim = Color.Black
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = VioletDark,
-    onPrimary = VioletInk,
-    primaryContainer = VioletContainerDark,
-    onPrimaryContainer = OnVioletContainerDark,
-    secondary = TangerineDark,
-    onSecondary = TangerineInk,
-    tertiary = PositiveDark,
-    onTertiary = PositiveInk,
-    background = NightBase,
-    onBackground = Moon,
+    primary = NightInk,
+    onPrimary = Night,
+    primaryContainer = NightRaised,
+    onPrimaryContainer = NightInk,
+    secondary = Gold,
+    onSecondary = Night,
+    tertiary = MoneyIn,
+    onTertiary = Night,
+    background = Night,
+    onBackground = NightInk,
     surface = NightSurface,
-    onSurface = Moon,
-    surfaceVariant = NightMuted,
-    onSurfaceVariant = MoonMuted,
-    outline = NightBorder,
-    outlineVariant = NightBorder,
-    error = NegativeDark,
-    onError = NegativeInk
+    onSurface = NightInk,
+    surfaceVariant = NightRaised,
+    onSurfaceVariant = NightSoft,
+    surfaceContainer = NightSurface,
+    surfaceContainerLow = NightSurface,
+    surfaceContainerHigh = NightRaised,
+    surfaceContainerHighest = NightRaised,
+    outline = NightLine,
+    outlineVariant = NightLine,
+    error = OverBudget,
+    onError = Night,
+    scrim = Color.Black
 )
 
 @Composable

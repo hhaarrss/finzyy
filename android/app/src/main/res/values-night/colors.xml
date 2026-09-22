@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Night variants of the sign-in screen: the ledger's black and white. -->
+    <color name="login_background">#FF000000</color>
+    <color name="login_surface">#FF0E0E0E</color>
+    <color name="login_ink">#FFF4F4F0</color>
+    <color name="login_ink_soft">#FF8A8A85</color>
+    <color name="login_field">#FF171717</color>
+    <color name="login_hairline">#FF262626</color>
+    <color name="login_brand">#FFF4F4F0</color>
+    <color name="login_brand_disabled">#80F4F4F0</color>
+    <color name="login_on_brand">#FF000000</color>
+    <color name="login_hero_top">#FF1C1C1C</color>
+    <color name="login_hero_bottom">#FF000000</color>
+    <color name="login_error">#FFE28A76</color>
+    <color name="login_error_container">#1FE28A76</color>
+    <color name="login_mark_ink">#FF0A0A0A</color>
+</resources>

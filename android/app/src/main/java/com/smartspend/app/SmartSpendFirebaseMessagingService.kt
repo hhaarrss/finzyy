@@ -26,6 +26,11 @@ class SmartSpendFirebaseMessagingService : FirebaseMessagingService() {
         val body = remoteMessage.notification?.body ?: remoteMessage.data["body"] ?: ""
         val alertType = remoteMessage.data["type"] ?: "budget_alert"
 
+        // The Account screen's "Insight notifications" switch. Default on, matching the switch.
+        val enabled = getSharedPreferences("smart_spend_prefs", Context.MODE_PRIVATE)
+            .getBoolean("pref_notifications_enabled", true)
+        if (!enabled) return
+
         showStatusBarNotification(title, body, alertType)
     }
 

@@ -42,13 +42,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.smartspend.app.sms.HistoricalSmsSync
+import com.smartspend.app.ui.theme.SmartSpendTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -83,7 +84,7 @@ fun SmsConsentScreen(
     LaunchedEffect(permissionsGranted) {
         if (permissionsGranted && step == ConsentStep.PermanentlyDenied) {
             step = ConsentStep.Scanning
-            delay(1200)
+            importInbox(context)
             onAutoSyncReady()
         }
     }
@@ -95,7 +96,7 @@ fun SmsConsentScreen(
         if (allGranted) {
             step = ConsentStep.Scanning
             scope.launch {
-                delay(1200)
+                importInbox(context)
                 onAutoSyncReady()
             }
         } else {
@@ -117,7 +118,7 @@ fun SmsConsentScreen(
         if (smsPermissionsGranted(context)) {
             step = ConsentStep.Scanning
             scope.launch {
-                delay(600)
+                importInbox(context)
                 onAutoSyncReady()
             }
         } else {
@@ -127,7 +128,7 @@ fun SmsConsentScreen(
     }
 
     Scaffold(
-        containerColor = Color(0xFFF7F8FB),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text("Auto-sync setup") },
@@ -136,7 +137,7 @@ fun SmsConsentScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF7F8FB))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
     ) { innerPadding ->
@@ -183,7 +184,7 @@ private fun DisclosureContent(onContinue: () -> Unit) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
                 modifier = Modifier.padding(18.dp),
@@ -197,7 +198,7 @@ private fun DisclosureContent(onContinue: () -> Unit) {
 
         Text(
             "We don't need your personal conversations or OTPs. Only messages from recognized bank senders are parsed, on your device.",
-            color = Color(0xFF667085),
+            color = SmartSpendTheme.colors.inkMuted,
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -224,7 +225,7 @@ private fun DisclosureContent(onContinue: () -> Unit) {
 @Composable
 private fun ConsentBullet(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("✓", color = Color(0xFF1F8A70), fontWeight = FontWeight.Bold)
+        Text("✓", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         Spacer(Modifier.width(10.dp))
         Text(text, fontWeight = FontWeight.SemiBold)
     }
@@ -237,13 +238,13 @@ private fun ScanningContent() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        CircularProgressIndicator(color = Color(0xFF1F8A70))
+        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(20.dp))
         Text("Scanning your messages...", fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(6.dp))
         Text(
-            "Setting up auto-sync for bank transaction SMS.",
-            color = Color(0xFF667085),
+            "Importing recent bank SMS. Only amounts, merchants and dates leave your phone.",
+            color = SmartSpendTheme.colors.inkMuted,
             style = MaterialTheme.typography.bodySmall
         )
     }
@@ -261,7 +262,7 @@ private fun PermanentlyDeniedContent(onOpenSettings: () -> Unit, onBackToHome: (
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -271,7 +272,7 @@ private fun PermanentlyDeniedContent(onOpenSettings: () -> Unit, onBackToHome: (
                 Text("SMS permission is blocked", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text(
                     "You've denied SMS access more than once, so Android won't show the prompt again. To enable auto-sync, allow SMS permission from your device Settings.",
-                    color = Color(0xFF667085),
+                    color = SmartSpendTheme.colors.inkMuted,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Button(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
@@ -283,4 +284,17 @@ private fun PermanentlyDeniedContent(onOpenSettings: () -> Unit, onBackToHome: (
             }
         }
     }
+}
+
+/**
+ * The "Scanning your messages" step used to be a timed pause. It now imports the recent inbox
+ * so the user lands on a Home that already has their transactions. Failures are swallowed —
+ * live auto-sync still works, and the import can be re-run from Account.
+ */
+private suspend fun importInbox(context: Context) {
+    val started = System.currentTimeMillis()
+    runCatching { HistoricalSmsSync.run(context) }
+    // Keep the step on screen long enough to read, even when the inbox is empty.
+    val elapsed = System.currentTimeMillis() - started
+    if (elapsed < 900) delay(900 - elapsed)
 }

@@ -8,10 +8,18 @@ package com.smartspend.app.ui.navigation
  */
 enum class Destination(val route: String) {
     Home("home"),
+    Search("search?review={review}"),
     AddTransaction("add_transaction"),
     Budget("budget"),
     Categories("categories"),
+    CategoryDetail("category/{name}"),
     Trends("trends"),
+    Insights("insights"),
     Account("account"),
-    SmsConsent("sms_consent")
+    SmsConsent("sms_consent");
+
+    companion object {
+        fun search(reviewOnly: Boolean) = "search?review=$reviewOnly"
+        fun category(name: String) = "category/" + android.net.Uri.encode(name)
+    }
 }
