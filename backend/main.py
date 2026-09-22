@@ -90,18 +90,10 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Set up CORS middleware
+# CORS: the only client is the Android app, which ignores CORS, so no browser origin is
+# allowed by default. Set ALLOWED_ORIGINS (comma-separated) only if a browser client returns.
 raw_origins = os.getenv("ALLOWED_ORIGINS", "")
-if raw_origins:
-    ALLOWED_ORIGINS = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
-else:
-    ALLOWED_ORIGINS = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        "https://expense-tracker-pk4d.onrender.com",
-    ]
+ALLOWED_ORIGINS = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,

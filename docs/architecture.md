@@ -10,7 +10,6 @@ This document provides in-depth technical documentation on SmartSpend's core arc
 graph TD
     subgraph Client Layer
         A[Android Mobile App]
-        B[React Web Dashboard]
     end
 
     subgraph API & Application Layer
@@ -31,7 +30,6 @@ graph TD
     end
 
     A -->|HTTPS REST| C
-    B -->|HTTPS REST| C
     C --> D
     D --> E
     D --> F
@@ -189,7 +187,6 @@ expense-tracker/
 │   └── screenshots/
 │       ├── mobile_dashboard.png
 │       ├── ai_sms_ingest.png
-│       └── web_dashboard.png
 ```
 
 ### 2. Standard Markdown Syntax:
@@ -208,6 +205,5 @@ expense-tracker/
 ```html
 <p align="center">
   <img src="docs/screenshots/mobile_dashboard.png" width="45%" />
-  <img src="docs/screenshots/web_dashboard.png" width="45%" />
 </p>
 ```

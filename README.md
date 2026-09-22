@@ -5,7 +5,6 @@ An AI-augmented personal expense tracker built for the Indian UPI/banking ecosys
 [![Backend](https://img.shields.io/badge/backend-FastAPI-009688?logo=fastapi&logoColor=white)](#tech-stack)
 [![Database](https://img.shields.io/badge/database-PostgreSQL-4169E1?logo=postgresql&logoColor=white)](#tech-stack)
 [![Android](https://img.shields.io/badge/android-Kotlin-7F52FF?logo=kotlin&logoColor=white)](#tech-stack)
-[![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20Vite-61DAFB?logo=react&logoColor=black)](#tech-stack)
 [![License](https://img.shields.io/badge/license-MIT-green)](#license)
 
 ---
@@ -24,7 +23,7 @@ Most personal budgeting apps fail for one simple reason: **users hate manually t
 * 🧠 **5-layer hybrid merchant categorization** — a waterfall pipeline combining user-corrected mappings, a curated merchant database, ISO Merchant Category Code (MCC) lookups, keyword pattern matching, and a confidence-scored fallback — so accuracy improves the more you use it.
 * 📶 **Offline-resilient sync** — transactions captured with no network connection are queued locally and auto-flushed once connectivity returns.
 * 🔁 **Idempotent by design** — every transaction is fingerprinted (SHA-256) before insertion, preventing duplicate entries when a bank re-sends or retries an SMS broadcast.
-* 📊 **Live analytics dashboard** — a React web dashboard visualizes spending by category, daily trends, budget utilization, and month-over-month change, kept in sync with the mobile app in real time.
+* 📊 **In-app analytics** — the Android app shows spending by category and merchant, trends over time, budget utilization, and month-over-month change.
 * 🎯 **Budget limits & smart alerts** — per-category monthly budgets with utilization tracking and over-limit warnings.
 * 🔎 **Continuous learning loop** — every manual re-categorization a user makes trains the categorizer for that merchant going forward, so the system needs less correction over time.
 
@@ -70,9 +69,9 @@ Most personal budgeting apps fail for one simple reason: **users hate manually t
 └────────────┬────────────┘
              │
              ▼
- Real-time Dashboard Query
+ REST API (FastAPI)
 ┌─────────────────────────┐
-│    React Vite Web UI    │
+│   Android app screens   │
 │  (Charts & Analytics)   │
 └─────────────────────────┘
 ```
@@ -86,8 +85,7 @@ Most personal budgeting apps fail for one simple reason: **users hate manually t
 | **Backend API** | Python 3.11 | FastAPI, Uvicorn, Pydantic v2 |
 | **Database** | PostgreSQL | SQLAlchemy 2.0 (Async), asyncpg, Alembic |
 | **Security / Auth** | Auth Subsystem | PyJWT, passlib / bcrypt |
-| **Android App** | Native Kotlin | Retrofit2, Gson, OkHttp3, Coroutines |
-| **Web Dashboard** | React (Vite) | Context API, Axios, Recharts, Lucide Icons |
+| **Android App** | Native Kotlin | Jetpack Compose, Retrofit2, Gson, OkHttp3, Coroutines |
 
 ### Why these choices?
 * **Async SQLAlchemy + asyncpg** over a synchronous driver like psycopg2 — a sync driver would block FastAPI's event loop during every DB call, defeating the purpose of an async framework.
@@ -123,7 +121,6 @@ Every transaction runs through a 5-layer waterfall until it finds a confident ma
 ### Prerequisites
 * Python 3.11+
 * PostgreSQL 14+
-* Node.js 18+
 * Android Studio (for the mobile app)
 
 ### Backend setup
@@ -141,13 +138,6 @@ alembic upgrade head
 
 # Start the API
 uvicorn main:app --reload
-```
-
-### Frontend setup
-```bash
-cd frontend
-npm install
-npm run dev
 ```
 
 ### Android app
@@ -191,6 +181,6 @@ This project is licensed under the MIT License — see [LICENSE](LICENSE) for de
 
 ## 🙋 About
 
-Built by **Harsh Rabadiya** as a full-stack, cross-platform exploration of passive financial data ingestion for the Indian UPI ecosystem — spanning native Android, an async Python backend, and a React analytics dashboard.
+Built by **Harsh Rabadiya** as a full-stack, cross-platform exploration of passive financial data ingestion for the Indian UPI ecosystem — spanning a native Android app and an async Python backend.
 
 📫 **Reach out**: [harshr4834@gmail.com](mailto:harshr4834@gmail.com) · [LinkedIn Profile](https://www.linkedin.com/in/harsh-rabadiya-828683265/)
