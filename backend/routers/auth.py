@@ -1,113 +1,178 @@
 """
 Router for Authentication and Profile Management.
 
-Handles registration, login, and profile fetching.
+Primary sign-in is phone number + OTP through Firebase Phone Auth; Google sign-in is the
+secondary option. Both hand this backend a Firebase ID token, which is verified server-side
+before this backend issues its own JWT. Email + password is kept for accounts created before
+phone login, so those users can still sign in and then link a phone number.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from database import get_db
 from models.user import User
-from schemas.user import UserCreate, UserResponse, Token
-from utils.auth import hash_password, verify_password, create_access_token
+from schemas.user import AuthResponse, FirebaseLoginRequest, UserCreate, UserResponse
+from services.accounts import build_user_response, issue_auth_response
+from utils.auth import hash_password, verify_password
 from utils.dependencies import get_current_user
+from utils.firebase_admin_client import verify_firebase_id_token
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+def _sign_in_provider(claims: dict) -> str:
+    return (claims.get("firebase") or {}).get("sign_in_provider", "")
+
+
+@router.post(
+    "/firebase",
+    response_model=AuthResponse,
+    summary="Sign in (or sign up) with a Firebase ID token from Phone OTP or Google",
+)
+async def firebase_login(
+    payload: FirebaseLoginRequest,
+    db: AsyncSession = Depends(get_db),
+) -> AuthResponse:
+    """
+    Exchanges a verified Firebase ID token for this app's own JWT.
+
+    - Phone sign-in: the account is identified by the verified phone number.
+    - Google sign-in: the account is identified by the Google-verified email, so an
+      existing email/password account with the same address is signed into, not duplicated.
+
+    A new account is created on first sign-in; `profile_complete` tells the app whether to
+    show the profile setup screen next.
+    """
+    claims = verify_firebase_id_token(payload.id_token)
+    provider = _sign_in_provider(claims)
+    phone_number = claims.get("phone_number")
+    email = (claims.get("email") or "").strip().lower() or None
+
+    user: User | None = None
+    is_new_user = False
+
+    if phone_number:
+        result = await db.execute(select(User).where(User.phone_number == phone_number))
+        user = result.scalars().first()
+        if user is None:
+            user = User(phone_number=phone_number, full_name="")
+            db.add(user)
+            is_new_user = True
+    elif email and claims.get("email_verified") and provider == "google.com":
+        result = await db.execute(select(User).where(func.lower(User.email) == email))
+        user = result.scalars().first()
+        if user is None:
+            user = User(email=email, full_name=(claims.get("name") or "")[:100])
+            db.add(user)
+            is_new_user = True
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="This sign-in has no verified phone number or Google email.",
+        )
+
+    await db.commit()
+    await db.refresh(user)
+    return issue_auth_response(user, is_new_user=is_new_user)
+
+
+@router.post(
+    "/link-phone",
+    response_model=UserResponse,
+    summary="Attach a verified phone number to the signed-in account",
+)
+async def link_phone(
+    payload: FirebaseLoginRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    """
+    Moves an email/password or Google account over to phone login: after the user verifies
+    their number with OTP, the phone is saved on their existing account so future phone
+    sign-ins open the same data.
+    """
+    claims = verify_firebase_id_token(payload.id_token)
+    phone_number = claims.get("phone_number")
+    if not phone_number:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verify a phone number with OTP first.",
+        )
+
+    result = await db.execute(select(User).where(User.phone_number == phone_number))
+    owner = result.scalars().first()
+    if owner is not None and owner.id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This number is already linked to another SmartSpend account.",
+        )
+
+    current_user.phone_number = phone_number
+    await db.commit()
+    await db.refresh(current_user)
+    return await build_user_response(db, current_user)
+
+
 @router.post(
     "/register",
-    response_model=Token,
+    response_model=AuthResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Register a new user and return a JWT access token",
+    summary="Register with email + password (legacy; the app uses phone sign-in)",
 )
 async def register(
     user_in: UserCreate,
     db: AsyncSession = Depends(get_db)
-) -> dict:
+) -> AuthResponse:
     """
     Registers a new user by checking for duplicates, hashing the password, and committing.
     Returns a JWT token so the client can immediately start using the app.
-
-    Args:
-        user_in (UserCreate): Schema containing user email, password, and full name.
-        db (AsyncSession): The database session.
-
-    Raises:
-        HTTPException: 400 Bad Request if the email already exists in the system.
-
-    Returns:
-        dict: Object containing the access token and bearer type.
     """
-    # Check if user already exists
-    result = await db.execute(select(User).where(User.email == user_in.email))
-    existing_user = result.scalars().first()
-    if existing_user:
+    email = user_in.email.lower()
+    result = await db.execute(select(User).where(func.lower(User.email) == email))
+    if result.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
         )
 
-    # Hash the password and create the database object
-    hashed_pwd = hash_password(user_in.password)
     new_user = User(
-        email=user_in.email,
-        hashed_password=hashed_pwd,
+        email=email,
+        hashed_password=hash_password(user_in.password),
         full_name=user_in.full_name,
     )
-
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
-
-    # Auto-login: return a JWT token immediately
-    token_data = {"sub": new_user.email, "user_id": new_user.id}
-    access_token = create_access_token(data=token_data)
-
-    return {"access_token": access_token, "token_type": "bearer"}
+    return issue_auth_response(new_user, is_new_user=True)
 
 
 @router.post(
     "/login",
-    response_model=Token,
-    summary="Authenticate user and obtain a JWT access token",
+    response_model=AuthResponse,
+    summary="Sign in with email + password (accounts created before phone login)",
 )
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
-) -> dict:
+) -> AuthResponse:
     """
     Authenticates a user using standard OAuth2 Password Request Form (username=email, password).
-    Returns a JWT access token on success.
-
-    Args:
-        form_data (OAuth2PasswordRequestForm): FastAPI form containing credentials.
-        db (AsyncSession): The database session.
-
-    Raises:
-        HTTPException: 401 Unauthorized if invalid email or password.
-
-    Returns:
-        dict: Object containing the access token and bearer type.
     """
-    result = await db.execute(select(User).where(User.email == form_data.username))
+    result = await db.execute(select(User).where(func.lower(User.email) == form_data.username.strip().lower()))
     user = result.scalars().first()
-    
-    if not user or not verify_password(form_data.password, user.hashed_password):
+
+    if not user or not user.hashed_password or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Create JWT access token
-    token_data = {"sub": user.email, "user_id": user.id}
-    access_token = create_access_token(data=token_data)
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+    return issue_auth_response(user)
 
 
 @router.get(
@@ -116,15 +181,8 @@ async def login(
     summary="Fetch the current authenticated user profile",
 )
 async def get_me(
-    current_user: User = Depends(get_current_user)
-) -> User:
-    """
-    Returns the profile metadata of the current authenticated user.
-
-    Args:
-        current_user (User): The user injected by the authentication dependency.
-
-    Returns:
-        User: The authenticated user database object.
-    """
-    return current_user
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    """Returns the profile of the current authenticated user."""
+    return await build_user_response(db, current_user)

@@ -136,6 +136,31 @@ app.include_router(users_router)
 app.include_router(home_router)
 
 
+# Phone sign-in + profile columns. Every statement is idempotent, so this is safe to run on
+# every start in every environment — it keeps an existing database working even where the
+# Alembic migration (a1b2c3d4e5f6) has not been run as a pre-deploy step.
+AUTH_SCHEMA_STATEMENTS = [
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_phone_number ON users (phone_number)",
+    "ALTER TABLE users ALTER COLUMN email DROP NOT NULL",
+    "ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL",
+    "ALTER TABLE users ALTER COLUMN full_name SET DEFAULT ''",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(30)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS occupation VARCHAR(100)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS monthly_income NUMERIC(12, 2)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed_at TIMESTAMP WITH TIME ZONE",
+]
+
+
+async def ensure_auth_schema() -> None:
+    from sqlalchemy import text
+    async with engine.begin() as conn:
+        for statement in AUTH_SCHEMA_STATEMENTS:
+            await conn.execute(text(statement))
+
+
 @app.on_event("startup")
 async def on_startup() -> None:
     print("Initializing Smart Expense Tracker Backend...")
@@ -150,6 +175,7 @@ async def on_startup() -> None:
                 from sqlalchemy import text
                 await conn.execute(text("SELECT 1"))
             print("Database connection verified.")
+            await ensure_auth_schema()
         except Exception as e:
             print(f"Warning: Database connectivity check failed: {e}")
         return
@@ -172,6 +198,7 @@ async def on_startup() -> None:
             await conn.execute(text("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_transfer BOOLEAN DEFAULT FALSE;"))
             await conn.execute(text("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_to VARCHAR(255);"))
             await conn.execute(text("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS notes TEXT;"))
+        await ensure_auth_schema()
         print("Database connection successfully established, schema migrated, and tables verified.")
 
         async with AsyncSessionLocal() as db:

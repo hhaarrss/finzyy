@@ -14,3 +14,4 @@ alembic>=1.13.1
 psycopg2-binary>=2.9.9
 email-validator
 python-multipart
+firebase-admin>=6.5.0

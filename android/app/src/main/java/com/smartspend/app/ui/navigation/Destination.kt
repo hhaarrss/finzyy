@@ -16,6 +16,8 @@ enum class Destination(val route: String) {
     Trends("trends"),
     Insights("insights"),
     Account("account"),
+    EditProfile("edit_profile"),
+    AddPhone("add_phone"),
     SmsConsent("sms_consent");
 
     companion object {
