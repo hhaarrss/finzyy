@@ -1,6 +1,7 @@
 package com.smartspend.app.ui.categories
 
 import androidx.compose.animation.AnimatedVisibility
+import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -95,6 +96,7 @@ fun CategoriesScreen(
     var period by rememberSaveable { mutableStateOf(BreakdownPeriod.ThisMonth) }
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var reloadKey by remember { mutableIntStateOf(0) }
+    val liveVersion = rememberTransactionsVersion()
 
     var categories by remember { mutableStateOf<List<CategoryTotal>?>(null) }
     var catError by remember { mutableStateOf<String?>(null) }
@@ -103,7 +105,7 @@ fun CategoriesScreen(
     var openTx by remember { mutableStateOf<TxView?>(null) }
 
     // Category totals come from the backend's monthly aggregate — the same numbers Home shows.
-    LaunchedEffect(period, reloadKey) {
+    LaunchedEffect(period, reloadKey, liveVersion) {
         categories = null
         catError = null
         val summaries = SpendData.monthSummaries(period.monthList())
@@ -119,7 +121,7 @@ fun CategoriesScreen(
     }
 
     // No endpoint groups by merchant for a date range, so merchants are grouped here.
-    LaunchedEffect(period, tab, reloadKey) {
+    LaunchedEffect(period, tab, reloadKey, liveVersion) {
         if (tab != 1) return@LaunchedEffect
         merchants = null
         merchError = null

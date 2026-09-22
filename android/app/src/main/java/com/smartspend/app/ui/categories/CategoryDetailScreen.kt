@@ -1,6 +1,7 @@
 package com.smartspend.app.ui.categories
 
 import androidx.compose.foundation.layout.Arrangement
+import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -62,14 +63,15 @@ fun CategoryDetailScreen(category: String, onBack: () -> Unit) {
     var selected by rememberSaveable { mutableIntStateOf(HISTORY_MONTHS - 1) }
     var txs by remember { mutableStateOf<List<TransactionData>?>(null) }
     var reloadKey by remember { mutableIntStateOf(0) }
+    val liveVersion = rememberTransactionsVersion()
     var openTx by remember { mutableStateOf<TxView?>(null) }
 
-    LaunchedEffect(reloadKey) {
+    LaunchedEffect(reloadKey, liveVersion) {
         history = SpendData.monthSummaries(months).map { (_, summary) ->
             summary?.categories?.firstOrNull { it.category.equals(category, ignoreCase = true) }
         }
     }
-    LaunchedEffect(selected, reloadKey) {
+    LaunchedEffect(selected, reloadKey, liveVersion) {
         txs = null
         val month = months[selected]
         txs = runCatching {

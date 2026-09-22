@@ -200,14 +200,10 @@ async def get_mom_change(
             if normalize_category_name(tx.category or "").lower() == target_norm
         )
     else:
-        cur_spent = sum(
-            float(tx.amount) for tx in cur_txs
-            if normalize_category_name(tx.category or "").lower() not in EXCLUDED_CATEGORY_PLACEHOLDERS
-        )
-        prev_spent = sum(
-            float(tx.amount) for tx in prev_txs
-            if normalize_category_name(tx.category or "").lower() not in EXCLUDED_CATEGORY_PLACEHOLDERS
-        )
+        # Overall spend counts every debit, including ones still waiting for review,
+        # so it stays consistent with total_spent in get_monthly_overview().
+        cur_spent = sum(float(tx.amount) for tx in cur_txs)
+        prev_spent = sum(float(tx.amount) for tx in prev_txs)
 
     # Near-zero baseline guard
     if prev_spent < MIN_MEANINGFUL_BASELINE:
@@ -465,11 +461,12 @@ async def get_monthly_overview(
     debits = [t for t in txs if t.type == "debit"]
     credits = [t for t in txs if t.type == "credit"]
 
+    # Uncategorised / needs-review debits are real money out, so they count towards
+    # total_spent straight away (they're only left out of the per-category breakdown).
     merchant_debits = [
         t for t in debits
         if not t.is_transfer
         and (t.category or "").lower() != "transfer"
-        and normalize_category_name(t.category or "").lower() not in EXCLUDED_CATEGORY_PLACEHOLDERS
     ]
     transfer_debits = [t for t in debits if t.is_transfer or (t.category or "").lower() == "transfer"]
 

@@ -82,7 +82,7 @@ class TestCrossPageConsistency(unittest.IsolatedAsyncioTestCase):
         # Food & Dining: total 6000.0 (BREACHED! > 5000 limit)
         # Groceries: total 2500.0 (WITHIN BUDGET: 62.5%)
         # Shopping: total 1500.0 (WITHIN BUDGET: 50.0%)
-        # Needs Review (placeholder): 450.0 (EXCLUDED from category totals)
+        # Needs Review (placeholder): 450.0 (EXCLUDED from category totals, INCLUDED in total spent)
         aug_txs = [
             Transaction(
                 user_id=self.user_id,
@@ -198,8 +198,10 @@ class TestCrossPageConsistency(unittest.IsolatedAsyncioTestCase):
         expected_cat_sum = sum(cat_totals.values())
         self.assertEqual(expected_cat_sum, 10000.0)
 
-        # Dashboard merchant spent must equal sum of category totals
-        self.assertEqual(overview["merchant_spent"], expected_cat_sum)
+        # Dashboard spent = category totals + the 450.0 still waiting for review
+        # (unreviewed debits count towards total spent immediately)
+        self.assertEqual(overview["merchant_spent"], expected_cat_sum + 450.0)
+        self.assertEqual(overview["total_spent"], expected_cat_sum + 450.0)
 
         # Budget Limits total spent across categories must match category totals
         budget_spent_sum = sum(b.spent for b in budgets)
@@ -272,10 +274,11 @@ class TestCrossPageConsistency(unittest.IsolatedAsyncioTestCase):
         mom_groceries = await get_mom_change(self.session, self.user_id, 2026, 8, category="Groceries")
         self.assertEqual(mom_groceries, 25.0)
 
-        # Overall MoM: July total spend = 6050.0 (>= 100.0), Aug total spent = 10000.0 -> valid float
+        # Overall MoM: July total spend = 6050.0 (>= 100.0), Aug total spent = 10450.0
+        # (includes the 450.0 awaiting review) -> valid float
         mom_overall = await get_mom_change(self.session, self.user_id, 2026, 8, category=None)
         self.assertIsNotNone(mom_overall)
-        self.assertEqual(mom_overall, 65.3)
+        self.assertEqual(mom_overall, 72.7)
 
     async def test_no_duplicate_category_cards(self):
         """

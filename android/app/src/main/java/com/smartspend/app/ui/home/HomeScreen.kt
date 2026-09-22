@@ -1,6 +1,7 @@
 package com.smartspend.app.ui.home
 
 import android.widget.Toast
+import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -116,10 +117,11 @@ fun HomeScreen(
 ) {
     var state by remember { mutableStateOf<HomeUiState>(HomeUiState.Loading) }
     var refreshKey by remember { mutableIntStateOf(0) }
+    val liveVersion = rememberTransactionsVersion()
     var refreshing by remember { mutableStateOf(false) }
     var openTx by remember { mutableStateOf<TxView?>(null) }
 
-    LaunchedEffect(refreshKey) {
+    LaunchedEffect(refreshKey, liveVersion) {
         if (state !is HomeUiState.Loaded) state = HomeUiState.Loading
         state = try {
             coroutineScope {

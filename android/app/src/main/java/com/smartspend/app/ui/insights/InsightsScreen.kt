@@ -1,6 +1,7 @@
 package com.smartspend.app.ui.insights
 
 import androidx.compose.foundation.clickable
+import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -69,8 +70,9 @@ fun InsightsScreen(onBack: () -> Unit, onBudget: () -> Unit, onCategory: (String
     var bundle by remember { mutableStateOf<InsightsBundle?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var reloadKey by remember { mutableIntStateOf(0) }
+    val liveVersion = rememberTransactionsVersion()
 
-    LaunchedEffect(reloadKey) {
+    LaunchedEffect(reloadKey, liveVersion) {
         error = null
         try {
             coroutineScope {

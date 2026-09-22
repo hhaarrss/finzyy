@@ -1,6 +1,7 @@
 package com.smartspend.app.ui.trends
 
 import androidx.activity.compose.BackHandler
+import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -131,10 +132,11 @@ fun TrendsScreen(onBack: () -> Unit, onBudget: () -> Unit) {
     var txs by remember { mutableStateOf<List<TransactionData>?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var reloadKey by remember { mutableIntStateOf(0) }
+    val liveVersion = rememberTransactionsVersion()
     var selected by remember(period, filters) { mutableStateOf<Int?>(null) }
 
     // One fetch per period; filters apply locally so Apply is instant.
-    LaunchedEffect(period, reloadKey) {
+    LaunchedEffect(period, reloadKey, liveVersion) {
         error = null
         txs = try {
             SpendData.transactions(period.start, LocalDate.now(), includeTransfers = true)

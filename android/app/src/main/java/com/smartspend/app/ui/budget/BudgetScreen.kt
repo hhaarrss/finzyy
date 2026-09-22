@@ -1,6 +1,7 @@
 package com.smartspend.app.ui.budget
 
 import androidx.compose.animation.AnimatedVisibility
+import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -86,6 +87,7 @@ fun BudgetScreen(onBack: () -> Unit) {
 
     var loaded by remember { mutableStateOf(false) }
     var reloadKey by remember { mutableIntStateOf(0) }
+    val liveVersion = rememberTransactionsVersion()
     var savedOverall by remember { mutableStateOf<Double?>(null) }
     var overallInput by remember { mutableStateOf("") }
     var monthSpent by remember { mutableStateOf<Double?>(null) }
@@ -97,7 +99,7 @@ fun BudgetScreen(onBack: () -> Unit) {
     var formAmount by remember { mutableStateOf("") }
     var saving by remember { mutableStateOf(false) }
 
-    LaunchedEffect(reloadKey) {
+    LaunchedEffect(reloadKey, liveVersion) {
         runCatching {
             coroutineScope {
                 val overall = async { runCatching { RetrofitClient.apiService.getOverallBudget() }.getOrNull() }

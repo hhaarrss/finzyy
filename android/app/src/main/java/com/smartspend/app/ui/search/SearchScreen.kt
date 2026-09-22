@@ -1,6 +1,7 @@
 package com.smartspend.app.ui.search
 
 import androidx.compose.foundation.background
+import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -81,12 +82,13 @@ fun SearchScreen(onBack: () -> Unit, startWithReview: Boolean) {
     var all by remember { mutableStateOf<List<TransactionData>?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var reloadKey by remember { mutableIntStateOf(0) }
+    val liveVersion = rememberTransactionsVersion()
     var openTx by remember { mutableStateOf<TxView?>(null) }
 
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(reloadKey) {
+    LaunchedEffect(reloadKey, liveVersion) {
         error = null
         all = try {
             val end = LocalDate.now()

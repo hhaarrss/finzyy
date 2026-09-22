@@ -158,14 +158,19 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    private var hasResumedOnce = false
+
     override fun onResume() {
         super.onResume()
         val token = sharedPrefs.getString("jwt_token", null)
         if (!token.isNullOrEmpty()) {
             // Push anything queued while offline / logged out and catch up on missed SMS.
             SmsSyncWorker.enqueueNow(this)
+            // Transactions may have been synced while the app was in the background: refresh open screens.
+            if (hasResumedOnce) TransactionEvents.notifyChanged()
             registerFcmTokenIfAvailable(token)
         }
+        hasResumedOnce = true
     }
 
     private fun registerFcmTokenIfAvailable(jwtToken: String) {

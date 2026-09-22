@@ -202,6 +202,8 @@ class SmsReceiver : BroadcastReceiver() {
                             done.add(itemId(obj))
                             if (body.success) {
                                 Log.d(TAG, "Synced SMS transaction ${body.transaction?.id}")
+                                // Let any open screen reload so the new payment shows up immediately.
+                                TransactionEvents.notifyChanged()
                                 sharedPrefs.edit().apply {
                                     putString("last_sms", "${payload.transaction_type} ${payload.amount} from ${payload.bank_sender_id}")
                                     putInt("total_synced", sharedPrefs.getInt("total_synced", 0) + 1)
