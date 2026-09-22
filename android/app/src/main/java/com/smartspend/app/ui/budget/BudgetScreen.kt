@@ -1,183 +1,311 @@
 package com.smartspend.app.ui.budget
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.smartspend.app.BudgetLimitData
 import com.smartspend.app.BudgetSetPayload
 import com.smartspend.app.BudgetUtilizationData
 import com.smartspend.app.OverallBudgetPayload
 import com.smartspend.app.RetrofitClient
+import com.smartspend.app.ui.components.Block
+import com.smartspend.app.ui.components.CategoryCache
+import com.smartspend.app.ui.components.CategoryChip
+import com.smartspend.app.ui.components.EmptyNote
+import com.smartspend.app.ui.components.Eyebrow
+import com.smartspend.app.ui.components.MerchantAvatar
+import com.smartspend.app.ui.components.PrimaryButton
+import com.smartspend.app.ui.components.RoundIconButton
+import com.smartspend.app.ui.components.ScreenGutter
+import com.smartspend.app.ui.components.ScreenHeader
+import com.smartspend.app.ui.components.SecondaryButton
+import com.smartspend.app.ui.components.SectionTitle
+import com.smartspend.app.ui.components.ThinProgress
+import com.smartspend.app.ui.components.budgetColor
+import com.smartspend.app.ui.components.budgetWord
+import com.smartspend.app.ui.components.money
+import com.smartspend.app.ui.components.monthName
+import com.smartspend.app.ui.components.pickable
+import com.smartspend.app.ui.theme.SmartSpendTheme
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
-import java.util.Locale
+import java.time.LocalDate
+import kotlin.math.roundToInt
 
+/**
+ * Two things only: one overall monthly limit, and optional per-category limits. The two are
+ * independent on the backend — category limits don't have to add up to the overall one.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BudgetScreen(onBack: () -> Unit) {
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    var budgets by remember { mutableStateOf<List<BudgetLimitData>>(emptyList()) }
+    val today = remember { LocalDate.now() }
+
+    var loaded by remember { mutableStateOf(false) }
+    var reloadKey by remember { mutableIntStateOf(0) }
+    var savedOverall by remember { mutableStateOf<Double?>(null) }
+    var overallInput by remember { mutableStateOf("") }
+    var monthSpent by remember { mutableStateOf<Double?>(null) }
     var utilization by remember { mutableStateOf<List<BudgetUtilizationData>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
-    var showAdd by remember { mutableStateOf(false) }
-    var overallBudget by remember { mutableStateOf("") }
-    var newCategory by remember { mutableStateOf("") }
-    var newLimit by remember { mutableStateOf("") }
+    var debitCategories by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    suspend fun refresh() {
-        loading = true
-        try {
-            val budgetResponse = RetrofitClient.apiService.getBudgetsNoAuth()
-            val utilizationResponse = RetrofitClient.apiService.getBudgetUtilization()
-            val overallResponse = RetrofitClient.apiService.getOverallBudget()
-            if (budgetResponse.isSuccessful) budgets = budgetResponse.body().orEmpty()
-            if (utilizationResponse.isSuccessful) utilization = utilizationResponse.body().orEmpty()
-            if (overallResponse.isSuccessful) {
-                overallBudget = overallResponse.body()?.monthly_limit?.let { plainNumber(it) }.orEmpty()
+    var formOpen by remember { mutableStateOf(false) }
+    var formCategory by remember { mutableStateOf<String?>(null) }
+    var formAmount by remember { mutableStateOf("") }
+    var saving by remember { mutableStateOf(false) }
+
+    LaunchedEffect(reloadKey) {
+        runCatching {
+            coroutineScope {
+                val overall = async { runCatching { RetrofitClient.apiService.getOverallBudget() }.getOrNull() }
+                val util = async { RetrofitClient.apiService.getBudgetUtilization() }
+                val home = async { runCatching { RetrofitClient.apiService.getHomeData("") }.getOrNull() }
+                val cats = async { runCatching { CategoryCache.get() }.getOrNull() }
+
+                val limit = overall.await()?.takeIf { it.isSuccessful }?.body()?.monthly_limit?.takeIf { it > 0 }
+                savedOverall = limit
+                if (!loaded) overallInput = limit?.let(::plainNumber).orEmpty()
+                util.await().takeIf { it.isSuccessful }?.body()?.let { utilization = it.sortedByDescending { u -> u.percent_used } }
+                monthSpent = home.await()?.body()?.overview?.total_spent
+                cats.await()?.let { debitCategories = it.debit.pickable() }
             }
-        } finally {
-            loading = false
+        }.onFailure { snackbar.showSnackbar(it.localizedMessage ?: "Couldn't load budgets") }
+        loaded = true
+    }
+
+    fun saveOverall() {
+        val value = overallInput.toDoubleOrNull()
+        if (value == null || value <= 0) {
+            scope.launch { snackbar.showSnackbar("Enter a monthly limit above ₹0") }
+            return
+        }
+        saving = true
+        scope.launch {
+            val ok = runCatching { RetrofitClient.apiService.setOverallBudget(OverallBudgetPayload(value)).isSuccessful }
+                .getOrDefault(false)
+            saving = false
+            if (ok) {
+                savedOverall = value
+                snackbar.showSnackbar("Monthly budget set to ${money(value)}")
+            } else snackbar.showSnackbar("Couldn't save the budget")
         }
     }
 
-    LaunchedEffect(Unit) { refresh() }
-
-    fun addBudget() {
-        val limit = newLimit.toDoubleOrNull()
-        if (newCategory.isBlank() || limit == null || limit <= 0.0) {
-            scope.launch { snackbarHostState.showSnackbar("Category and positive limit are required.") }
-            return
-        }
-        scope.launch {
-            val response = RetrofitClient.apiService.setBudgetNoAuth(
-                BudgetSetPayload(category = newCategory.trim(), monthly_limit = limit)
-            )
-            if (response.isSuccessful) {
-                newCategory = ""
-                newLimit = ""
-                showAdd = false
-                refresh()
-                snackbarHostState.showSnackbar("Budget saved.")
-            } else {
-                snackbarHostState.showSnackbar("Budget save failed (${response.code()}).")
-            }
-        }
+    fun openForm(category: String?, limit: Double?) {
+        formCategory = category
+        formAmount = limit?.let(::plainNumber).orEmpty()
+        formOpen = true
     }
 
-    fun saveOverallBudget() {
-        val limit = overallBudget.toDoubleOrNull()
-        if (limit == null || limit <= 0.0) {
-            scope.launch { snackbarHostState.showSnackbar("Enter a positive overall budget.") }
-            return
-        }
+    fun saveCategory() {
+        val category = formCategory
+        val value = formAmount.toDoubleOrNull()
+        if (category == null) { scope.launch { snackbar.showSnackbar("Pick a category") }; return }
+        if (value == null || value <= 0) { scope.launch { snackbar.showSnackbar("Enter a limit above ₹0") }; return }
+        saving = true
         scope.launch {
-            val response = RetrofitClient.apiService.setOverallBudget(OverallBudgetPayload(monthly_limit = limit))
-            if (response.isSuccessful) {
-                overallBudget = response.body()?.monthly_limit?.let { plainNumber(it) } ?: overallBudget
-                snackbarHostState.showSnackbar("Overall budget saved.")
-            } else {
-                snackbarHostState.showSnackbar("Overall budget save failed (${response.code()}).")
-            }
+            val ok = runCatching {
+                RetrofitClient.apiService.setBudgetNoAuth(BudgetSetPayload(category = category, monthly_limit = value)).isSuccessful
+            }.getOrDefault(false)
+            saving = false
+            if (ok) {
+                formOpen = false
+                reloadKey++
+                snackbar.showSnackbar("$category limit set to ${money(value)}")
+            } else snackbar.showSnackbar("Couldn't save the $category limit")
         }
     }
 
     Scaffold(
-        containerColor = Color(0xFFF7F8FB),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showAdd = !showAdd }) {
-                Icon(Icons.Default.Add, contentDescription = "Add category budget")
-            }
-        }
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbar) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Header("Budget", onBack)
-            Card(shape = RoundedCornerShape(8.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Overall budget", fontWeight = FontWeight.Bold)
-                    OutlinedTextField(
-                        value = overallBudget,
-                        onValueChange = { overallBudget = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Monthly limit") },
-                        supportingText = { Text("Independent from category budgets") },
-                        singleLine = true
-                    )
-                    Button(onClick = { saveOverallBudget() }) {
-                        Text("Save overall budget")
+            ScreenHeader(
+                title = "Budget plan",
+                subtitle = "Limits for ${monthName(today.monthValue, today.year)}",
+                onBack = onBack
+            )
+
+            // ── Overall ────────────────────────────────────────────────────
+            SectionTitle("Overall budget", modifier = Modifier.padding(horizontal = ScreenGutter))
+            Block(modifier = Modifier.padding(horizontal = ScreenGutter)) {
+                Eyebrow("Monthly limit")
+                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("₹", style = MaterialTheme.typography.displaySmall, color = SmartSpendTheme.colors.inkMuted)
+                    Spacer(Modifier.width(6.dp))
+                    Column(Modifier.weight(1f)) {
+                        if (overallInput.isEmpty()) {
+                            Text("0", style = MaterialTheme.typography.displaySmall, color = SmartSpendTheme.colors.hairline)
+                        }
+                        BasicTextField(
+                            value = overallInput,
+                            onValueChange = { v -> overallInput = v.filter { it.isDigit() }.take(9) },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.displaySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
+                Text(
+                    "One cap for everything you spend in a month.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SmartSpendTheme.colors.inkMuted
+                )
+
+                val limit = savedOverall
+                val spent = monthSpent
+                if (limit != null && spent != null) {
+                    Spacer(Modifier.height(16.dp))
+                    val pct = spent / limit * 100
+                    ThinProgress(fraction = (spent / limit).toFloat(), color = budgetColor(pct))
+                    Spacer(Modifier.height(8.dp))
+                    Row {
+                        Text(
+                            "${money(spent)} spent so far",
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "${pct.roundToInt()}% · ${budgetWord(pct)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = budgetColor(pct)
+                        )
+                    }
+                }
+
+                val dirty = overallInput.toDoubleOrNull() != savedOverall && overallInput.isNotEmpty()
+                if (dirty || savedOverall == null) {
+                    Spacer(Modifier.height(16.dp))
+                    PrimaryButton(
+                        label = if (savedOverall == null) "Set monthly budget" else "Update to ${overallInput.toDoubleOrNull()?.let(::money) ?: ""}",
+                        onClick = { saveOverall() },
+                        enabled = !saving && overallInput.isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
-            Card(shape = RoundedCornerShape(8.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Per-category budgets", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                        IconButton(onClick = { showAdd = !showAdd }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add category budget")
+
+            // ── Per category ───────────────────────────────────────────────
+            SectionTitle(
+                "Category budgets",
+                modifier = Modifier.padding(start = ScreenGutter, end = ScreenGutter - 4.dp, top = 12.dp)
+            ) {
+                RoundIconButton(
+                    icon = if (formOpen) Icons.Default.Close else Icons.Default.Add,
+                    contentDescription = if (formOpen) "Close" else "Add category budget",
+                    onClick = { if (formOpen) formOpen = false else openForm(null, null) }
+                )
+            }
+
+            AnimatedVisibility(visible = formOpen) {
+                Block(modifier = Modifier.padding(horizontal = ScreenGutter)) {
+                    Eyebrow("Category")
+                    Spacer(Modifier.height(10.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        debitCategories.forEach { name ->
+                            CategoryChip(
+                                category = name,
+                                selected = name == formCategory,
+                                onClick = {
+                                    formCategory = name
+                                    utilization.firstOrNull { it.category.equals(name, true) }?.let {
+                                        formAmount = plainNumber(it.limit)
+                                    }
+                                }
+                            )
                         }
                     }
-                    if (showAdd) {
-                        OutlinedTextField(
-                            value = newCategory,
-                            onValueChange = { newCategory = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Category") },
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = newLimit,
-                            onValueChange = { newLimit = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Limit") },
-                            singleLine = true
-                        )
-                        TextButton(onClick = { addBudget() }) { Text("Save category budget") }
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = formAmount,
+                        onValueChange = { v -> formAmount = v.filter { it.isDigit() }.take(9) },
+                        label = { Text("Monthly limit") },
+                        prefix = { Text("₹") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.small
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SecondaryButton("Cancel", onClick = { formOpen = false }, modifier = Modifier.weight(1f))
+                        PrimaryButton("Save", onClick = { saveCategory() }, enabled = !saving, modifier = Modifier.weight(1f))
                     }
-                    if (loading) Text("Loading budgets...", color = Color(0xFF667085))
-                    utilization.forEach { item -> BudgetRow(item) }
+                }
+            }
+
+            Block(
+                modifier = Modifier.padding(horizontal = ScreenGutter),
+                padding = PaddingValues(vertical = 4.dp)
+            ) {
+                if (loaded && utilization.isEmpty()) {
+                    EmptyNote(
+                        title = "No category limits yet",
+                        body = "Tap + to cap a category like Food or Shopping."
+                    )
+                }
+                utilization.forEachIndexed { i, item ->
+                    if (i > 0) HorizontalDivider(Modifier.padding(start = 70.dp), color = SmartSpendTheme.colors.hairline)
+                    CategoryBudgetRow(item, onClick = { openForm(item.category, item.limit) })
                 }
             }
         }
@@ -185,54 +313,40 @@ fun BudgetScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun BudgetRow(item: BudgetUtilizationData) {
-    val progress = (item.percent_used / 100.0).coerceIn(0.0, 1.0).toFloat()
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(item.category, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+private fun CategoryBudgetRow(item: BudgetUtilizationData, onClick: () -> Unit) {
+    val pct = item.percent_used
+    val color = budgetColor(pct)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        MerchantAvatar(category = item.category, size = 40.dp)
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    item.category,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text("${pct.roundToInt()}% · ${budgetWord(pct)}", style = MaterialTheme.typography.labelLarge, color = color)
+            }
+            ThinProgress(fraction = (pct / 100).toFloat(), color = color, height = 6.dp)
             Text(
-                "${item.percent_used.toInt()}% used",
-                color = budgetTextColor(item.percent_used)
+                if (item.spent > item.limit) "${money(item.spent - item.limit)} over ${money(item.limit)}"
+                else "${money(item.spent)} of ${money(item.limit)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = SmartSpendTheme.colors.inkMuted
             )
         }
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            color = budgetBarColor(item.percent_used),
-            trackColor = Color(0xFFE4E7EC)
-        )
-        Text("${money(item.spent)} of ${money(item.limit)}", color = Color(0xFF667085))
     }
 }
-
-@Composable
-private fun Header(title: String, onBack: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Column {
-            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text("Limits and utilization", color = Color(0xFF667085))
-        }
-        TextButton(onClick = onBack) { Text("Back") }
-    }
-}
-
-private fun money(value: Double): String =
-    NumberFormat.getCurrencyInstance(Locale.Builder().setLanguage("en").setRegion("IN").build()).format(value)
 
 private fun plainNumber(value: Double): String =
     if (value % 1.0 == 0.0) value.toLong().toString() else value.toString()
-
-private fun budgetBarColor(percentUsed: Double): Color = when {
-    percentUsed > 100.0 -> Color(0xFFE5484D)
-    percentUsed >= 80.0 -> Color(0xFFF59E0B)
-    else -> Color(0xFF1F8A70)
-}
-
-private fun budgetTextColor(percentUsed: Double): Color = when {
-    percentUsed > 100.0 -> Color(0xFFB42318)
-    percentUsed >= 80.0 -> Color(0xFFB54708)
-    else -> Color(0xFF475467)
-}

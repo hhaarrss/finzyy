@@ -1,6 +1,6 @@
 """
 Canonical list of categories for SmartSpend.
-Single source of truth for backend, React web dashboard, and Android app.
+Single source of truth for the backend and the Android app.
 """
 
 from typing import List, Optional

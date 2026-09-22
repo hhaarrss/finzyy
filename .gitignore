@@ -15,9 +15,8 @@ env/
 # Docker volumes
 postgres_data/
 
-# Node / React
+# Node
 node_modules/
-frontend/build/
 
 # Android
 android/.gradle/

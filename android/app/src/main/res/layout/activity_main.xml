@@ -1,1830 +1,337 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Sign in / create account. Visual design only: every view the login code in MainActivity
+    touches (loginSection, tvLoginTitle, tvLoginSubtitle, llFullName, etFullName, etEmail,
+    etPassword, btnLogin, btnToggleAuthMode, btnGoogleSignIn) keeps its id and view type, and
+    texts the code rewrites when switching sign-in / sign-up start out identical to what it sets.
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_background">
+    android:background="@color/login_background">
 
-    <!-- ==================== LOGIN SECTION ==================== -->
     <ScrollView
         android:id="@+id/loginSection"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
         android:fillViewport="true"
+        android:overScrollMode="never"
         android:visibility="gone">
 
         <LinearLayout
+            android:id="@+id/loginContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="32dp">
+            android:orientation="vertical">
 
-            <!-- Brand Logo -->
-            <LinearLayout
-                android:layout_width="wrap_content"
+            <!-- ============ Hero: the splash mark on the onboarding violet ============ -->
+            <FrameLayout
+                android:id="@+id/loginHero"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:background="@drawable/login_hero_bg"
+                android:clipChildren="true"
+                android:paddingTop="36dp"
+                android:paddingBottom="76dp">
 
+                <!-- Gold guilloché engraving, the same line work as the app's hero note. -->
                 <ImageView
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:layout_marginEnd="12dp"
-                    android:background="@drawable/bg_gradient_button"
-                    android:contentDescription="SmartSpend Logo"
-                    android:padding="10dp"
-                    android:src="@drawable/ic_smartspend_logo" />
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:importantForAccessibility="no"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/guilloche_rosette" />
+
+                <!-- Oversized ghost ₹ marks bleeding off opposite corners, as on the splash. -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|start"
+                    android:layout_marginStart="-30dp"
+                    android:layout_marginTop="-70dp"
+                    android:alpha="0.07"
+                    android:importantForAccessibility="no"
+                    android:includeFontPadding="false"
+                    android:text="₹"
+                    android:textColor="@android:color/white"
+                    android:textSize="210sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.02"
-                    android:text="@string/app_name"
-                    android:textColor="@color/text_primary"
-                    android:textSize="28sp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginEnd="-36dp"
+                    android:layout_marginBottom="-96dp"
+                    android:alpha="0.045"
+                    android:importantForAccessibility="no"
+                    android:includeFontPadding="false"
+                    android:text="₹"
+                    android:textColor="@android:color/white"
+                    android:textSize="170sp"
                     android:textStyle="bold" />
-            </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="40dp"
-                android:text="SMS Auto-Sync &amp; Analytics Companion"
-                android:textColor="@color/text_tertiary"
-                android:textSize="14sp" />
+                <ImageButton
+                    android:id="@+id/loginBack"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="top|start"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="-24dp"
+                    android:background="@drawable/login_back_bg"
+                    android:contentDescription="Back"
+                    android:src="@drawable/ic_login_back" />
 
-            <!-- Login Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
+                        android:background="@drawable/login_mark_bg"
+                        android:elevation="10dp"
+                        android:gravity="center"
+                        android:importantForAccessibility="no"
+                        android:text="₹"
+                        android:textColor="@color/login_mark_ink"
+                        android:textSize="32sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:letterSpacing="-0.02"
+                        android:text="@string/app_name"
+                        android:textColor="@android:color/white"
+                        android:textSize="25sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:alpha="0.72"
+                        android:text="Your money, tracked automatically"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- ============ Form card, lifted up over the hero ============ -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_card_dark"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="-48dp"
+                android:layout_marginEnd="20dp"
+                android:background="@drawable/login_card_bg"
+                android:elevation="6dp"
                 android:orientation="vertical"
-                android:padding="28dp">
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="3dp"
-                    android:layout_marginStart="-28dp"
-                    android:layout_marginTop="-28dp"
-                    android:layout_marginEnd="-28dp"
-                    android:layout_marginBottom="24dp"
-                    android:background="@drawable/bg_gradient_button" />
+                android:paddingStart="24dp"
+                android:paddingTop="28dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="24dp">
 
                 <TextView
                     android:id="@+id/tvLoginTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:letterSpacing="-0.02"
                     android:text="@string/login_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="22sp"
+                    android:textColor="@color/login_ink"
+                    android:textSize="24sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvLoginSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginBottom="28dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="24dp"
+                    android:lineSpacingExtra="3sp"
                     android:text="Sign in to pair your Android device with your Expense Dashboard"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textColor="@color/login_ink_soft"
+                    android:textSize="14sp" />
 
-                <!-- Error message -->
                 <TextView
                     android:id="@+id/tvLoginError"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
-                    android:background="@color/rose_surface"
-                    android:padding="12dp"
-                    android:textColor="@color/rose_error"
-                    android:textSize="12sp"
+                    android:background="@drawable/login_error_bg"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp"
+                    android:textColor="@color/login_error"
+                    android:textSize="13sp"
                     android:visibility="gone" />
 
-                <!-- Full Name Input (Hidden by default for Register) -->
+                <!-- Full name: shown only in create-account mode (the code toggles llFullName). -->
                 <LinearLayout
                     android:id="@+id/llFullName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:visibility="gone">
-                    <TextView
-                        android:layout_width="wrap_content"
+
+                    <!-- Sign-up only: Google first, then the form. Living inside llFullName means the
+                         login code's own sign-in/sign-up switch shows and hides it. -->
+                    <LinearLayout
+                        android:id="@+id/btnGoogleSignIn"
+                        android:layout_width="match_parent"
+                        android:layout_height="54dp"
+                        android:background="@drawable/login_secondary_button_bg"
+                        android:clickable="true"
+                        android:contentDescription="Continue with Google"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@drawable/login_google_badge_bg"
+                            android:gravity="center"
+                            android:importantForAccessibility="no"
+                            android:text="G"
+                            android:textColor="#4285F4"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:importantForAccessibility="no"
+                            android:text="Continue with Google"
+                            android:textColor="@color/login_ink"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- OR -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:letterSpacing="0.1"
-                        android:text="FULL NAME"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
+                        android:layout_marginTop="18dp"
+                        android:layout_marginBottom="18dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1"
+                            android:background="@color/login_hairline" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="12dp"
+                            android:letterSpacing="0.09"
+                            android:text="OR"
+                            android:textColor="@color/login_ink_soft"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1"
+                            android:background="@color/login_hairline" />
+                    </LinearLayout>
+
+                    <TextView
+                        style="@style/LoginFieldLabel"
+                        android:text="FULL NAME" />
 
                     <EditText
                         android:id="@+id/etFullName"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="20dp"
+                        style="@style/LoginField"
                         android:autofillHints="personName"
-                        android:background="@drawable/bg_input_dark"
-                        android:hint="John Doe"
-                        android:importantForAutofill="yes"
-                        android:inputType="textPersonName"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_tertiary"
-                        android:textSize="14sp" />
+                        android:hint="Your name"
+                        android:inputType="textPersonName|textCapWords" />
                 </LinearLayout>
 
-                <!-- Email Input -->
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:letterSpacing="0.1"
-                    android:text="EMAIL ADDRESS"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:id="@+id/tvEmailLabel"
+                    style="@style/LoginFieldLabel"
+                    android:text="EMAIL OR PHONE" />
 
                 <EditText
                     android:id="@+id/etEmail"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginBottom="20dp"
+                    style="@style/LoginField"
                     android:autofillHints="emailAddress"
-                    android:background="@drawable/bg_input_dark"
-                    android:hint="@string/hint_email"
-                    android:importantForAutofill="yes"
-                    android:inputType="textEmailAddress"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_tertiary"
-                    android:textSize="14sp" />
+                    android:hint="Email or phone number"
+                    android:inputType="textEmailAddress" />
 
-                <!-- Password Input -->
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:letterSpacing="0.1"
-                    android:text="PASSWORD"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    style="@style/LoginFieldLabel"
+                    android:text="PASSWORD" />
 
                 <EditText
                     android:id="@+id/etPassword"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginBottom="28dp"
+                    style="@style/LoginField"
+                    android:layout_marginBottom="24dp"
                     android:autofillHints="password"
-                    android:background="@drawable/bg_input_dark"
-                    android:hint="@string/hint_password"
-                    android:importantForAutofill="yes"
-                    android:inputType="textPassword"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_tertiary"
-                    android:textSize="14sp" />
+                    android:hint="Your password"
+                    android:inputType="textPassword" />
 
-                <!-- Login Button -->
                 <Button
                     android:id="@+id/btnLogin"
                     android:layout_width="match_parent"
                     android:layout_height="54dp"
-                    android:background="@drawable/bg_gradient_button"
+                    android:background="@drawable/login_primary_button_bg"
                     android:stateListAnimator="@null"
                     android:text="@string/btn_login"
                     android:textAllCaps="false"
-                    android:textColor="#1A1A2E"
+                    android:textColor="@color/login_on_brand"
                     android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:backgroundTint="@null" />
 
-                <!-- Toggle Auth Mode Button -->
                 <TextView
                     android:id="@+id/btnToggleAuthMode"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="16dp"
-                    android:text="Don't have an account? Sign up"
-                    android:textColor="@color/indigo_light"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:clickable="true"
-                    android:focusable="true"/>
-
-                <!-- OR Divider -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginBottom="20dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="#2A2A3E" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_marginEnd="12dp"
-                        android:text="OR"
-                        android:textColor="#64748B"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="#2A2A3E" />
-                </LinearLayout>
-
-                <!-- Continue with Google Button -->
-                <LinearLayout
-                    android:id="@+id/btnGoogleSignIn"
-                    android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:background="@drawable/bg_google_button"
+                    android:layout_marginTop="12dp"
+                    android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
+                    android:minHeight="44dp"
                     android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:layout_marginEnd="12dp"
-                        android:gravity="center"
-                        android:text="G"
-                        android:textColor="#4285F4"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:background="@android:color/white"
-                        android:padding="2dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Continue with Google"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="Don't have an account? Sign up"
+                    android:textColor="@color/login_brand"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
             </LinearLayout>
+
+            <!-- The same privacy promise the Account page makes. -->
+            <TextView
+                android:id="@+id/loginFooter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:lineSpacingExtra="2sp"
+                android:paddingStart="36dp"
+                android:paddingTop="20dp"
+                android:paddingEnd="36dp"
+                android:paddingBottom="28dp"
+                android:text="Bank SMS are read on your phone. Only the amount, merchant and date are synced."
+                android:textColor="@color/login_ink_soft"
+                android:textSize="12sp" />
         </LinearLayout>
     </ScrollView>
-
-    <!-- ==================== MAIN APPLICATION SECTION ==================== -->
-    <LinearLayout
-        android:id="@+id/dashboardSection"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:visibility="visible">
-
-        <!-- Top Header Bar -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/dark_surface"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="20dp"
-            android:paddingTop="14dp"
-            android:paddingEnd="20dp"
-            android:paddingBottom="10dp">
-
-            <ImageView
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_marginEnd="12dp"
-                android:background="@drawable/bg_gradient_button"
-                android:contentDescription="SmartSpend Logo"
-                android:padding="6dp"
-                android:src="@drawable/ic_smartspend_logo" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="SmartSpend"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvUserEmail"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/indigo_light"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvStatusBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🟢 Sync Active"
-                android:textColor="@color/emerald_success"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <!-- Profile Action Avatar Button -->
-            <LinearLayout
-                android:id="@+id/btnProfileHeader"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:background="@drawable/bg_input_dark"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="5dp">
-
-                <TextView
-                    android:id="@+id/tvProfileAvatarInitial"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="👤"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="Profile"
-                    android:textColor="@color/text_primary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- SCREEN CONTAINER FRAME -->
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-
-            <!-- ================= SCREEN 1: HOME & TRANSACTIONS ================= -->
-            <ScrollView
-                android:id="@+id/screenHome"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true"
-                android:visibility="visible">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <!-- Needs Review Action Banner Card -->
-                    <LinearLayout
-                        android:id="@+id/cardNeedsReviewBanner"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="14dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="14dp"
-                        android:visibility="gone">
-
-                        <TextView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:layout_marginEnd="12dp"
-                            android:gravity="center"
-                            android:text="🧠"
-                            android:textSize="18sp" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/tvNeedsReviewTitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Needs Review: 0 Transactions"
-                                android:textColor="#F59E0B"
-                                android:textSize="13sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Tap to classify — takes under 1 minute 🧠"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="11sp" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="#1AF59E0B"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="6dp"
-                            android:text="Review Now →"
-                            android:textColor="#F59E0B"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <!-- Row 1: Spent This Month & Income (Credits) -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        android:orientation="horizontal">
-
-                        <!-- Card 1: Spent This Month -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_card_dark"
-                            android:orientation="vertical"
-                            android:padding="14dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Spent This Month"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="11sp" />
-
-                                <TextView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:background="@color/rose_surface"
-                                    android:gravity="center"
-                                    android:text="📉"
-                                    android:textSize="12sp" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:id="@+id/tvSpentThisMonth"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
-                                android:text="₹0.00"
-                                android:textColor="@color/text_primary"
-                                android:textSize="18sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <!-- Card 2: Income (Credits) -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_card_dark"
-                            android:orientation="vertical"
-                            android:padding="14dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Income (Credits)"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="11sp" />
-
-                                <TextView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:background="#1010B981"
-                                    android:gravity="center"
-                                    android:text="📈"
-                                    android:textSize="12sp" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:id="@+id/tvIncomeCredits"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
-                                android:text="₹0.00"
-                                android:textColor="@color/text_primary"
-                                android:textSize="18sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- Row 2: Net Cash Flow & Top Category -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:orientation="horizontal">
-
-                        <!-- Card 3: Net Cash Flow -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_card_dark"
-                            android:orientation="vertical"
-                            android:padding="14dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Net Cash Flow"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="11sp" />
-
-                                <TextView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:background="#1010B981"
-                                    android:gravity="center"
-                                    android:text="↑"
-                                    android:textColor="@color/emerald_success"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:id="@+id/tvNetCashFlow"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
-                                android:text="₹0.00"
-                                android:textColor="@color/emerald_success"
-                                android:textSize="18sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <!-- Card 4: Top Category -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_card_dark"
-                            android:orientation="vertical"
-                            android:padding="14dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Top Category"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="11sp" />
-
-                                <TextView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:background="#108B5CF6"
-                                    android:gravity="center"
-                                    android:text="🛍️"
-                                    android:textSize="12sp" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:id="@+id/tvTopCategoryName"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="Shopping"
-                                android:textColor="@color/text_primary"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvTopCategoryPercent"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="0.0% of spend"
-                                android:textColor="@color/text_tertiary"
-                                android:textSize="11sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- Red Budget Warning Alert Card -->
-                    <LinearLayout
-                        android:id="@+id/cardBudgetExceededBanner"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:background="@color/rose_surface"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="14dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="10dp"
-                            android:text="⚠️"
-                            android:textSize="18sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Review"
-                            android:textColor="@color/rose_error"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <!-- Daily Spending Bar Chart Card -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="18dp">
-
-                        <TextView
-                            android:id="@+id/tvDailySpendingHeader"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="12dp"
-                            android:text="Daily Spending — Aug 2026"
-                            android:textColor="@color/text_primary"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="10dp"
-                            android:gravity="center"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/tvSelectedMonth"
-                                android:layout_width="match_parent"
-                                android:layout_height="44dp"
-                                android:background="@drawable/bg_input_dark"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:gravity="center"
-                                android:text="📅 May 2026"
-                                android:textColor="@color/text_primary"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <ProgressBar
-                            android:id="@+id/chartLoadingSpinner"
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
-                            android:layout_gravity="center"
-                            android:layout_marginBottom="8dp"
-                            android:indeterminate="true"
-                            android:visibility="gone" />
-
-                        <com.smartspend.app.DailySpendChartView
-                            android:id="@+id/cvDailySpendChart"
-                            android:layout_width="match_parent"
-                            android:layout_height="180dp"
-                            android:layout_marginBottom="12dp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="■ Spending spike (&gt;2× daily avg)"
-                            android:textColor="@color/rose_error"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <!-- Spending by Category Card -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="18dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="14dp"
-                            android:text="Spending by Category"
-                            android:textColor="@color/text_primary"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <!-- Donut Chart -->
-                        <com.smartspend.app.CategoryDonutChartView
-                            android:id="@+id/cvCategoryDonut"
-                            android:layout_width="match_parent"
-                            android:layout_height="180dp"
-                            android:layout_marginBottom="12dp" />
-
-                        <!-- Category Legend -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <LinearLayout
-                                android:id="@+id/llCategoryLegendContainer"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- Transactions Section Card -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="18dp">
-
-                        <!-- Header Row + Export CSV Button -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="12dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Transactions"
-                                android:textColor="@color/text_primary"
-                                android:textSize="17sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/btnRefreshFeed"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="12dp"
-                                android:gravity="center_vertical"
-                                android:text="🔄 Refresh"
-                                android:textColor="@color/indigo_light"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/btnExportCsv"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:text="📥 Export CSV"
-                                android:textColor="@color/emerald_success"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <!-- Search Bar -->
-                        <EditText
-                            android:id="@+id/etSearchTransactions"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:layout_marginBottom="12dp"
-                            android:background="@drawable/bg_input_dark"
-                            android:drawableStart="@android:drawable/ic_menu_search"
-                            android:drawablePadding="10dp"
-                            android:hint="Search merchant, bank, category..."
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:textColor="@color/text_primary"
-                            android:textColorHint="@color/text_tertiary"
-                            android:textSize="13sp" />
-
-                        <!-- Filter Pills Row -->
-                        <HorizontalScrollView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="16dp"
-                            android:scrollbars="none">
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-
-                                <Button
-                                    android:id="@+id/btnFilterAll"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="36dp"
-                                    android:layout_marginEnd="8dp"
-                                    android:background="@drawable/bg_gradient_button"
-                                    android:minWidth="0dp"
-                                    android:paddingStart="16dp"
-                                    android:paddingEnd="16dp"
-                                    android:stateListAnimator="@null"
-                                    android:text="All"
-                                    android:textAllCaps="false"
-                                    android:textColor="@color/white"
-                                    android:textSize="12sp"
-                                    android:textStyle="bold" />
-
-                                <Button
-                                    android:id="@+id/btnFilterNeedsReview"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="36dp"
-                                    android:layout_marginEnd="8dp"
-                                    android:background="@drawable/bg_input_dark"
-                                    android:minWidth="0dp"
-                                    android:paddingStart="14dp"
-                                    android:paddingEnd="14dp"
-                                    android:stateListAnimator="@null"
-                                    android:text="Needs Review"
-                                    android:textAllCaps="false"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="12sp" />
-
-                                <Button
-                                    android:id="@+id/btnFilterDebits"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="36dp"
-                                    android:layout_marginEnd="8dp"
-                                    android:background="@drawable/bg_input_dark"
-                                    android:minWidth="0dp"
-                                    android:paddingStart="14dp"
-                                    android:paddingEnd="14dp"
-                                    android:stateListAnimator="@null"
-                                    android:text="Debits"
-                                    android:textAllCaps="false"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="12sp" />
-
-                                <Button
-                                    android:id="@+id/btnFilterCredits"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="36dp"
-                                    android:background="@drawable/bg_input_dark"
-                                    android:minWidth="0dp"
-                                    android:paddingStart="14dp"
-                                    android:paddingEnd="14dp"
-                                    android:stateListAnimator="@null"
-                                    android:text="Credits"
-                                    android:textAllCaps="false"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="12sp" />
-                            </LinearLayout>
-                        </HorizontalScrollView>
-
-                        <!-- Transactions RecyclerView -->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/rvTransactions"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:nestedScrollingEnabled="false" />
-
-                        <TextView
-                            android:id="@+id/btnShowMore"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:layout_marginTop="8dp"
-                            android:background="@drawable/bg_input_dark"
-                            android:gravity="center"
-                            android:text="Show More"
-                            android:textColor="@color/indigo_light"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            android:visibility="gone" />
-                    </LinearLayout>
-                </LinearLayout>
-            </ScrollView>
-
-            <!-- ================= SCREEN 2: ADD TRANSACTION & SMS INGEST ================= -->
-            <ScrollView
-                android:id="@+id/screenAddTransaction"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <!-- Header Title -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:text="Add Transaction"
-                        android:textColor="@color/text_primary"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-
-                    <!-- Manual Entry Card -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="14dp"
-                            android:text="📝 Manual Entry"
-                            android:textColor="@color/emerald_success"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-
-                        <!-- Transaction Type Toggle -->
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="6dp"
-                            android:text="Transaction Type"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11sp" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:layout_marginBottom="16dp"
-                            android:orientation="horizontal">
-
-                            <Button
-                                android:id="@+id/btnToggleDebit"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_marginEnd="6dp"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_gradient_button"
-                                android:stateListAnimator="@null"
-                                android:text="↑ Debit (Expense)"
-                                android:textAllCaps="false"
-                                android:textColor="@color/white"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                            <Button
-                                android:id="@+id/btnToggleCredit"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_marginStart="6dp"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_input_dark"
-                                android:stateListAnimator="@null"
-                                android:text="↓ Credit (Income)"
-                                android:textAllCaps="false"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-                        </LinearLayout>
-
-                        <!-- Amount Input -->
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="6dp"
-                            android:text="Amount (₹)"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11sp" />
-
-                        <EditText
-                            android:id="@+id/etManualAmount"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginBottom="14dp"
-                            android:background="@drawable/bg_input_dark"
-                            android:hint="0.00"
-                            android:inputType="numberDecimal"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:textColor="@color/text_primary"
-                            android:textColorHint="@color/text_tertiary"
-                            android:textSize="14sp" />
-
-                        <!-- Merchant Input -->
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="6dp"
-                            android:text="Merchant / Payee"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11sp" />
-
-                        <EditText
-                            android:id="@+id/etManualMerchant"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginBottom="14dp"
-                            android:background="@drawable/bg_input_dark"
-                            android:hint="e.g. Swiggy, Amazon, Jio"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:textColor="@color/text_primary"
-                            android:textColorHint="@color/text_tertiary"
-                            android:textSize="14sp" />
-
-                        <!-- Category Dropdown Spinner -->
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="6dp"
-                            android:text="Category"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11sp" />
-
-                        <Spinner
-                            android:id="@+id/spManualCategory"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginBottom="14dp"
-                            android:background="@drawable/bg_input_dark"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="10dp" />
-
-                        <!-- Save Transaction Button -->
-                        <Button
-                            android:id="@+id/btnSaveManualTransaction"
-                            android:layout_width="match_parent"
-                            android:layout_height="50dp"
-                            android:layout_marginTop="8dp"
-                            android:background="@drawable/bg_gradient_button"
-                            android:stateListAnimator="@null"
-                            android:text="Save Transaction"
-                            android:textAllCaps="false"
-                            android:textColor="@color/white"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <!-- AI SMS Auto-Ingest Card -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🪄 AI SMS Auto-Ingest"
-                            android:textColor="@color/indigo_light"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:layout_marginBottom="12dp"
-                            android:text="Paste a bank SMS to auto-fill and record the transaction"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11sp" />
-
-                        <EditText
-                            android:id="@+id/etRawSmsInput"
-                            android:layout_width="match_parent"
-                            android:layout_height="90dp"
-                            android:layout_marginBottom="14dp"
-                            android:background="@drawable/bg_input_dark"
-                            android:gravity="top|start"
-                            android:hint="e.g. 'Rs.349.00 debited from A/c XX4521 to Swiggy on 17-08-2026 via UPI'"
-                            android:inputType="textMultiLine"
-                            android:padding="12dp"
-                            android:textColor="@color/text_primary"
-                            android:textColorHint="@color/text_tertiary"
-                            android:textSize="12sp" />
-
-                        <Button
-                            android:id="@+id/btnParseAndIngestSms"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginBottom="12dp"
-                            android:background="@drawable/bg_gradient_button"
-                            android:stateListAnimator="@null"
-                            android:text="Parse &amp; Sync SMS"
-                            android:textAllCaps="false"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-
-                        <Button
-                            android:id="@+id/btnSyncHistoricalSms"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:background="@drawable/bg_input_dark"
-                            android:stateListAnimator="@null"
-                            android:text="🔄 Sync All Existing SMS"
-                            android:textAllCaps="false"
-                            android:textColor="@color/indigo_light"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </LinearLayout>
-            </ScrollView>
-
-            <!-- ================= SCREEN 3: BUDGET LIMITS ================= -->
-            <ScrollView
-                android:id="@+id/screenBudget"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <!-- Header Title -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="14dp"
-                        android:text="Budget Limits"
-                        android:textColor="@color/text_primary"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-
-                    <!-- Budget Warning Header Card -->
-                    <LinearLayout
-                        android:id="@+id/cardBudgetWarningHeader"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:background="@color/rose_surface"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:id="@+id/tvBudgetHeaderAlertText"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="⚠️ 2 categories over budget\n3 categories nearing limit (&gt;80%)"
-                            android:textColor="@color/rose_error"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <!-- Budget Limits RecyclerView -->
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvBudgetLimits"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false" />
-                </LinearLayout>
-            </ScrollView>
-
-            <!-- SCREEN 4: INSIGHTS DASHBOARD -->
-            <ScrollView
-                android:id="@+id/screenInsights"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <!-- Header -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="💡 AI Insights Dashboard"
-                                android:textColor="@color/white"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="Smart anomaly detection &amp; spending intelligence"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-                        </LinearLayout>
-
-                        <Button
-                            android:id="@+id/btnRefreshInsights"
-                            style="@style/Widget.AppCompat.Button.Borderless"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:background="@drawable/bg_card_dark"
-                            android:paddingHorizontal="12dp"
-                            android:text="🔄 Refresh"
-                            android:textColor="@color/emerald_success"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-
-                    <!-- Section 1: Month-over-Month Spending Trends -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="📈 Month-over-Month Spending Trends"
-                        android:textColor="@color/white"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:id="@+id/containerSpendingChanges"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="18dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="16dp" />
-
-                    <!-- Section 2: Spike & Anomaly Detection -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="🚨 Spike &amp; Anomaly Notifications"
-                        android:textColor="@color/white"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:id="@+id/containerAnomalies"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="18dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="16dp" />
-
-                    <!-- Section 3: Critical Budget Warnings -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="🛡️ Critical Budget Warnings"
-                        android:textColor="@color/white"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:id="@+id/containerBudgetAlerts"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="24dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="16dp" />
-
-                </LinearLayout>
-            </ScrollView>
-
-            <!-- ================= SCREEN 5: USER PROFILE & SETTINGS ================= -->
-            <ScrollView
-                android:id="@+id/screenProfile"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <!-- Profile Header Card -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="24dp">
-
-                        <TextView
-                            android:id="@+id/tvProfileAvatarLarge"
-                            android:layout_width="72dp"
-                            android:layout_height="72dp"
-                            android:layout_marginBottom="12dp"
-                            android:background="@drawable/bg_gradient_button"
-                            android:gravity="center"
-                            android:text="👤"
-                            android:textColor="@color/black"
-                            android:textSize="32sp" />
-
-                        <TextView
-                            android:id="@+id/tvProfileDisplayName"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="User Name"
-                            android:textColor="@color/text_primary"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvProfileEmail"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="user@example.com"
-                            android:textColor="@color/indigo_light"
-                            android:textSize="13sp" />
-
-                        <TextView
-                            android:id="@+id/tvProfileStatusTag"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:background="@drawable/bg_input_dark"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="4dp"
-                            android:text="🟢 Verified &amp; Active"
-                            android:textColor="@color/emerald_success"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <!-- Section 1: Firebase Authentication Details Card -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:letterSpacing="0.05"
-                        android:text="FIREBASE AUTHENTICATION"
-                        android:textColor="@color/text_tertiary"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Firebase User UID"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvProfileFirebaseUid"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="—"
-                                android:textColor="@color/text_primary"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginVertical="10dp"
-                            android:background="@color/dark_border" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Auth Provider"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvProfileAuthProvider"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Firebase / Password"
-                                android:textColor="@color/text_primary"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginVertical="10dp"
-                            android:background="@color/dark_border" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Account State"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvProfileAccountState"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Synchronized ✅"
-                                android:textColor="@color/emerald_success"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- Section 2: Sync Companion & Device Status Card -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:letterSpacing="0.05"
-                        android:text="SYNC COMPANION &amp; DEVICE"
-                        android:textColor="@color/text_tertiary"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="20dp"
-                        android:background="@drawable/bg_card_dark"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="SMS Ingestion Service"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvProfileSyncService"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="🟢 Active (Foreground)"
-                                android:textColor="@color/emerald_success"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginVertical="10dp"
-                            android:background="@color/dark_border" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Total Synced Transactions"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvProfileTotalSyncedCount"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="0"
-                                android:textColor="@color/text_primary"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginVertical="10dp"
-                            android:background="@color/dark_border" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="FCM Push Notification Token"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvProfileFcmTokenStatus"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Connected 🔔"
-                                android:textColor="@color/emerald_success"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- Section 3: Account Actions -->
-                    <Button
-                        android:id="@+id/btnPrivacyPolicyProfile"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="12dp"
-                        android:backgroundTint="@color/dark_surface"
-                        android:text="Privacy Policy"
-                        android:textAllCaps="false"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <Button
-                        android:id="@+id/btnDeleteAccountProfile"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="12dp"
-                        android:backgroundTint="@color/rose_error"
-                        android:text="Delete My Account"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <Button
-                        android:id="@+id/btnLogoutProfile"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="24dp"
-                        android:backgroundTint="@color/rose_error"
-                        android:text="🚪  Sign Out / Log Out"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-            </ScrollView>
-
-        </FrameLayout>
-
-        <!-- ==================== BOTTOM NAVIGATION BAR ==================== -->
-        <LinearLayout
-            android:id="@+id/bottomNavLayout"
-            android:layout_width="match_parent"
-            android:layout_height="62dp"
-            android:background="@color/dark_surface"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <!-- Nav 1: Home -->
-            <LinearLayout
-                android:id="@+id/navHome"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/icNavHome"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🏠"
-                    android:textSize="18sp" />
-
-                <TextView
-                    android:id="@+id/tvNavHome"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Home"
-                    android:textColor="@color/emerald_success"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Nav 2: Add (Center Circular Action Button) -->
-            <LinearLayout
-                android:id="@+id/navAdd"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/icNavAdd"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/bg_gradient_button"
-                    android:gravity="center"
-                    android:text="➕"
-                    android:textColor="@color/white"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:id="@+id/tvNavAdd"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Add"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Nav 3: Budget -->
-            <LinearLayout
-                android:id="@+id/navBudget"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/icNavBudget"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="👛"
-                    android:textSize="18sp" />
-
-                <TextView
-                    android:id="@+id/tvNavBudget"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Budget"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvExceededBannerTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Shopping budget exceeded"
-                        android:textColor="@color/rose_error"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvExceededBannerSubtitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="₹5,698.00 of ₹5,000.00 (114% used)"
-                        android:textColor="@color/rose_error"
-                        android:textSize="11sp" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Nav 4: Insights -->
-            <LinearLayout
-                android:id="@+id/navInsights"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/icNavInsights"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="💡"
-                    android:textSize="18sp" />
-
-                <TextView
-                    android:id="@+id/tvNavInsights"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Insights"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Nav 5: Profile -->
-            <LinearLayout
-                android:id="@+id/navProfile"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/icNavProfile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="👤"
-                    android:textSize="18sp" />
-
-                <TextView
-                    android:id="@+id/tvNavProfile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Profile"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-    </LinearLayout>
 </FrameLayout>

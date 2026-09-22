@@ -9,8 +9,8 @@ without explicit confirmation from the developer.
 Android expense tracker for the Indian UPI/banking ecosystem. Reads bank
 SMS passively (on-device), categorizes transactions automatically via a
 5-layer waterfall, and gives budgeting/insights. Backend: FastAPI +
-PostgreSQL. Mobile: Kotlin + Jetpack Compose. Web dashboard exists but is
-NOT the current priority — this project is mobile-first.
+PostgreSQL. Mobile: Kotlin + Jetpack Compose. Mobile-only — the React web
+dashboard (frontend/) was removed in Sept 2026, along with its CORS origins.
 
 ## Ownership split — DO NOT CROSS THESE LINES
 
@@ -99,9 +99,21 @@ Design system (built, not yet device-verified):
   parent plus `values-night/`, but that also restyles the legacy XML login
   screens (colleague's surface, which assumes dark), so it belongs with the
   legacy-flow retirement rather than as an unverifiable change now.
-- Remaining screens still on hardcoded hex, in redesign order by size:
-  Trends (52), Account (48), DeleteAccountDialog (15), Categories (12),
-  Budget (11), SmsConsent (7), AddTransaction (4).
+- (Superseded by the Sept 2026 redesign below — all post-login screens now use tokens.)
+
+Visual direction — "Ledger" (approved Sept 2026, supersedes "playful & chunky" below):
+- Reference: https://claude.ai/artifact/XeRhdgewS4ZJesaQ5TbM47 (private to the developer).
+- Dark is primary and black-and-white like CRED (#000 ground, #0E0E0E / #171717 surfaces,
+  #262626 hairlines, #F4F4F0 ink). Light is cool stone #F1F1EE — deliberately not cream.
+  One engraved old-gold accent (#B8965A) for the hero guilloché and a single active state.
+- Colour only means money: green in, red over budget, amber approaching. Categories are not
+  colour-coded (CategoryPalette is monochrome); share-of-total uses `shareShades` by rank with
+  labelled rows beside it. Donut chart retired for `ShareStrip`.
+- Type roles: `WideFamily` (Archivo 125% width) for amounts/titles, `MonoFamily` (JetBrains
+  Mono) for statement detail/eyebrows, system sans for body. Both are placeholders in
+  ui/theme/Fonts.kt until the font files are bundled in res/font.
+- Lists are ledger rows split by hairlines, not cards. `Guilloche()` (Compose) and
+  res/drawable/guilloche_rosette.xml (generated, XML login) share one geometry.
 
 Design direction (decided, pending visual design pass):
 - Full UI redesign of every screen. Current screens are functional but
@@ -121,9 +133,40 @@ Design direction (decided, pending visual design pass):
   merchants. Chosen over sticker-illustrative (needs a new asset per
   merchant, noisy in dense lists) and soft-3D clay (heaviest, hard to keep
   consistent across both themes).
-- Splits card removed from Home — deferred to a later version.
+- Splits: shown on Home as a "Coming soon" preview card only (UI, no behaviour) — the feature itself is still future scope.
 - Still to design: welcome screen with motion, animated app logo / launch
   sequence, and a "dashboard updated" popup shown after a transaction syncs.
+
+UI redesign — Sept 2026 (code complete; see verification note):
+- **The Compose app is now the real post-login UI.** Before this, `DEV_SKIP_AUTH=false` meant every
+  real user got the legacy XML dashboard (Home/Add/Budget/Insights/Profile tabs in
+  `activity_main.xml` + `MainActivity`), and the Compose screens only ran in the dev stub path.
+  `MainActivity.showDashboard()` now hands the window to `SmartSpendNavHost`; the XML dashboard
+  section, its adapters/chart views/item layouts were deleted. **Login/register/Google sign-in
+  functions were carried over byte-for-byte (verified by script) — colleague's scope untouched.**
+- Auth for Compose calls: `SessionStore` + `AuthHeaderInterceptor` (OkHttp) add the stored JWT to
+  any request without one, and report 401s so `MainActivity` returns to login. This is why the
+  `...NoAuth` Retrofit methods now work against production. No endpoint or auth logic changed.
+- Flow (hub-and-spoke from Home, no bottom nav): Home → Search, Account, Add transaction, Budget
+  plan, Trends (+ right-side filter panel), Spending breakdown (Categories | Merchants, shared
+  period chips) → Category detail (6-month bar chart doubles as month picker), Insights.
+  Transaction detail is a bottom sheet (recategorize = merchant learning, edit, delete) — this
+  restores the edit/delete/review actions the XML dashboard had.
+- Insights page (new design): month pace (projection, safe-to-spend/day with a budget), budget
+  alerts, MoM movers, recurring, spikes — all from existing `/insights/summary` + `/home`.
+- Category palette re-stepped onto a colour-blind-validated 8-hue set (old Food/Transport and
+  Education/Entertainment pairs failed CVD checks). Donut caps at top 5 + Other.
+- Theme toggle (System/Light/Dark) is real (`ThemePreference`); notification toggle now gates
+  FCM display. "Sync existing SMS" (old dashboard button) moved to `sms/HistoricalSmsSync.kt`,
+  used by Account and by the consent screen's scanning step (which was a timed pause before).
+- First sign-in shows the SMS disclosure screen once, replacing the old unexplained permission
+  prompt fired at every launch.
+- Search matches merchant/category/bank/amount over the last 6 months client-side (the list
+  endpoint has no text query). "From SMS" = row has bank or card digits; `source` is the
+  categoriser's origin, not SMS-vs-manual.
+- Blog URL is a placeholder (product site root) — replace `BLOG_URL` in `AccountScreen.kt`.
+  Phone row reads `user_phone` / `user_phone_verified` prefs, which nothing writes yet (lands
+  with colleague's OTP login).
 
 In progress / not yet done:
 - Navigation rebuilt on Navigation Compose (`ui/navigation/`): `Destination`

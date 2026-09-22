@@ -463,6 +463,8 @@ interface BackendService {
 
     companion object {
         private val BASE_URL =
+            // expense-tracker-pk4d.onrender.com is the retired Render service — it accepts the
+            // connection and never answers, so every call hit the 60s timeout.
             if (BuildConfig.DEV_SKIP_AUTH) BuildConfig.DEV_BACKEND_BASE_URL else "https://firstproject-smartspend.onrender.com/"
 
         /**
@@ -474,6 +476,7 @@ interface BackendService {
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
                 .retryOnConnectionFailure(true)
+                .addInterceptor(AuthHeaderInterceptor())
                 .build()
 
             val gson = GsonBuilder()

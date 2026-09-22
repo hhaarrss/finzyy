@@ -1,11 +1,21 @@
 package com.smartspend.app.ui.home
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import com.smartspend.app.ui.components.Guilloche
+import com.smartspend.app.ui.components.Hairline
+import com.smartspend.app.ui.components.ShareStrip
+import com.smartspend.app.ui.components.foldToShares
+import com.smartspend.app.ui.theme.LedgerAmount
+import kotlin.math.roundToInt
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,29 +26,28 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,705 +55,724 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.smartspend.app.HomeBudgetSnapshotData
 import com.smartspend.app.HomeCategoryData
 import com.smartspend.app.HomeData
-import com.smartspend.app.HomeRecentTransactionData
 import com.smartspend.app.RetrofitClient
+import com.smartspend.app.ui.components.Block
+import com.smartspend.app.ui.components.ErrorPanel
+import com.smartspend.app.ui.components.Eyebrow
 import com.smartspend.app.ui.components.MerchantAvatar
+import com.smartspend.app.ui.components.RoundIconButton
+import com.smartspend.app.ui.components.ScreenGutter
+import com.smartspend.app.ui.components.SectionTitle
+import com.smartspend.app.ui.components.SkeletonBlocks
+import com.smartspend.app.ui.components.SmartSpendIcons
+import com.smartspend.app.ui.components.TextAction
+import com.smartspend.app.ui.components.ThinProgress
+import com.smartspend.app.ui.components.TransactionRow
+import com.smartspend.app.ui.components.TransactionSheet
+import com.smartspend.app.ui.components.TxView
+import com.smartspend.app.ui.components.greetingFor
+import com.smartspend.app.ui.components.money
+import com.smartspend.app.ui.components.monthName
+import com.smartspend.app.ui.components.toView
 import com.smartspend.app.ui.permission.rememberSmsPermissionsGranted
 import com.smartspend.app.ui.theme.SmartSpendTheme
 import com.smartspend.app.ui.theme.TabularAmount
-import java.text.NumberFormat
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.OffsetDateTime
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
+
+private data class HomeBundle(val home: HomeData, val overallBudget: Double?)
 
 private sealed interface HomeUiState {
     data object Loading : HomeUiState
-    data class Loaded(val data: HomeData) : HomeUiState
+    data class Loaded(val bundle: HomeBundle) : HomeUiState
     data class Error(val message: String) : HomeUiState
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onAddTransaction: () -> Unit = {},
-    onBudget: () -> Unit = {},
-    onCategories: () -> Unit = {},
-    onTrends: () -> Unit = {},
-    onAccount: () -> Unit = {},
-    onEnableAutoSync: () -> Unit = {}
+    onSearch: (reviewOnly: Boolean) -> Unit,
+    onAccount: () -> Unit,
+    onAddTransaction: () -> Unit,
+    onBudget: () -> Unit,
+    onTrends: () -> Unit,
+    onCategories: () -> Unit,
+    onCategory: (String) -> Unit,
+    onInsights: () -> Unit,
+    onEnableAutoSync: () -> Unit
 ) {
     var state by remember { mutableStateOf<HomeUiState>(HomeUiState.Loading) }
-    var refreshKey by remember { mutableStateOf(0) }
-
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val sharedPrefs = remember { context.getSharedPreferences("smart_spend_prefs", android.content.Context.MODE_PRIVATE) }
-    val token = sharedPrefs.getString("jwt_token", "") ?: ""
-    val authHeader = if (token.isNotEmpty()) "Bearer $token" else ""
+    var refreshKey by remember { mutableIntStateOf(0) }
+    var refreshing by remember { mutableStateOf(false) }
+    var openTx by remember { mutableStateOf<TxView?>(null) }
 
     LaunchedEffect(refreshKey) {
-        state = HomeUiState.Loading
+        if (state !is HomeUiState.Loaded) state = HomeUiState.Loading
         state = try {
-            val response = RetrofitClient.apiService.getHomeData(authHeader)
-            val body = response.body()
-            if (response.isSuccessful && body != null) {
-                HomeUiState.Loaded(body)
-            } else {
-                HomeUiState.Error("Home data failed to load (${response.code()}).")
+            coroutineScope {
+                val home = async { RetrofitClient.apiService.getHomeData("") }
+                val overall = async { runCatching { RetrofitClient.apiService.getOverallBudget() }.getOrNull() }
+                val homeResponse = home.await()
+                val body = homeResponse.body()
+                if (homeResponse.isSuccessful && body != null) {
+                    val limit = overall.await()?.takeIf { it.isSuccessful }?.body()?.monthly_limit
+                    HomeUiState.Loaded(HomeBundle(body, limit?.takeIf { it > 0 }))
+                } else {
+                    HomeUiState.Error("The server answered ${homeResponse.code()}. Pull down to retry.")
+                }
             }
         } catch (e: Exception) {
-            HomeUiState.Error(e.localizedMessage ?: "Unable to reach SmartSpend.")
+            (state as? HomeUiState.Loaded) ?: HomeUiState.Error(e.localizedMessage ?: "Can't reach SmartSpend right now.")
         }
+        refreshing = false
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onAddTransaction,
-                containerColor = SmartSpendTheme.colors.accent,
-                contentColor = SmartSpendTheme.colors.onAccent,
-                shape = MaterialTheme.shapes.large
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Add", fontWeight = FontWeight.Black)
-            }
-        }
-    ) { innerPadding ->
-        Box(
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = refreshing,
+            onRefresh = { refreshing = true; refreshKey++ },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
             when (val current = state) {
-                HomeUiState.Loading -> HomeSkeleton()
+                HomeUiState.Loading -> Column {
+                    TopBar(name = null, onAccount = onAccount, onSearch = { onSearch(false) })
+                    SkeletonBlocks(listOf(200.dp, 104.dp, 64.dp, 300.dp))
+                }
+                is HomeUiState.Error -> Column {
+                    TopBar(name = null, onAccount = onAccount, onSearch = { onSearch(false) })
+                    ErrorPanel(current.message, onRetry = { refreshKey++ })
+                }
                 is HomeUiState.Loaded -> HomeContent(
-                    data = current.data,
-                    onBudget = onBudget,
-                    onCategories = onCategories,
-                    onTrends = onTrends,
+                    bundle = current.bundle,
+                    onSearch = onSearch,
                     onAccount = onAccount,
-                    onEnableAutoSync = onEnableAutoSync
-                )
-                is HomeUiState.Error -> HomeError(
-                    message = current.message,
-                    onRetry = { refreshKey++ }
+                    onAddTransaction = onAddTransaction,
+                    onBudget = onBudget,
+                    onTrends = onTrends,
+                    onCategories = onCategories,
+                    onCategory = onCategory,
+                    onInsights = onInsights,
+                    onEnableAutoSync = onEnableAutoSync,
+                    onOpenTx = { openTx = it }
                 )
             }
         }
+    }
+
+    openTx?.let { tx ->
+        TransactionSheet(tx = tx, onDismiss = { openTx = null }, onChanged = { refreshKey++ })
     }
 }
 
 @Composable
 private fun HomeContent(
-    data: HomeData,
-    onBudget: () -> Unit,
-    onCategories: () -> Unit,
-    onTrends: () -> Unit,
+    bundle: HomeBundle,
+    onSearch: (Boolean) -> Unit,
     onAccount: () -> Unit,
-    onEnableAutoSync: () -> Unit
+    onAddTransaction: () -> Unit,
+    onBudget: () -> Unit,
+    onTrends: () -> Unit,
+    onCategories: () -> Unit,
+    onCategory: (String) -> Unit,
+    onInsights: () -> Unit,
+    onEnableAutoSync: () -> Unit,
+    onOpenTx: (TxView) -> Unit
 ) {
+    val data = bundle.home
+    val autoSyncOn = rememberSmsPermissionsGranted()
+    val pace = remember(data) { monthPace(data) }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        // Generous bottom padding so the FAB never covers the last row.
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        contentPadding = PaddingValues(bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { GreetingRow(data.user.full_name, data.user.email, onAccount) }
-        item { SpendHero(data) }
-        item { InsightStrip(data) }
+        item { TopBar(name = displayName(data), onAccount = onAccount, onSearch = { onSearch(false) }) }
 
-        if (data.overview.needs_review_count > 0) {
-            item { NeedsReviewBanner(data.overview.needs_review_count, onCategories) }
+        item {
+            SpendHero(
+                data = data,
+                overallBudget = bundle.overallBudget,
+                modifier = Modifier.padding(horizontal = ScreenGutter)
+            )
         }
 
-        item { AutoSyncCard(onEnableAutoSync) }
+        item {
+            IncomeBudgetBlock(
+                income = data.overview.total_income,
+                month = monthName(data.month, data.year, "MMM"),
+                limit = bundle.overallBudget,
+                onBudget = onBudget,
+                modifier = Modifier.padding(horizontal = ScreenGutter)
+            )
+        }
 
-        if (data.top_categories.isNotEmpty()) {
-            item {
-                SectionCard(title = "Where it's going", actionLabel = "Categories", onAction = onCategories) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        val biggest = data.top_categories.maxOf { it.spent }.coerceAtLeast(0.01)
-                        data.top_categories.take(4).forEach { CategoryRow(it, biggest) }
-                    }
-                }
+        item {
+            Row(
+                modifier = Modifier.padding(horizontal = ScreenGutter),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                LinkPill(SmartSpendIcons.Trends, "Trends", onTrends, Modifier.weight(1f))
+                LinkPill(SmartSpendIcons.Categories, "Categories", onCategories, Modifier.weight(1f))
             }
         }
 
-        if (data.recent_transactions.isNotEmpty()) {
+        if (pace != null) {
             item {
-                SectionCard(title = "Recent", actionLabel = "Trends", onAction = onTrends) {
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        data.recent_transactions.take(5).forEach { TransactionRow(it) }
-                    }
-                }
-            }
-        }
-
-        if (data.budget_snapshot.isNotEmpty()) {
-            item {
-                SectionCard(title = "Budgets", actionLabel = "Manage", onAction = onBudget) {
-                    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                        data.budget_snapshot.take(4).forEach { BudgetRow(it) }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun GreetingRow(fullName: String?, email: String?, onAccount: () -> Unit) {
-    val displayName = fullName?.takeIf { it.isNotBlank() }
-        ?: email?.substringBefore("@")?.replaceFirstChar { it.titlecase(Locale.getDefault()) }
-        ?: "there"
-    val initial = displayName.firstOrNull()?.uppercase() ?: "S"
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                greetingFor(LocalTime.now()).uppercase(Locale.getDefault()),
-                style = MaterialTheme.typography.labelMedium,
-                color = SmartSpendTheme.colors.inkMuted
-            )
-            Text(
-                displayName,
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Box(
-            modifier = Modifier
-                .size(46.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-                .clickable(onClick = onAccount),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                initial,
-                color = MaterialTheme.colorScheme.onPrimary,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Black
-            )
-        }
-    }
-}
-
-/**
- * The one number the screen exists to show. Everything else on Home is context for it,
- * so it gets the display size and the only saturated surface on the page.
- */
-@Composable
-private fun SpendHero(data: HomeData) {
-    val overview = data.overview
-    val onHero = SmartSpendTheme.colors.onHeroSurface
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = SmartSpendTheme.colors.heroSurface)
-    ) {
-        Column(
-            modifier = Modifier.padding(22.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Text(
-                "SPENT IN ${monthLabel(data.month, data.year).uppercase(Locale.getDefault())}",
-                style = MaterialTheme.typography.labelMedium,
-                color = onHero.copy(alpha = 0.75f)
-            )
-            Text(
-                moneyWhole(overview.total_spent),
-                style = MaterialTheme.typography.displayLarge,
-                color = onHero,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            MomPill(overview.mom_change_percent, overview.total_spent)
-
-            if (overview.total_income > 0.0) {
-                Spacer(Modifier.height(2.dp))
-                IncomeUsageBar(
-                    spent = overview.total_spent,
-                    income = overview.total_income,
-                    onHero = onHero
+                InsightTeaser(
+                    pace = pace,
+                    overallBudget = bundle.overallBudget,
+                    onClick = onInsights,
+                    modifier = Modifier.padding(horizontal = ScreenGutter)
                 )
             }
         }
+
+        if (data.overview.needs_review_count > 0) {
+            item {
+                NeedsReviewBanner(
+                    count = data.overview.needs_review_count,
+                    onClick = { onSearch(true) },
+                    modifier = Modifier.padding(horizontal = ScreenGutter)
+                )
+            }
+        }
+
+        if (!autoSyncOn) {
+            item {
+                AutoSyncPrompt(onEnableAutoSync, Modifier.padding(horizontal = ScreenGutter))
+            }
+        }
+
+        // ── Recent transactions ────────────────────────────────────────────
+        item {
+            SectionTitle(
+                "Recent",
+                modifier = Modifier.padding(start = ScreenGutter, end = ScreenGutter, top = 16.dp)
+            ) {
+                AddPill(onClick = onAddTransaction)
+            }
+        }
+        item {
+            Column(Modifier.padding(horizontal = ScreenGutter - 16.dp)) {
+                if (data.recent_transactions.isEmpty()) {
+                    Text(
+                        "Nothing yet this month. Transactions from bank SMS land here automatically, or add one by hand.",
+                        modifier = Modifier.padding(18.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = SmartSpendTheme.colors.inkMuted
+                    )
+                } else {
+                    data.recent_transactions.take(5).forEachIndexed { i, raw ->
+                        if (i > 0) Hairline(Modifier.padding(start = 68.dp, end = 16.dp))
+                        val tx = raw.toView()
+                        TransactionRow(tx = tx, onClick = { onOpenTx(tx) })
+                    }
+                    Hairline(Modifier.padding(horizontal = 16.dp))
+                    SeeAllRow("See all transactions", onClick = { onSearch(false) })
+                }
+            }
+        }
+
+        // ── Categories ─────────────────────────────────────────────────────
+        if (data.top_categories.isNotEmpty()) {
+            item {
+                SectionTitle(
+                    "Where it went",
+                    modifier = Modifier.padding(start = ScreenGutter, end = ScreenGutter, top = 16.dp)
+                ) { TextAction("All →", onClick = onCategories) }
+            }
+            item {
+                WhereItWent(
+                    categories = data.top_categories,
+                    onCategory = onCategory,
+                    modifier = Modifier.padding(horizontal = ScreenGutter)
+                )
+            }
+        }
+
+        // ── Splits (preview only) ──────────────────────────────────────────
+        item {
+            SectionTitle(
+                "Split expenses",
+                modifier = Modifier.padding(start = ScreenGutter, end = ScreenGutter, top = 16.dp)
+            ) { SoonTag() }
+        }
+        item { SplitsPreview(Modifier.padding(horizontal = ScreenGutter)) }
+    }
+}
+
+@Composable
+private fun TopBar(name: String?, onAccount: () -> Unit, onSearch: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = ScreenGutter, end = ScreenGutter - 4.dp, top = 12.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .clip(MaterialTheme.shapes.small)
+                .clickable(role = Role.Button, onClick = onAccount),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    name?.firstOrNull()?.uppercase() ?: "",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.Black
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(
+                    greetingFor(LocalTime.now().hour),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SmartSpendTheme.colors.inkMuted
+                )
+                Text(
+                    name ?: " ",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        RoundIconButton(icon = Icons.Default.Search, contentDescription = "Search transactions", onClick = onSearch)
     }
 }
 
 /**
- * A raw "-12.4% MoM" makes the reader do the work. The rupee difference plus a plain-word
- * comparison is the same fact in the form people actually think about it.
+ * The number the screen exists for, printed like a banknote: guilloché engraving behind it,
+ * a serial in the corner, and a statement-thin meter that answers "am I OK?" — with a tick
+ * marking where today falls in the month, so pace reads without a second number.
  */
 @Composable
-private fun MomPill(momPercent: Double, totalSpent: Double) {
-    if (momPercent == 0.0) return
-
-    val spendingLess = momPercent < 0
-    // total_spent is this month at (100 + mom)% of last month; recover the rupee gap.
-    val previous = if (momPercent > -100.0) totalSpent / (1 + momPercent / 100.0) else 0.0
-    val delta = (totalSpent - previous).absoluteValue
-
-    val tint = if (spendingLess) SmartSpendTheme.colors.positive else SmartSpendTheme.colors.negative
-    val verb = if (spendingLess) "less" else "more"
+private fun SpendHero(data: HomeData, overallBudget: Double?, modifier: Modifier = Modifier) {
+    val colors = SmartSpendTheme.colors
+    val spent = data.overview.total_spent
+    val ym = runCatching { YearMonth.of(data.year, data.month) }.getOrNull()
+    val today = LocalDate.now()
+    val dayOfMonth = if (ym != null && ym == YearMonth.from(today)) today.dayOfMonth else ym?.lengthOfMonth() ?: 30
+    val daysIn = ym?.lengthOfMonth() ?: 30
 
     Surface(
-        shape = CircleShape,
-        color = tint.copy(alpha = 0.22f)
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = colors.heroSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, colors.hairline)
     ) {
-        Text(
-            text = "${if (spendingLess) "▼" else "▲"}  ${moneyWhole(delta)} $verb than last month",
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelLarge,
-            color = Color.White
-        )
-    }
-}
-
-/** How much of what came in has gone back out — the fastest read on whether this month is fine. */
-@Composable
-private fun IncomeUsageBar(spent: Double, income: Double, onHero: Color) {
-    val ratio = (spent / income).coerceIn(0.0, 1.0).toFloat()
-    val remaining = (income - spent).coerceAtLeast(0.0)
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        LinearProgressIndicator(
-            progress = { ratio },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(10.dp)
-                .clip(CircleShape),
-            color = onHero,
-            trackColor = onHero.copy(alpha = 0.25f),
-            gapSize = 0.dp,
-            drawStopIndicator = {}
-        )
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                "${(ratio * 100).roundToInt()}% of income used",
-                style = MaterialTheme.typography.bodySmall,
-                color = onHero.copy(alpha = 0.8f),
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                "${moneyWhole(remaining)} left",
-                style = MaterialTheme.typography.bodySmall,
-                color = onHero,
-                fontWeight = FontWeight.Bold
-            )
+        Box {
+            Guilloche(color = colors.accent, fadeTo = colors.heroSurface, modifier = Modifier.matchParentSize())
+            Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 18.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Eyebrow("Spent · ${monthName(data.month, data.year)}", modifier = Modifier.weight(1f))
+                    Text(
+                        "SS ${"%02d".format(data.month)}·${data.year}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.inkFaint
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.Top) {
+                    Text(
+                        "₹",
+                        modifier = Modifier.padding(top = 6.dp, end = 3.dp),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = colors.onHeroSurface
+                    )
+                    Text(
+                        moneyDigits(spent),
+                        style = MaterialTheme.typography.displayLarge.merge(TabularAmount).copy(textAlign = TextAlign.Start),
+                        color = colors.onHeroSurface,
+                        maxLines = 1
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                if (overallBudget != null) {
+                    val ratio = (spent / overallBudget).toFloat()
+                    BudgetMeter(ratio = ratio, dayFraction = dayOfMonth / daysIn.toFloat())
+                    Spacer(Modifier.height(8.dp))
+                    Row {
+                        Text(
+                            buildAnnotatedString {
+                                if (spent <= overallBudget) {
+                                    withStyle(SpanStyle(color = colors.onHeroSurface, fontWeight = FontWeight.SemiBold)) { append(money(overallBudget - spent)) }
+                                    append(" left of ${money(overallBudget)}")
+                                } else {
+                                    withStyle(SpanStyle(color = colors.negative, fontWeight = FontWeight.SemiBold)) { append(money(spent - overallBudget)) }
+                                    append(" over ${money(overallBudget)}")
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.inkMuted
+                        )
+                        Text("day $dayOfMonth of $daysIn", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+                    }
+                } else {
+                    MomLine(data.overview.mom_change_percent, spent, colors.onHeroSurface)
+                }
+            }
         }
     }
 }
 
-/** Burn rate and runway — the two derived numbers that change behaviour mid-month. */
+/** Budget used, with a tick where "today" falls in the month — ahead of the tick means over pace. */
 @Composable
-private fun InsightStrip(data: HomeData) {
-    val today = LocalDate.now()
-    val isCurrentMonth = today.year == data.year && today.monthValue == data.month
-    val daysInMonth = runCatching { YearMonth.of(data.year, data.month).lengthOfMonth() }
-        .getOrDefault(30)
-    val daysElapsed = if (isCurrentMonth) today.dayOfMonth else daysInMonth
-    val daysLeft = (daysInMonth - daysElapsed).coerceAtLeast(0)
-    val perDay = if (daysElapsed > 0) data.overview.total_spent / daysElapsed else 0.0
-
-    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        StatTile(
-            modifier = Modifier.weight(1f),
-            value = moneyWhole(perDay),
-            label = "a day, on average"
-        )
-        StatTile(
-            modifier = Modifier.weight(1f),
-            value = if (isCurrentMonth) "$daysLeft" else "$daysInMonth",
-            label = if (isCurrentMonth) "days left this month" else "days in this month"
-        )
+private fun BudgetMeter(ratio: Float, dayFraction: Float) {
+    val colors = SmartSpendTheme.colors
+    val fill = if (ratio > 1f) colors.negative else MaterialTheme.colorScheme.onSurface
+    androidx.compose.foundation.Canvas(
+        Modifier
+            .fillMaxWidth()
+            .height(11.dp)
+    ) {
+        val y = size.height / 2f
+        val h = 3.dp.toPx()
+        drawRect(colors.hairline, androidx.compose.ui.geometry.Offset(0f, y - h / 2), androidx.compose.ui.geometry.Size(size.width, h))
+        drawRect(fill, androidx.compose.ui.geometry.Offset(0f, y - h / 2), androidx.compose.ui.geometry.Size(size.width * ratio.coerceIn(0f, 1f), h))
+        val tx = size.width * dayFraction.coerceIn(0f, 1f)
+        drawRect(colors.inkMuted, androidx.compose.ui.geometry.Offset(tx, 0f), androidx.compose.ui.geometry.Size(1.dp.toPx(), size.height))
     }
 }
 
 @Composable
-private fun StatTile(modifier: Modifier = Modifier, value: String, label: String) {
-    Card(
+private fun MomLine(momPercent: Double, spent: Double, onHero: Color) {
+    if (momPercent == 0.0 || momPercent <= -100.0) {
+        Text(
+            "Set a monthly budget to see how much is left.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = onHero.copy(alpha = 0.8f)
+        )
+        return
+    }
+    val less = momPercent < 0
+    val previous = spent / (1 + momPercent / 100.0)
+    val delta = (spent - previous).absoluteValue
+    Text(
+        "${if (less) "▼" else "▲"} ${money(delta)} ${if (less) "less" else "more"} than last month so far",
+        style = MaterialTheme.typography.bodySmall,
+        color = if (less) SmartSpendTheme.colors.positive else onHero
+    )
+}
+
+@Composable
+private fun IncomeBudgetBlock(
+    income: Double,
+    month: String,
+    limit: Double?,
+    onBudget: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = SmartSpendTheme.colors
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, colors.hairline)
+    ) {
+        Row(Modifier.height(androidx.compose.foundation.layout.IntrinsicSize.Min)) {
+            Column(Modifier.weight(1f).padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Eyebrow("Income")
+                Text(
+                    if (income > 0) "+${money(income)}" else money(0.0),
+                    style = MaterialTheme.typography.headlineSmall.merge(TabularAmount).copy(textAlign = TextAlign.Start),
+                    color = if (income > 0) colors.positive else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+                Text("received in $month", style = MaterialTheme.typography.bodySmall, color = colors.inkMuted)
+            }
+            Box(Modifier.fillMaxHeight().width(1.dp).background(colors.hairline))
+            Column(
+                Modifier
+                    .weight(1f)
+                    .clickable(role = Role.Button, onClick = onBudget)
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Eyebrow("Monthly budget")
+                Text(
+                    limit?.let(::money) ?: "Not set",
+                    style = MaterialTheme.typography.headlineSmall.merge(TabularAmount).copy(textAlign = TextAlign.Start),
+                    color = if (limit != null) MaterialTheme.colorScheme.onSurface else colors.inkMuted,
+                    maxLines = 1
+                )
+                Row {
+                    Text(if (limit != null) "Edit" else "Set budget", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text("→", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LinkPill(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .border(1.dp, SmartSpendTheme.colors.hairline, CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = 11.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onBackground)
+    }
+}
+
+private data class Pace(val projected: Double, val monthEnd: LocalDate)
+
+/** Straight-line month-end projection. Too noisy to show before the 3rd of the month. */
+private fun monthPace(data: HomeData): Pace? {
+    val today = LocalDate.now()
+    if (today.year != data.year || today.monthValue != data.month) return null
+    val daysElapsed = today.dayOfMonth
+    if (daysElapsed < 3 || data.overview.total_spent <= 0) return null
+    val ym = YearMonth.of(data.year, data.month)
+    val projected = data.overview.total_spent / daysElapsed * ym.lengthOfMonth()
+    return Pace(projected, ym.atEndOfMonth())
+}
+
+@Composable
+private fun InsightTeaser(pace: Pace, overallBudget: Double?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val over = overallBudget != null && pace.projected > overallBudget
+    Block(
         modifier = modifier,
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        padding = PaddingValues(16.dp),
+        onClick = onClick,
+        color = if (over) SmartSpendTheme.colors.negativeContainer else MaterialTheme.colorScheme.surface
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                value,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                SmartSpendIcons.Insights,
+                contentDescription = null,
+                tint = if (over) SmartSpendTheme.colors.negative else MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(22.dp)
             )
-            Text(
-                label,
-                style = MaterialTheme.typography.bodySmall,
-                color = SmartSpendTheme.colors.inkMuted
-            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "At this pace: ${money(pace.projected)} by ${pace.monthEnd.dayOfMonth} ${monthName(pace.monthEnd.monthValue, pace.monthEnd.year, "MMM")}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    when {
+                        overallBudget == null -> "See what's driving it"
+                        over -> "${money(pace.projected - overallBudget)} over your budget — see what's driving it"
+                        else -> "${money(overallBudget - pace.projected)} under your budget"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SmartSpendTheme.colors.inkMuted
+                )
+            }
+            Text("Insights", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
 
 @Composable
-private fun NeedsReviewBanner(count: Int, onReview: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
+private fun NeedsReviewBanner(count: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Block(
+        modifier = modifier,
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = SmartSpendTheme.colors.cautionContainer)
+        padding = PaddingValues(16.dp),
+        onClick = onClick,
+        color = SmartSpendTheme.colors.cautionContainer
     ) {
-        Row(
-            modifier = Modifier
-                .clickable(onClick = onReview)
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
                 Text(
                     if (count == 1) "1 transaction needs a category" else "$count transactions need a category",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    "Tag them once and we'll remember next time",
+                    "Tag them once — we'll remember the merchant",
                     style = MaterialTheme.typography.bodySmall,
                     color = SmartSpendTheme.colors.inkMuted
                 )
             }
-            Text(
-                "Review",
-                style = MaterialTheme.typography.labelLarge,
-                color = SmartSpendTheme.colors.caution
-            )
+            Text("Review", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
 
 @Composable
-private fun AutoSyncCard(onEnableAutoSync: () -> Unit) {
-    val autoSyncActive = rememberSmsPermissionsGranted()
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = if (autoSyncActive) {
-                SmartSpendTheme.colors.positiveContainer
-            } else {
-                MaterialTheme.colorScheme.surface
+private fun AutoSyncPrompt(onEnable: () -> Unit, modifier: Modifier = Modifier) {
+    Block(modifier = modifier, shape = MaterialTheme.shapes.medium, padding = PaddingValues(16.dp), onClick = onEnable) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(SmartSpendIcons.Sms, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Auto-sync is off", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    "Log bank SMS automatically instead of by hand",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SmartSpendTheme.colors.inkMuted
+                )
             }
-        )
+            Text("Turn on", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+@Composable
+private fun AddPill(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.onBackground,
+        contentColor = MaterialTheme.colorScheme.background
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(start = 10.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    if (autoSyncActive) "Auto-sync is on" else "Auto-sync is off",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    if (autoSyncActive) {
-                        "Bank SMS get logged the moment they arrive"
-                    } else {
-                        "Log bank SMS automatically instead of by hand"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkMuted
-                )
-            }
-            if (!autoSyncActive) {
-                Spacer(Modifier.width(12.dp))
-                Button(
-                    onClick = onEnableAutoSync,
-                    shape = MaterialTheme.shapes.small,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text("Turn on", fontWeight = FontWeight.Black)
-                }
-            }
+            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(15.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("ADD", style = MaterialTheme.typography.labelMedium)
         }
     }
 }
 
 @Composable
-private fun SectionCard(
-    title: String,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null,
-    content: @Composable () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+private fun SeeAllRow(label: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    title,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (actionLabel != null && onAction != null) {
-                    Text(
-                        actionLabel,
-                        modifier = Modifier.clickable(onClick = onAction),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+    }
+}
+
+/**
+ * Share of the month by category: one engraved strip of ink shades, then a row per shade with
+ * its name, share and amount — the rows are the readable twin of the strip.
+ */
+@Composable
+private fun WhereItWent(categories: List<HomeCategoryData>, onCategory: (String) -> Unit, modifier: Modifier = Modifier) {
+    val colors = SmartSpendTheme.colors
+    val slices = remember(categories, colors) {
+        foldToShares(categories, { it.spent }, { it.category }, colors.shareShades)
+    }
+    val total = slices.sumOf { it.value }.coerceAtLeast(0.01)
+    Column(modifier) {
+        ShareStrip(slices, Modifier.padding(top = 4.dp, bottom = 10.dp))
+        slices.forEachIndexed { i, slice ->
+            if (i > 0) Hairline()
+            val tappable = slice.label != "Everything else"
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .then(if (tappable) Modifier.clickable(role = Role.Button) { onCategory(slice.label) } else Modifier)
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(10.dp).background(slice.color, RoundedCornerShape(2.dp)))
+                Spacer(Modifier.width(12.dp))
+                Text(slice.label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.width(6.dp))
+                Text("${(slice.value / total * 100).roundToInt()}%", style = MaterialTheme.typography.labelSmall, color = colors.inkMuted, modifier = Modifier.weight(1f))
+                Text(money(slice.value), style = LedgerAmount, color = MaterialTheme.colorScheme.onBackground)
             }
-            content()
         }
     }
 }
 
 @Composable
-private fun TransactionRow(tx: HomeRecentTransactionData) {
-    val isCredit = tx.type.equals("credit", ignoreCase = true)
-
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        MerchantAvatar(category = tx.category, merchant = tx.merchant, size = 42.dp)
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                tx.merchant?.takeIf { it.isNotBlank() } ?: tx.category,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                "${tx.category} · ${formatDate(tx.date)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = SmartSpendTheme.colors.inkMuted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Spacer(Modifier.width(10.dp))
+private fun SoonTag() {
+    Surface(shape = CircleShape, color = SmartSpendTheme.colors.subtleSurface) {
         Text(
-            text = if (isCredit) "+${moneyWhole(tx.amount)}" else moneyWhole(tx.amount),
-            style = MaterialTheme.typography.titleMedium.merge(TabularAmount),
-            color = if (isCredit) SmartSpendTheme.colors.positive else MaterialTheme.colorScheme.onSurface
+            "COMING SOON",
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = SmartSpendTheme.colors.inkMuted
         )
     }
 }
 
 /**
- * Bars are scaled against the biggest category rather than total spend: against the total
- * every bar is short and they all look alike, which defeats the comparison.
+ * Splits is future scope — this card previews the feature so the Home layout doesn't shift
+ * when it ships. Tapping explains that rather than opening a half-built flow.
  */
 @Composable
-private fun CategoryRow(category: HomeCategoryData, biggestSpend: Double) {
-    val colors = SmartSpendTheme.categories[category.category]
-    val ratio = (category.spent / biggestSpend).coerceIn(0.0, 1.0).toFloat()
-
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        MerchantAvatar(category = category.category, size = 38.dp)
-        Spacer(Modifier.width(14.dp))
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(7.dp)
-        ) {
-            Row {
-                Text(
-                    category.category,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    moneyWhole(category.spent),
-                    style = MaterialTheme.typography.titleMedium.merge(TabularAmount),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            LinearProgressIndicator(
-                progress = { ratio },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(CircleShape),
-                color = colors.accent,
-                trackColor = SmartSpendTheme.colors.subtleSurface,
-                gapSize = 0.dp,
-                drawStopIndicator = {}
-            )
-        }
-    }
-}
-
-@Composable
-private fun BudgetRow(budget: HomeBudgetSnapshotData) {
-    val percent = budget.percent_used
-    val ratio = (percent / 100.0).coerceIn(0.0, 1.0).toFloat()
-    val barColor = when {
-        percent > 100.0 -> SmartSpendTheme.colors.negative
-        percent >= 80.0 -> SmartSpendTheme.colors.caution
-        else -> SmartSpendTheme.colors.positive
-    }
-    val overspend = budget.spent - budget.limit
-
-    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+private fun SplitsPreview(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    Block(
+        modifier = modifier,
+        onClick = { Toast.makeText(context, "Splitting bills is coming in a future update", Toast.LENGTH_SHORT).show() }
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                budget.category,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                "${percent.roundToInt()}%",
-                style = MaterialTheme.typography.titleMedium,
-                color = barColor
-            )
-        }
-        LinearProgressIndicator(
-            progress = { ratio },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(CircleShape),
-            color = barColor,
-            trackColor = SmartSpendTheme.colors.subtleSurface,
-            gapSize = 0.dp,
-            drawStopIndicator = {}
-        )
-        Text(
-            text = if (overspend > 0) {
-                "${moneyWhole(overspend)} over ${moneyWhole(budget.limit)}"
-            } else {
-                "${moneyWhole(budget.spent)} of ${moneyWhole(budget.limit)}"
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = if (overspend > 0) SmartSpendTheme.colors.negative else SmartSpendTheme.colors.inkMuted
-        )
-    }
-}
-
-@Composable
-private fun HomeSkeleton() {
-    val transition = rememberInfiniteTransition(label = "home-skeleton")
-    val alpha by transition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.75f,
-        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
-        label = "skeleton-alpha"
-    )
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        items(6) { index ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(if (index == 0) 190.dp else 86.dp)
-                    .clip(
-                        if (index == 0) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large
-                    )
-                    .background(SmartSpendTheme.colors.subtleSurface.copy(alpha = alpha))
-            )
-        }
-    }
-}
-
-@Composable
-private fun HomeError(message: String, onRetry: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Card(
-            shape = MaterialTheme.shapes.large,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(24.dp)
-                    .widthIn(max = 360.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    "Couldn't load your spending",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SmartSpendTheme.colors.inkMuted
-                )
-                OutlinedButton(onClick = onRetry, shape = MaterialTheme.shapes.small) {
-                    Text("Try again", fontWeight = FontWeight.Bold)
+            Box(Modifier.width(76.dp).height(40.dp)) {
+                listOf("A", "R", "+").forEachIndexed { i, letter ->
+                    Box(
+                        modifier = Modifier
+                            .offset(x = (i * 22).dp)
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(if (letter == "+") SmartSpendTheme.colors.subtleSurface else MaterialTheme.colorScheme.primaryContainer)
+                            .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            letter,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = if (letter == "+") SmartSpendTheme.colors.inkMuted else MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Split a bill", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    "Add friends to a transaction and track who owes what",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SmartSpendTheme.colors.inkMuted
+                )
+            }
         }
     }
 }
 
-/** Whole rupees. Paise widen every amount on screen and tell the user nothing. */
-private val inrWhole: NumberFormat =
-    NumberFormat.getCurrencyInstance(Locale.Builder().setLanguage("en").setRegion("IN").build())
-        .apply { maximumFractionDigits = 0 }
+private fun displayName(data: HomeData): String =
+    data.user.full_name?.takeIf { it.isNotBlank() }
+        ?: data.user.email?.substringBefore("@")?.replaceFirstChar { it.titlecase(Locale.getDefault()) }
+        ?: "there"
 
-private fun moneyWhole(value: Double): String = inrWhole.format(value.absoluteValue)
-
-private fun greetingFor(time: LocalTime): String = when (time.hour) {
-    in 0..11 -> "Good morning"
-    in 12..16 -> "Good afternoon"
-    else -> "Good evening"
-}
-
-private fun monthLabel(month: Int, year: Int): String = runCatching {
-    YearMonth.of(year, month).format(DateTimeFormatter.ofPattern("MMMM"))
-}.getOrDefault("this month")
-
-private fun formatDate(value: String?): String {
-    if (value.isNullOrBlank()) return "Recent"
-    return try {
-        OffsetDateTime.parse(value).format(DateTimeFormatter.ofPattern("d MMM"))
-    } catch (_: Exception) {
-        value.take(10)
-    }
-}
+/** Grouped digits without the currency sign, for the hero where ₹ is set smaller beside them. */
+private fun moneyDigits(value: Double): String = money(value).replace("₹", "").trim()

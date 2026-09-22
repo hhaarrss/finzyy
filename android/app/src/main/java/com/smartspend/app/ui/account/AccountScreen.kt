@@ -1,5 +1,6 @@
 package com.smartspend.app.ui.account
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -9,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,484 +21,297 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Badge
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
 import com.smartspend.app.BuildConfig
+import com.smartspend.app.RetrofitClient
+import com.smartspend.app.sms.HistoricalSmsSync
+import com.smartspend.app.ui.components.Block
+import com.smartspend.app.ui.components.Eyebrow
+import com.smartspend.app.ui.components.ScreenGutter
+import com.smartspend.app.ui.components.ScreenHeader
+import com.smartspend.app.ui.components.SegmentedControl
+import com.smartspend.app.ui.components.SmartSpendIcons
+import com.smartspend.app.ui.permission.smsPermissionsGranted
+import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.ThemeMode
+import com.smartspend.app.ui.theme.ThemePreference
+import kotlinx.coroutines.launch
 
 private const val PRIVACY_POLICY_URL = "https://hhaarrss.github.io/smart-spend/privacy-policy.html"
 private const val TERMS_OF_SERVICE_URL = "https://hhaarrss.github.io/smart-spend/terms.html"
 private const val SUPPORT_FAQ_URL = "https://hhaarrss.github.io/smart-spend/support.html"
+// No blog exists yet; this opens the product site until one does. Swap the URL, nothing else.
+private const val BLOG_URL = "https://hhaarrss.github.io/smart-spend/"
 private const val SUPPORT_EMAIL = "smartspend4support@gmail.com"
 
-@OptIn(ExperimentalMaterial3Api::class)
+private const val PREFS = "smart_spend_prefs"
+const val PREF_NOTIFICATIONS_ENABLED = "pref_notifications_enabled"
+
 @Composable
 fun AccountScreen(
-    onBack: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onBack: () -> Unit,
+    onLogout: () -> Unit,
+    onEnableAutoSync: () -> Unit
 ) {
     val context = LocalContext.current
-    val sharedPrefs = remember {
-        context.getSharedPreferences("smart_spend_prefs", Context.MODE_PRIVATE)
+    val scope = rememberCoroutineScope()
+    val prefs = remember { context.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
+
+    val email = remember { prefs.getString("user_email", null) }
+    var name by remember { mutableStateOf<String?>(null) }
+    val phone = remember { prefs.getString("user_phone", null)?.takeIf { it.isNotBlank() } }
+    val phoneVerified = remember { prefs.getBoolean("user_phone_verified", false) }
+
+    var notifications by remember { mutableStateOf(prefs.getBoolean(PREF_NOTIFICATIONS_ENABLED, true)) }
+    var syncing by remember { mutableStateOf(false) }
+    var confirmLogout by remember { mutableStateOf(false) }
+    var showDelete by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        name = runCatching { RetrofitClient.apiService.getMyProfile("").body()?.full_name }.getOrNull()
     }
 
-    val userEmail = remember {
-        sharedPrefs.getString("user_email", "user@smartspend.app") ?: "user@smartspend.app"
-    }
-    val jwtToken = remember {
-        sharedPrefs.getString("jwt_token", null)
-    }
+    fun toast(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
 
-    var notificationsEnabled by remember {
-        mutableStateOf(sharedPrefs.getBoolean("pref_notifications_enabled", true))
-    }
-    var showDeleteDialog by remember { mutableStateOf(false) }
-
-    fun openUrl(url: String) {
+    fun open(url: String) {
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(context, "Unable to open link: ${e.message}", Toast.LENGTH_SHORT).show()
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (_: ActivityNotFoundException) {
+            toast("No app can open this link")
         }
     }
 
-    fun openMailto(email: String) {
+    fun rateApp() {
+        val pkg = context.packageName
         try {
-            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                data = Uri.parse("mailto:$email")
-                putExtra(Intent.EXTRA_SUBJECT, "SmartSpend Support Request")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(context, "No email app found to contact $email", Toast.LENGTH_SHORT).show()
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")))
+        } catch (_: ActivityNotFoundException) {
+            open("https://play.google.com/store/apps/details?id=$pkg")
         }
     }
 
-    fun handleLogout() {
-        sharedPrefs.edit()
-            .remove("jwt_token")
-            .remove("user_email")
-            .remove("fcm_token")
-            .apply()
-        try {
-            FirebaseAuth.getInstance().signOut()
-        } catch (_: Exception) {}
-        Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
-        onLogout()
+    fun syncInbox() {
+        if (!smsPermissionsGranted(context)) {
+            onEnableAutoSync()
+            return
+        }
+        syncing = true
+        scope.launch {
+            val result = runCatching { HistoricalSmsSync.run(context) }
+            syncing = false
+            result.onSuccess { toast(if (it.synced == 0) "Checked ${it.scanned} messages — nothing new" else "Added ${it.synced} transactions from SMS") }
+                .onFailure { toast("Sync failed: ${it.localizedMessage}") }
+        }
     }
 
-    Scaffold(
-        containerColor = Color(0xFFF7F8FB),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Account & Profile",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color(0xFF101828),
-                    navigationIconContentColor = Color(0xFF101828)
-                )
-            )
-        }
-    ) { innerPadding ->
+    val displayName = name?.takeIf { it.isNotBlank() }
+        ?: email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+        ?: "Your account"
+
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 1. Profile Section
-            SectionHeader(title = "PROFILE")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(Color(0xFF1F8A70), Color(0xFF101828))
-                                    )
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = userEmail.firstOrNull()?.uppercase() ?: "S",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 22.sp
-                            )
-                        }
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = userEmail.substringBefore("@")
-                                    .replaceFirstChar { it.uppercase() }
-                                    .ifEmpty { "SmartSpend User" },
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF101828)
-                            )
-                            Text(
-                                text = userEmail,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF667085)
-                            )
-                        }
-                    }
+            ScreenHeader(title = "Account", onBack = onBack)
 
-                    HorizontalDivider(color = Color(0xFFF2F4F7))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Phone,
-                            contentDescription = "Phone",
-                            tint = Color(0xFF667085),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                "Phone Number",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF667085)
-                            )
-                            Text(
-                                "+91 98765 43210 (Stub)",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF101828)
-                            )
-                        }
-                        Badge(containerColor = Color(0xFFF2F4F7)) {
-                            Text("Stub user", color = Color(0xFF475467), fontSize = 11.sp)
-                        }
-                    }
-                }
-            }
-
-            // 2. Preferences Section
-            SectionHeader(title = "PREFERENCES")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications",
-                            tint = Color(0xFF1F8A70),
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                "Push Notifications",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF101828)
-                            )
-                            Text(
-                                "Budget alerts & daily spend summaries",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF667085)
-                            )
-                        }
-                        Switch(
-                            checked = notificationsEnabled,
-                            onCheckedChange = {
-                                notificationsEnabled = it
-                                sharedPrefs.edit().putBoolean("pref_notifications_enabled", it).apply()
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = Color(0xFF1F8A70)
-                            )
-                        )
-                    }
-
-                    HorizontalDivider(color = Color(0xFFF2F4F7))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "Theme",
-                            tint = Color(0xFF667085),
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                "Theme",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF101828)
-                            )
-                            Text(
-                                "System Default (Non-functional stub)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF667085)
-                            )
-                        }
-                        Badge(containerColor = Color(0xFFFFF4E5)) {
-                            Text("Stub", color = Color(0xFFB54708), fontSize = 11.sp)
-                        }
-                    }
-                }
-            }
-
-            // 3. Privacy & Data Section (Compliance)
-            SectionHeader(title = "PRIVACY & DATA (PLAY STORE COMPLIANCE)")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column {
-                    ActionRowItem(
-                        icon = Icons.Default.Lock,
-                        iconTint = Color(0xFF1F8A70),
-                        title = "Privacy Policy",
-                        subtitle = "Review how your SMS & transaction data is handled",
-                        onClick = { openUrl(PRIVACY_POLICY_URL) }
-                    )
-
-                    HorizontalDivider(color = Color(0xFFF2F4F7))
-
-                    ActionRowItem(
-                        icon = Icons.Default.Info,
-                        iconTint = Color(0xFF1F8A70),
-                        title = "Terms of Service",
-                        subtitle = "SmartSpend terms and conditions",
-                        onClick = { openUrl(TERMS_OF_SERVICE_URL) }
-                    )
-
-                    HorizontalDivider(color = Color(0xFFF2F4F7))
-
-                    ActionRowItem(
-                        icon = Icons.Default.Share,
-                        iconTint = Color(0xFF98A2B3),
-                        title = "Export my data (CSV)",
-                        subtitle = "Download all personal transactions as CSV",
-                        badge = "Missing backend endpoint",
-                        badgeColor = Color(0xFFFEE2E2),
-                        badgeTextColor = Color(0xFF991B1B),
-                        enabled = false,
-                        onClick = {
-                            Toast.makeText(
-                                context,
-                                "CSV Export endpoint is missing on backend. Flagged for review.",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    )
-
-                    HorizontalDivider(color = Color(0xFFF2F4F7))
-
-                    ActionRowItem(
-                        icon = Icons.Default.Delete,
-                        iconTint = Color(0xFFDC2626),
-                        title = "Delete my account",
-                        titleColor = Color(0xFFDC2626),
-                        subtitle = "Permanently purge all data from SmartSpend servers",
-                        onClick = { showDeleteDialog = true }
-                    )
-                }
-            }
-
-            // 4. Support Section
-            SectionHeader(title = "SUPPORT")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column {
-                    ActionRowItem(
-                        icon = Icons.Default.Info,
-                        iconTint = Color(0xFF1F8A70),
-                        title = "Help & FAQ",
-                        subtitle = "Frequently asked questions and guides",
-                        onClick = { openUrl(SUPPORT_FAQ_URL) }
-                    )
-
-                    HorizontalDivider(color = Color(0xFFF2F4F7))
-
-                    ActionRowItem(
-                        icon = Icons.Default.Email,
-                        iconTint = Color(0xFF1F8A70),
-                        title = "Contact Support",
-                        subtitle = SUPPORT_EMAIL,
-                        onClick = { openMailto(SUPPORT_EMAIL) }
-                    )
-                }
-            }
-
-            // 5. About Section
-            SectionHeader(title = "ABOUT")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+            // ── Profile ──────────────────────────────────────────────────
+            Block(modifier = Modifier.padding(horizontal = ScreenGutter), padding = PaddingValues(0.dp)) {
+                Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "SmartSpend",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF101828)
+                            displayName.first().uppercase(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Black
                         )
-                        Spacer(Modifier.weight(1f))
-                        Badge(containerColor = Color(0xFFDCFCE7)) {
-                            Text(
-                                "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                                color = Color(0xFF166534),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(displayName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (email != null) {
+                            Text(email, style = MaterialTheme.typography.bodySmall, color = SmartSpendTheme.colors.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
-                    Text(
-                        "SMS Auto-Sync & Expense Analytics for Android",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF667085)
-                    )
-                    Text(
-                        "All SMS parsing happens locally on your device.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF1F8A70),
-                        fontWeight = FontWeight.Medium
-                    )
                 }
-            }
-
-            // 6. Logout Button
-            OutlinedButton(
-                onClick = { handleLogout() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(
-                    "Log Out",
-                    color = Color(0xFFDC2626),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                RowDivider()
+                SettingRow(
+                    icon = Icons.Default.Phone,
+                    title = phone ?: "Phone number",
+                    subtitle = when {
+                        phone == null -> "Added when you sign in with your phone"
+                        phoneVerified -> "Verified"
+                        else -> "Not verified yet"
+                    },
+                    trailing = {
+                        if (phone != null && phoneVerified) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = "Verified", tint = SmartSpendTheme.colors.positive, modifier = Modifier.size(22.dp))
+                        }
+                    }
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            // ── Preferences ──────────────────────────────────────────────
+            Group("Preferences") {
+                SettingRow(
+                    icon = Icons.Default.Notifications,
+                    title = "Insight notifications",
+                    subtitle = "Budget alerts and spending nudges",
+                    onClick = {
+                        notifications = !notifications
+                        prefs.edit().putBoolean(PREF_NOTIFICATIONS_ENABLED, notifications).apply()
+                    },
+                    trailing = {
+                        Switch(
+                            checked = notifications,
+                            onCheckedChange = {
+                                notifications = it
+                                prefs.edit().putBoolean(PREF_NOTIFICATIONS_ENABLED, it).apply()
+                            }
+                        )
+                    }
+                )
+                RowDivider()
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconChip(SmartSpendIcons.Theme)
+                        Spacer(Modifier.width(14.dp))
+                        Text("Theme", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    SegmentedControl(
+                        options = ThemeMode.entries.map { it.label },
+                        selectedIndex = ThemePreference.mode.ordinal,
+                        onSelect = { ThemePreference.set(context, ThemeMode.entries[it]) }
+                    )
+                }
+                RowDivider()
+                SettingRow(
+                    icon = Icons.Default.Refresh,
+                    title = if (syncing) "Syncing SMS…" else "Sync existing SMS",
+                    subtitle = "Import bank messages already in your inbox",
+                    onClick = if (syncing) null else ({ syncInbox() })
+                )
+            }
+
+            // ── Help ─────────────────────────────────────────────────────
+            Group("Help & more") {
+                SettingRow(SmartSpendIcons.Help, "Help & FAQ", onClick = { open(SUPPORT_FAQ_URL) }, chevron = true)
+                RowDivider()
+                SettingRow(Icons.Default.Email, "Contact support", subtitle = SUPPORT_EMAIL, onClick = {
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$SUPPORT_EMAIL")).putExtra(Intent.EXTRA_SUBJECT, "SmartSpend support"))
+                    } catch (_: ActivityNotFoundException) {
+                        toast("No email app found")
+                    }
+                }, chevron = true)
+                RowDivider()
+                SettingRow(Icons.Default.Star, "Rate us", subtitle = "Tell others what you think", onClick = { rateApp() }, chevron = true)
+                RowDivider()
+                SettingRow(SmartSpendIcons.Article, "Blog", subtitle = "Money tips and product news", onClick = { open(BLOG_URL) }, chevron = true)
+            }
+
+            // ── Legal ────────────────────────────────────────────────────
+            Group("Privacy & legal") {
+                SettingRow(Icons.Default.Lock, "Privacy policy", onClick = { open(PRIVACY_POLICY_URL) }, chevron = true)
+                RowDivider()
+                SettingRow(Icons.Default.Info, "Terms of service", onClick = { open(TERMS_OF_SERVICE_URL) }, chevron = true)
+                RowDivider()
+                SettingRow(
+                    Icons.Default.Delete,
+                    "Delete account",
+                    subtitle = "Erase your account and all its data",
+                    tint = SmartSpendTheme.colors.negative,
+                    onClick = { showDelete = true }
+                )
+            }
+
+            Block(modifier = Modifier.padding(horizontal = ScreenGutter), padding = PaddingValues(0.dp)) {
+                SettingRow(
+                    Icons.AutoMirrored.Filled.ExitToApp,
+                    "Log out",
+                    tint = SmartSpendTheme.colors.negative,
+                    onClick = { confirmLogout = true }
+                )
+            }
+
+            Text(
+                "SmartSpend ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\nSMS are read on your phone; only the amount, merchant and date are sent.",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = ScreenGutter + 8.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = SmartSpendTheme.colors.inkMuted,
+                textAlign = TextAlign.Center
+            )
         }
     }
 
-    if (showDeleteDialog) {
+    if (confirmLogout) {
+        AlertDialog(
+            onDismissRequest = { confirmLogout = false },
+            title = { Text("Log out?") },
+            text = { Text("Auto-sync pauses until you sign in again. Your data stays in your account.") },
+            confirmButton = { TextButton(onClick = { confirmLogout = false; onLogout() }) { Text("Log out") } },
+            dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text("Cancel") } }
+        )
+    }
+
+    if (showDelete) {
         DeleteAccountDialog(
-            jwtToken = jwtToken,
-            onDismiss = { showDeleteDialog = false },
+            jwtToken = prefs.getString("jwt_token", null),
+            onDismiss = { showDelete = false },
             onDeleted = {
-                showDeleteDialog = false
-                sharedPrefs.edit().clear().apply()
-                try {
-                    FirebaseAuth.getInstance().signOut()
-                } catch (_: Exception) {}
-                Toast.makeText(context, "Account permanently deleted.", Toast.LENGTH_LONG).show()
+                showDelete = false
+                Toast.makeText(context, "Your account has been deleted.", Toast.LENGTH_LONG).show()
                 onLogout()
             }
         )
@@ -504,80 +319,57 @@ fun AccountScreen(
 }
 
 @Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelSmall,
-        fontWeight = FontWeight.Bold,
-        color = Color(0xFF667085),
-        letterSpacing = 1.sp,
-        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
-    )
+private fun Group(title: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Eyebrow(title, modifier = Modifier.padding(start = ScreenGutter + 4.dp, top = 8.dp))
+        Block(modifier = Modifier.padding(horizontal = ScreenGutter), padding = PaddingValues(0.dp)) { content() }
+    }
 }
 
 @Composable
-private fun ActionRowItem(
+private fun RowDivider() = HorizontalDivider(Modifier.padding(start = 66.dp), color = SmartSpendTheme.colors.hairline)
+
+@Composable
+private fun IconChip(icon: ImageVector, tint: Color = MaterialTheme.colorScheme.primary) {
+    Box(
+        Modifier
+            .size(36.dp)
+            .clip(MaterialTheme.shapes.small)
+            .background(tint.copy(alpha = 0.12f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun SettingRow(
     icon: ImageVector,
-    iconTint: Color,
     title: String,
-    titleColor: Color = Color(0xFF101828),
-    subtitle: String,
-    badge: String? = null,
-    badgeColor: Color = Color(0xFFF2F4F7),
-    badgeTextColor: Color = Color(0xFF475467),
-    enabled: Boolean = true,
-    onClick: () -> Unit
+    subtitle: String? = null,
+    tint: Color? = null,
+    onClick: (() -> Unit)? = null,
+    chevron: Boolean = false,
+    trailing: @Composable () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(16.dp),
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(iconTint.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = iconTint,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        IconChip(icon, tint ?: MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (enabled) titleColor else Color(0xFF98A2B3)
-                )
-                if (badge != null) {
-                    Spacer(Modifier.width(8.dp))
-                    Badge(containerColor = badgeColor) {
-                        Text(badge, color = badgeTextColor, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-                    }
-                }
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = tint ?: MaterialTheme.colorScheme.onSurface)
+            if (subtitle != null) {
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = SmartSpendTheme.colors.inkMuted)
             }
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF667085)
-            )
         }
-        if (enabled) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Navigate",
-                tint = Color(0xFF98A2B3),
-                modifier = Modifier.size(20.dp)
-            )
+        trailing()
+        if (chevron) {
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = SmartSpendTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
         }
     }
 }

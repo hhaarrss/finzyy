@@ -1,18 +1,32 @@
 package com.smartspend.app.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.smartspend.app.ui.account.AccountScreen
 import com.smartspend.app.ui.addtransaction.AddTransactionScreen
 import com.smartspend.app.ui.budget.BudgetScreen
 import com.smartspend.app.ui.categories.CategoriesScreen
+import com.smartspend.app.ui.categories.CategoryDetailScreen
 import com.smartspend.app.ui.home.HomeScreen
+import com.smartspend.app.ui.insights.InsightsScreen
 import com.smartspend.app.ui.permission.SmsConsentScreen
+import com.smartspend.app.ui.search.SearchScreen
 import com.smartspend.app.ui.trends.TrendsScreen
 
 /**
@@ -20,79 +34,133 @@ import com.smartspend.app.ui.trends.TrendsScreen
  * destination twice, leaving a duplicate on the back stack that the user has to dismiss
  * two times. Dropping events from a non-resumed entry is the standard guard.
  */
-private fun NavHostController.navigateTo(destination: Destination) {
+private fun NavHostController.navigateTo(route: String) {
     val isResumed = currentBackStackEntry?.lifecycle?.currentState
         ?.isAtLeast(Lifecycle.State.RESUMED) == true
     if (!isResumed) return
-    navigate(destination.route) { launchSingleTop = true }
+    navigate(route) { launchSingleTop = true }
 }
 
+private fun NavHostController.back() {
+    val isResumed = currentBackStackEntry?.lifecycle?.currentState
+        ?.isAtLeast(Lifecycle.State.RESUMED) == true
+    if (isResumed) navigateUp()
+}
+
+/**
+ * Home is the hub; every other screen is one level (category detail two) below it. Screens
+ * slide in from the right on push and back out on pop, so depth reads spatially.
+ */
 @Composable
 fun SmartSpendNavHost(
+    onSignedOut: () -> Unit,
     modifier: Modifier = Modifier,
+    promptSmsConsent: Boolean = false,
     navController: NavHostController = rememberNavController(),
     startDestination: Destination = Destination.Home
 ) {
+    val slide = tween<androidx.compose.ui.unit.IntOffset>(280)
+    var consentShown by rememberSaveable { mutableStateOf(false) }
     NavHost(
         navController = navController,
         startDestination = startDestination.route,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, slide) + fadeIn(tween(200)) },
+        exitTransition = { fadeOut(tween(200)) },
+        popEnterTransition = { fadeIn(tween(200)) },
+        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, slide) + fadeOut(tween(200)) }
     ) {
         composable(Destination.Home.route) {
+            // First sign-in: open the SMS disclosure once, on top of Home so back lands there.
+            LaunchedEffect(Unit) {
+                if (promptSmsConsent && !consentShown) {
+                    consentShown = true
+                    navController.navigate(Destination.SmsConsent.route)
+                }
+            }
             HomeScreen(
-                onAddTransaction = { navController.navigateTo(Destination.AddTransaction) },
-                onBudget = { navController.navigateTo(Destination.Budget) },
-                onCategories = { navController.navigateTo(Destination.Categories) },
-                onTrends = { navController.navigateTo(Destination.Trends) },
-                onAccount = { navController.navigateTo(Destination.Account) },
-                onEnableAutoSync = { navController.navigateTo(Destination.SmsConsent) }
+                onSearch = { review -> navController.navigateTo(Destination.search(review)) },
+                onAccount = { navController.navigateTo(Destination.Account.route) },
+                onAddTransaction = { navController.navigateTo(Destination.AddTransaction.route) },
+                onBudget = { navController.navigateTo(Destination.Budget.route) },
+                onTrends = { navController.navigateTo(Destination.Trends.route) },
+                onCategories = { navController.navigateTo(Destination.Categories.route) },
+                onCategory = { navController.navigateTo(Destination.category(it)) },
+                onInsights = { navController.navigateTo(Destination.Insights.route) },
+                onEnableAutoSync = { navController.navigateTo(Destination.SmsConsent.route) }
+            )
+        }
+
+        composable(
+            Destination.Search.route,
+            arguments = listOf(navArgument("review") { type = NavType.BoolType; defaultValue = false })
+        ) { entry ->
+            SearchScreen(
+                onBack = { navController.back() },
+                startWithReview = entry.arguments?.getBoolean("review") == true
             )
         }
 
         composable(Destination.AddTransaction.route) {
-            AddTransactionScreen(onBack = { navController.navigateUp() })
+            AddTransactionScreen(onBack = { navController.back() })
         }
 
         composable(Destination.Budget.route) {
-            BudgetScreen(onBack = { navController.navigateUp() })
-        }
-
-        composable(Destination.Categories.route) {
-            CategoriesScreen(onBack = { navController.navigateUp() })
+            BudgetScreen(onBack = { navController.back() })
         }
 
         composable(Destination.Trends.route) {
             TrendsScreen(
-                onBack = { navController.navigateUp() },
-                onBudget = { navController.navigateTo(Destination.Budget) }
+                onBack = { navController.back() },
+                onBudget = { navController.navigateTo(Destination.Budget.route) }
+            )
+        }
+
+        composable(Destination.Categories.route) {
+            CategoriesScreen(
+                onBack = { navController.back() },
+                onBudget = { navController.navigateTo(Destination.Budget.route) },
+                onCategory = { navController.navigateTo(Destination.category(it)) }
+            )
+        }
+
+        composable(
+            Destination.CategoryDetail.route,
+            arguments = listOf(navArgument("name") { type = NavType.StringType })
+        ) { entry ->
+            CategoryDetailScreen(
+                category = entry.arguments?.getString("name").orEmpty(),
+                onBack = { navController.back() }
+            )
+        }
+
+        composable(Destination.Insights.route) {
+            InsightsScreen(
+                onBack = { navController.back() },
+                onBudget = { navController.navigateTo(Destination.Budget.route) },
+                onCategory = { navController.navigateTo(Destination.category(it)) }
             )
         }
 
         composable(Destination.Account.route) {
             AccountScreen(
-                onBack = { navController.navigateUp() },
-                onLogout = {
-                    // Nothing from the signed-in session may stay reachable via back.
-                    // This is where the auth graph attaches once real login exists.
-                    navController.navigate(Destination.Home.route) {
-                        popUpTo(Destination.Home.route) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
+                onBack = { navController.back() },
+                onLogout = onSignedOut,
+                onEnableAutoSync = { navController.navigateTo(Destination.SmsConsent.route) }
             )
         }
 
         composable(Destination.SmsConsent.route) {
-            // Every outcome lands back on Home with the consent screen dropped from the
-            // back stack — pressing back from Home must not re-enter the disclosure flow.
-            val returnHome = {
-                navController.popBackStack(Destination.Home.route, inclusive = false)
+            // Every outcome drops the consent screen from the back stack — pressing back
+            // from the previous screen must not re-enter the disclosure flow.
+            val done = {
+                navController.popBackStack()
                 Unit
             }
             SmsConsentScreen(
-                onBack = { navController.navigateUp() },
-                onAutoSyncReady = returnHome,
-                onManualEntry = returnHome
+                onBack = { navController.back() },
+                onAutoSyncReady = done,
+                onManualEntry = done
             )
         }
     }
