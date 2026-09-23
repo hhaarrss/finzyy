@@ -13,4 +13,14 @@
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
     </style>
+
+    <!-- CategorizeActivity: no window of its own, so only the bottom sheet shows over whatever
+         the user was doing when they tapped the notification action. -->
+    <style name="Theme.SmartSpend.Overlay" parent="Theme.SmartSpend">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
 </resources>

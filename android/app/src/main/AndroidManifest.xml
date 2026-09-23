@@ -48,6 +48,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- "Categorize" from a transaction notification: a bare category sheet, not the app. -->
+        <activity
+            android:name=".notifications.CategorizeActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance"
+            android:theme="@style/Theme.SmartSpend.Overlay" />
     </application>
 
 </manifest>

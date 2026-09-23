@@ -1,14 +1,11 @@
 package com.smartspend.app
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.provider.Telephony
 import android.util.Log
-import androidx.core.app.NotificationCompat
+import com.smartspend.app.notifications.TransactionNotifier
 import com.smartspend.app.sms.BankSenderWhitelist
 import com.smartspend.app.sms.SmsTransactionParser
 import kotlinx.coroutines.sync.Mutex
@@ -210,8 +207,7 @@ class SmsReceiver : BroadcastReceiver() {
                                     commit()
                                 }
                                 if (notify) {
-                                    val tx = body.transaction
-                                    showSyncNotification(context, tx?.amount ?: payload.amount, tx?.merchant ?: payload.merchant_raw, tx?.category)
+                                    TransactionNotifier.show(context, body.transaction, payload.amount, payload.merchant_raw)
                                 }
                             } else {
                                 Log.d(TAG, "SMS transaction was already on the server")
@@ -247,40 +243,6 @@ class SmsReceiver : BroadcastReceiver() {
                     remaining.length() == 0
                 }
             }
-
-        fun showSyncNotification(context: Context, amount: Double?, merchant: String?, category: String?) {
-            try {
-                val channelId = "smartspend_sms_sync"
-                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val channel = NotificationChannel(
-                        channelId,
-                        "SMS Auto-Sync Notifications",
-                        NotificationManager.IMPORTANCE_HIGH
-                    ).apply {
-                        description = "Notifies when a payment SMS is auto-synced to SmartSpend"
-                    }
-                    notificationManager.createNotificationChannel(channel)
-                }
-
-                val amtStr = if (amount != null) "₹%.2f".format(amount) else "Payment"
-                val merchStr = merchant ?: "Merchant"
-                val catStr = category ?: "General"
-
-                val notification = NotificationCompat.Builder(context, channelId)
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setContentTitle("💳 Payment Auto-Synced!")
-                    .setContentText("Synced $amtStr to $merchStr ($catStr)")
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setAutoCancel(true)
-                    .build()
-
-                notificationManager.notify(System.nanoTime().toInt(), notification)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to show notification", e)
-            }
-        }
 
         private fun optNullableString(obj: JSONObject, key: String): String? {
             if (!obj.has(key) || obj.isNull(key)) {
