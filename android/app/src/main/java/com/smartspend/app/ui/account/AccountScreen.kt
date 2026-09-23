@@ -43,6 +43,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +56,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.smartspend.app.ui.permission.notificationsAllowed
+import com.smartspend.app.ui.permission.openAppNotificationSettings
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -110,6 +116,23 @@ fun AccountScreen(
     val phoneVerified = phone != null
 
     var notifications by remember { mutableStateOf(prefs.getBoolean(PREF_NOTIFICATIONS_ENABLED, true)) }
+    // Re-read on resume: the user may have just come back from system settings.
+    var systemAllows by remember { mutableStateOf(notificationsAllowed(context)) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) systemAllows = notificationsAllowed(context)
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    // Turning the switch on while Android blocks the app would do nothing, so send the user to
+    // the one place that can unblock it.
+    fun setNotifications(on: Boolean) {
+        notifications = on
+        prefs.edit().putBoolean(PREF_NOTIFICATIONS_ENABLED, on).apply()
+        if (on && !systemAllows) openAppNotificationSettings(context)
+    }
     var syncing by remember { mutableStateOf(false) }
     var confirmLogout by remember { mutableStateOf(false) }
     var showDelete by remember { mutableStateOf(false) }
@@ -223,18 +246,14 @@ fun AccountScreen(
                 SettingRow(
                     icon = Icons.Default.Notifications,
                     title = "Insight notifications",
-                    subtitle = "Budget alerts and spending nudges",
+                    subtitle = if (notifications && !systemAllows) "Blocked by Android — tap to allow" else "Budget alerts and spending nudges",
                     onClick = {
-                        notifications = !notifications
-                        prefs.edit().putBoolean(PREF_NOTIFICATIONS_ENABLED, notifications).apply()
+                        if (notifications && !systemAllows) openAppNotificationSettings(context) else setNotifications(!notifications)
                     },
                     trailing = {
                         Switch(
-                            checked = notifications,
-                            onCheckedChange = {
-                                notifications = it
-                                prefs.edit().putBoolean(PREF_NOTIFICATIONS_ENABLED, it).apply()
-                            }
+                            checked = notifications && systemAllows,
+                            onCheckedChange = { setNotifications(it) }
                         )
                     }
                 )

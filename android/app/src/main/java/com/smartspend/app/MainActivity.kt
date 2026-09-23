@@ -1,8 +1,11 @@
 package com.smartspend.app
 
 import android.content.Context
+import android.Manifest
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -20,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.core.content.ContextCompat
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -61,6 +65,11 @@ class MainActivity : ComponentActivity() {
             showSignIn()
         }
     }
+
+    /** Result is read where it matters (notificationsAllowed); nothing to do here. */
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
 
     /** Google account picker result -> Firebase credential -> SmartSpend session. */
     private val googleSignInLauncher = registerForActivityResult(
@@ -321,6 +330,15 @@ class MainActivity : ComponentActivity() {
         val promptConsent = !smsPermissionsGranted(this) &&
             !sharedPrefs.getBoolean(PREF_CONSENT_PROMPTED, false)
         if (promptConsent) sharedPrefs.edit().putBoolean(PREF_CONSENT_PROMPTED, true).apply()
+
+        // Android 13+ drops every notification (sync alerts, budget pushes) until the app holds
+        // POST_NOTIFICATIONS. Not stacked on the SMS consent screen — that launch asks for SMS;
+        // the next one asks for this. The system itself stops showing it after two denials.
+        if (!promptConsent && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         setContent {
             val dark = ThemePreference.mode.isDark()
