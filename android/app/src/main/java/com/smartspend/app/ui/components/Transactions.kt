@@ -69,6 +69,8 @@ data class TxView(
     val isCredit: Boolean,
     val category: String,
     val merchant: String?,
+    /** What the bank sent. Corrections are keyed on this, never on the displayed [merchant]. */
+    val merchantRaw: String? = null,
     val date: String?,
     val fromSms: Boolean?,
     val needsReview: Boolean,
@@ -81,12 +83,12 @@ data class TxView(
 
 fun TransactionData.toView() = TxView(
     id = id, amount = amount, isCredit = isCredit, category = category, merchant = merchant,
-    date = date, fromSms = isFromSms, needsReview = needsReview, bank = bank, last4 = account_last4
+    merchantRaw = merchant_raw, date = date, fromSms = isFromSms, needsReview = needsReview, bank = bank, last4 = account_last4
 )
 
 fun HomeRecentTransactionData.toView() = TxView(
     id = id, amount = amount, isCredit = type.equals("credit", ignoreCase = true), category = category,
-    merchant = merchant, date = date, fromSms = null,
+    merchant = merchant, merchantRaw = merchant_raw, date = date, fromSms = null,
     needsReview = review_status?.contains("needs_review", ignoreCase = true) == true
 )
 
@@ -245,7 +247,7 @@ fun TransactionSheet(
                     "", tx.id,
                     RecategorizePayload(
                         transaction_id = tx.id,
-                        merchant_raw = tx.merchant?.takeIf { it.isNotBlank() } ?: tx.category,
+                        merchant_raw = (tx.merchantRaw ?: tx.merchant)?.takeIf { it.isNotBlank() } ?: tx.category,
                         new_category = newCategory
                     )
                 ).isSuccessful

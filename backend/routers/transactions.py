@@ -39,6 +39,7 @@ from utils.transfer_detector import detect_p2p_transfer
 from utils.notifications import check_budget_and_alert
 from categorizer.transaction_categorizer import (
     categorize_transaction,
+    match_merchant_db,
     merchant_key,
     normalize_category_name,
 )
@@ -76,12 +77,12 @@ async def find_user_correction(
     return result.scalars().first()
 
 
-def categorize_parsed_sms(merchant_raw: Optional[str]) -> dict:
+def categorize_parsed_sms(merchant_raw: Optional[str], transaction_type: Optional[str] = None) -> dict:
     """
     Categorize an on-device parsed transaction using its merchant value.
     Fallback/no-confidence matches are routed to Needs Review with review_status='needs_review'.
     """
-    enriched = categorize_transaction(merchant_raw)
+    enriched = categorize_transaction(merchant_raw, transaction_type)
 
     category = enriched.get("category") or "Needs Review"
     confidence = enriched.get("confidence") or "none"
@@ -95,7 +96,8 @@ def categorize_parsed_sms(merchant_raw: Optional[str]) -> dict:
     return {
         "category": category,
         "subcategory": enriched.get("subcategory"),
-        "merchant": enriched.get("merchant") or merchant_raw or "Unknown Merchant",
+        "merchant": merchant_raw or "Unknown Merchant",
+        "merchant_display": enriched.get("merchant_display"),
         "source": source,
         "confidence": confidence,
         "review_status": review_status,
@@ -269,8 +271,9 @@ async def get_monthly_category_summary(
 
         merchant_totals: Dict[str, float] = {}
         for t in cat_txs:
-            if t.merchant and t.merchant.strip():
-                m_name = t.merchant.strip()
+            shown = t.merchant_display or t.merchant
+            if shown and shown.strip():
+                m_name = shown.strip()
                 merchant_totals[m_name] = merchant_totals.get(m_name, 0.0) + float(t.amount)
 
         top_merchant = max(merchant_totals.items(), key=lambda x: x[1])[0] if merchant_totals else "N/A"
@@ -527,15 +530,19 @@ async def ingest_sms(
             # This SMS's own merchant text, not the stored display name (which may carry
             # the order number of the transaction that was corrected).
             "merchant": sms_in.merchant_raw or correction.display_name or "Unknown Merchant",
+            "merchant_display": (match_merchant_db(sms_in.merchant_raw) or {}).get("merchant_display")
+            if sms_in.merchant_raw else None,
             "source": "user_correction",
             "confidence": "high",
             "review_status": "reviewed",
         }
     else:
         # Layers 2-5: categorization engine
-        cat_info = categorize_parsed_sms(sms_in.merchant_raw)
+        cat_info = categorize_parsed_sms(sms_in.merchant_raw, sms_in.transaction_type)
     category = cat_info["category"]
-    merchant = cat_info["merchant"] or sms_in.merchant_raw or "Unknown Merchant"
+    # Always the text the bank sent; a recognised brand goes in merchant_display instead.
+    merchant = sms_in.merchant_raw or "Unknown Merchant"
+    merchant_display = cat_info.get("merchant_display")
     subcategory = cat_info.get("subcategory")
     source = cat_info.get("source") or "sms"
     confidence = cat_info.get("confidence") or "medium"
@@ -571,7 +578,7 @@ async def ingest_sms(
     if correction is not None and category.strip().lower() != "transfer":
         is_tx_transfer, recipient = False, None
     else:
-        is_tx_transfer, recipient = detect_p2p_transfer(merchant, category=category)
+        is_tx_transfer, recipient = detect_p2p_transfer(merchant_display or merchant, category=category)
     if is_tx_transfer:
         category = "Transfer"
 
@@ -590,6 +597,7 @@ async def ingest_sms(
         category=normalize_category_name(category),
         subcategory=subcategory,
         merchant=merchant,
+        merchant_display=merchant_display,
         upi_ref=sms_in.upi_ref,
         bank=sms_in.bank_sender_id,
         account_last4=sms_in.account_last4,
@@ -645,18 +653,18 @@ async def list_known_merchants(
 
     tx_res = await db.execute(
         select(
-            Transaction.merchant,
+            func.coalesce(Transaction.merchant_display, Transaction.merchant),
             Transaction.category,
             func.count(Transaction.id),
         )
         .where(
             and_(
                 Transaction.user_id == current_user.id,
-                Transaction.merchant.is_not(None),
-                Transaction.merchant != "",
+                func.coalesce(Transaction.merchant_display, Transaction.merchant).is_not(None),
+                func.coalesce(Transaction.merchant_display, Transaction.merchant) != "",
             )
         )
-        .group_by(Transaction.merchant, Transaction.category)
+        .group_by(func.coalesce(Transaction.merchant_display, Transaction.merchant), Transaction.category)
     )
     for merchant, category, count in tx_res.all():
         display = (merchant or "").strip()
@@ -828,6 +836,7 @@ async def update_transaction_fields(
         transaction.review_status = body.review_status
     if body.merchant is not None:
         transaction.merchant = body.merchant
+        transaction.merchant_display = None  # the user's wording replaces any brand match
 
     await db.commit()
     await db.refresh(transaction)
@@ -864,6 +873,7 @@ async def edit_transaction(
         transaction.category = normalize_category_name(updates.category)
     if updates.merchant is not None:
         transaction.merchant = updates.merchant
+        transaction.merchant_display = None  # the user's wording replaces any brand match
     if updates.amount is not None:
         transaction.amount = updates.amount
     if updates.date is not None:

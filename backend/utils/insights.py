@@ -69,9 +69,10 @@ async def detect_recurring(user_id: int, db: AsyncSession) -> List[Dict[str, Any
     # Group transactions by merchant keyword (case-insensitive)
     merchant_groups: Dict[str, List[Transaction]] = {}
     for tx in txs:
-        if not tx.merchant:
+        shown = tx.merchant_display or tx.merchant
+        if not shown:
             continue
-        m_lower = tx.merchant.lower().strip()
+        m_lower = shown.lower().strip()
         if m_lower not in merchant_groups:
             merchant_groups[m_lower] = []
         merchant_groups[m_lower].append(tx)

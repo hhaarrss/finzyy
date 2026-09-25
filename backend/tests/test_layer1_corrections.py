@@ -91,7 +91,7 @@ class TestLayer1Corrections(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second.source, "user_correction")
         self.assertEqual(second.confidence, "high")
         self.assertEqual(second.review_status, "reviewed")  # no manual review needed
-        self.assertEqual(second.merchant, "SWIGGY*ORDER9931")  # the new message's own text
+        self.assertEqual(second.merchant_raw, "SWIGGY*ORDER9931")  # the new message's own text, stored as-is
 
     async def test_correction_overrides_a_different_automatic_category(self):
         first = await self._ingest(self.user_a, "SWIGGY*ORDER8827")

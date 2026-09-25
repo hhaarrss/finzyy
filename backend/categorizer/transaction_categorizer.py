@@ -18,6 +18,7 @@ import json
 import os
 import re
 from datetime import datetime
+from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 # Load data files path relative to this file
@@ -25,17 +26,38 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 MERCHANTS_PATH = os.path.join(DATA_DIR, "merchants.json")
 MCC_PATH = os.path.join(DATA_DIR, "mcc_codes.json")
+DEBIT_KEYWORDS_PATH = os.path.join(DATA_DIR, "debit_keywords.json")
 LEGACY_CORRECTIONS_PATH = os.path.join(DATA_DIR, "user_corrections.json")
 
 MERCHANTS: List[Dict[str, Any]] = []
 MCC_CODES: List[Dict[str, Any]] = []
+# (compiled whole-word pattern, keyword, category, rule order) - built from debit_keywords.json
+DEBIT_KEYWORD_RULES: List[tuple] = []
+DEBIT_KEYWORD_CONFIDENCE = "medium"
+
+
+def compile_keyword_rules(rules: List[Dict[str, Any]]) -> List[tuple]:
+    """
+    Turn the JSON rule list into whole-word patterns. A keyword matches only as complete
+    words ("SALOON" in "MC SALOON", not "PROVISION" for "VI"); multi-word keywords match
+    across any spacing or punctuation ("general store" also matches "GENERAL-STORE").
+    """
+    compiled: List[tuple] = []
+    for order, rule in enumerate(rules):
+        for keyword in rule.get("keywords", []):
+            words = [re.escape(w) for w in keyword.upper().split()]
+            if not words:
+                continue
+            pattern = re.compile(r"(?<![A-Z0-9])" + r"\s+".join(words) + r"(?![A-Z0-9])")
+            compiled.append((pattern, keyword, rule["category"], order))
+    return compiled
 
 
 def load_data() -> None:
     """
     Load the static merchant and MCC data files.
     """
-    global MERCHANTS, MCC_CODES
+    global MERCHANTS, MCC_CODES, DEBIT_KEYWORD_RULES, DEBIT_KEYWORD_CONFIDENCE
     try:
         # Remove the old shared corrections file if an older deployment left it
         # on disk. It was never user-scoped and is no longer a data source.
@@ -52,6 +74,13 @@ def load_data() -> None:
             with open(MCC_PATH, "r", encoding="utf-8") as f:
                 MCC_CODES = json.load(f)
                 print(f"[OK] Loaded {len(MCC_CODES)} MCC codes")
+
+        if os.path.exists(DEBIT_KEYWORDS_PATH):
+            with open(DEBIT_KEYWORDS_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            DEBIT_KEYWORD_CONFIDENCE = data.get("confidence", "medium")
+            DEBIT_KEYWORD_RULES = compile_keyword_rules(data.get("rules", []))
+            print(f"[OK] Loaded {len(DEBIT_KEYWORD_RULES)} debit keywords")
 
     except Exception as err:
         print(f"Error loading data files: {err}")
@@ -187,6 +216,7 @@ def parse_sms(sms: str) -> Optional[Dict[str, Any]]:
 # Priority: User DB mapping (looked up by the API layer, see merchant_key) -> Merchant DB -> MCC Codes -> Miscellaneous
 # ─────────────────────────────────────────────
 
+@lru_cache(maxsize=8192)
 def normalize_name(name: str) -> str:
     """
     Normalize merchant name for comparison.
@@ -263,63 +293,109 @@ def merchant_key(name: Optional[str]) -> str:
     return normalize_name(text)
 
 
-def fuzzy_score(query: str, target: str) -> int:
+# Containment ("SWIGGY" inside "SWIGGY ORDER 9931") only counts when the contained text is
+# at least this many characters long (spaces ignored) AND lines up with whole words.
+# 3 keeps real short brands (OLA, KFC, SBI, LIC); it drops 2-letter tokens such as "VI",
+# which used to match inside "PROVISION" and return Telecom at high confidence. A 2-letter
+# name still matches when it is the entire merchant text (equality is not containment).
+MIN_CONTAINMENT_CHARS = 3
+
+
+@lru_cache(maxsize=8192)
+def _word_form(name: str) -> str:
+    """Like normalize_name, but separators become spaces so word boundaries survive."""
+    n = name.upper()
+    n = re.sub(r"[\u2019']", "", n)  # DOMINO'S -> DOMINOS
+    n = re.sub(r"\bPVT\.?\s*LTD\.?\b", "", n)
+    n = re.sub(r"\bLIMITED\b", "", n)
+    n = re.sub(r"\bPRIVATE\b", "", n)
+    n = re.sub(r"\bINDIA\b", "", n)
+    n = re.sub(r"\bTECHNOLOGIES\b", "", n)
+    n = re.sub(r"[^A-Z0-9]+", " ", n)
+    return n.strip()
+
+
+def _has_whole_words(short: str, long: str) -> bool:
+    return re.search(r"(?<![A-Z0-9])" + re.escape(short) + r"(?![A-Z0-9])", long) is not None
+
+
+def match_strength(query: str, target: str) -> tuple:
     """
-    Fuzzy match: checks if query is contained in target or vice versa.
-    Returns a score 0-100.
+    Score 0-100 and how it was reached:
+      "exact"          - same text once normalised
+      "target_in_text" - the target (e.g. a brand) appears as whole words inside the query
+      "text_in_target" - the query is only a fragment of the target ("CAFE" in "CAFE COFFEE DAY")
+      "overlap"        - shared words
     """
     q = normalize_name(query)
     t = normalize_name(target)
 
     if q == t:
-        return 100
-    if q in t or t in q:
-        return 90
+        return 100, "exact"
+
+    qw, tw = _word_form(query), _word_form(target)
+    if qw and tw:
+        if len(qw) <= len(tw):
+            short, long_, kind = qw, tw, "text_in_target"
+        else:
+            short, long_, kind = tw, qw, "target_in_text"
+        if len(short.replace(" ", "")) >= MIN_CONTAINMENT_CHARS and short in long_ and _has_whole_words(short, long_):
+            return 90, kind
 
     # Check word overlap
     q_words = [w for w in q.split(" ") if len(w) > 2]
     t_words = [w for w in t.split(" ") if len(w) > 2]
 
     if not q_words or not t_words:
-        return 0
+        return 0, "none"
 
     overlap = len([w for w in q_words if w in t_words])
     if overlap > 0:
-        return round((overlap / max(len(q_words), len(t_words))) * 80)
+        return round((overlap / max(len(q_words), len(t_words))) * 80), "overlap"
 
-    return 0
+    return 0, "none"
+
+
+def fuzzy_score(query: str, target: str) -> int:
+    """Match score 0-100 (see match_strength)."""
+    return match_strength(query, target)[0]
 
 
 def match_merchant_db(merchant_raw: str) -> Optional[Dict[str, Any]]:
     """
     Match against Top 300 Indian Merchants DB.
+
+    "merchant" stays the text the bank sent. The brand's clean name goes in
+    "merchant_display", and only when the brand itself is in the text (an exact or
+    whole-word match) - a text that is merely a fragment of a brand name is not renamed,
+    and is capped at medium confidence.
     """
     best_match = None
-    best_score = 0
+    best_rank = (0, False, 0)
+    best_kind = "none"
     THRESHOLD = 60
 
     for merchant in MERCHANTS:
-        name_score = fuzzy_score(merchant_raw, merchant.get("name", ""))
-        if name_score > best_score:
-            best_score = name_score
-            best_match = merchant
+        for candidate in [merchant.get("name", "")] + list(merchant.get("aliases", [])):
+            score, kind = match_strength(merchant_raw, candidate)
+            # Best score first, then a brand found in the text over a mere fragment, then the
+            # longest (most specific) brand string: "Sulekha Parking" beats "Sulekha".
+            rank = (score, kind in ("exact", "target_in_text"), len(_word_form(candidate)))
+            if rank > best_rank:
+                best_rank, best_match, best_kind = rank, merchant, kind
 
-        for alias in merchant.get("aliases", []):
-            alias_score = fuzzy_score(merchant_raw, alias)
-            if alias_score > best_score:
-                best_score = alias_score
-                best_match = merchant
-
-        if best_score == 100:
+        if best_rank[0] == 100:
             break
 
+    best_score, strong, _specificity = best_rank
     if best_match and best_score >= THRESHOLD:
         return {
             "category": best_match["category"],
             "subcategory": best_match.get("subcategory"),
-            "merchant": best_match["name"],
+            "merchant": merchant_raw,
+            "merchant_display": best_match["name"] if strong and best_score >= 90 else None,
             "source": "merchant_db",
-            "confidence": "high" if best_score >= 90 else "medium",
+            "confidence": "high" if best_score >= 90 and strong else "medium",
             "score": best_score,
         }
 
@@ -391,6 +467,37 @@ def match_mcc_codes(merchant_raw: str) -> Optional[Dict[str, Any]]:
         }
 
     return None
+
+
+def match_debit_keywords(merchant_raw: Optional[str]) -> Optional[Dict[str, Any]]:
+    """
+    Keyword rules for debit merchants (categorizer/data/debit_keywords.json).
+
+    Whole-word, case-insensitive. If several keywords match, the longest wins ("general
+    store" beats "store"); on a tie the category listed first in the file wins.
+    """
+    if not merchant_raw or not DEBIT_KEYWORD_RULES:
+        return None
+
+    text = _word_form(merchant_raw)
+    best = None
+    for pattern, keyword, category, order in DEBIT_KEYWORD_RULES:
+        if pattern.search(text):
+            rank = (len(keyword), -order)
+            if best is None or rank > best[0]:
+                best = (rank, keyword, category)
+    if best is None:
+        return None
+
+    return {
+        "category": best[2],
+        "subcategory": None,
+        "merchant": merchant_raw,
+        "merchant_display": None,
+        "source": "keyword_rules",
+        "confidence": DEBIT_KEYWORD_CONFIDENCE,
+        "keyword": best[1],
+    }
 
 
 def fallback_category(merchant_raw: Optional[str]) -> Dict[str, Any]:
@@ -524,7 +631,9 @@ def normalize_category_name(cat: Optional[str]) -> str:
     return CANONICAL_CATEGORY_MAP.get(key, cat.strip())
 
 
-def categorize_transaction(merchant_raw: Optional[str | Dict[str, Any]]) -> Dict[str, Any]:
+def categorize_transaction(
+    merchant_raw: Optional[str | Dict[str, Any]], transaction_type: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Run the categorization cascade using the parsed merchant value.
 
@@ -536,8 +645,12 @@ def categorize_transaction(merchant_raw: Optional[str | Dict[str, Any]]) -> Dict
     1. User corrections from merchant_mappings (NOT here — see above)
     2. Credit keyword matching (Salary, Refund, Interest, Cashback, etc.)
     3. Top 300 Indian Merchants DB matching
+    3b. Debit keyword rules from debit_keywords.json (skipped for credits)
     4. MCC Code matching
     5. Fallback to Miscellaneous
+
+    "merchant" in the result is always the text that was passed in. A matched brand's clean
+    name is returned separately as "merchant_display" (None when there was no brand match).
 
     Args:
         merchant_raw (Optional[str | Dict[str, Any]]): Parsed merchant text/description,
@@ -552,6 +665,7 @@ def categorize_transaction(merchant_raw: Optional[str | Dict[str, Any]]) -> Dict
             or merchant_raw.get("merchant")
             or merchant_raw.get("raw")
         )
+    is_credit = (transaction_type or "").strip().lower() == "credit"
 
     category_result = None
 
@@ -563,6 +677,10 @@ def categorize_transaction(merchant_raw: Optional[str | Dict[str, Any]]) -> Dict
         if not category_result:
             category_result = match_merchant_db(merchant_raw)
 
+        # Layer 3b: debit keyword rules (a debit category on a credit would be rejected later)
+        if not category_result and not is_credit:
+            category_result = match_debit_keywords(merchant_raw)
+
         # Layer 4: Match against MCC codes
         if not category_result:
             category_result = match_mcc_codes(merchant_raw)
@@ -573,6 +691,8 @@ def categorize_transaction(merchant_raw: Optional[str | Dict[str, Any]]) -> Dict
     if category_result and "category" in category_result:
         category_result["category"] = normalize_category_name(category_result["category"])
 
+    category_result["merchant"] = merchant_raw or "Unknown"
+    category_result.setdefault("merchant_display", None)
     category_result["categorized_at"] = datetime.utcnow().isoformat() + "Z"
     return category_result
 

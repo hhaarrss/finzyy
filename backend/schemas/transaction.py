@@ -4,7 +4,7 @@ Pydantic schemas for Transaction verification and response serialization.
 
 from datetime import datetime
 from typing import Optional, Dict, List
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class TransactionBase(BaseModel):
@@ -39,7 +39,7 @@ class TransactionBase(BaseModel):
     def validate_source(cls, v: str) -> str:
         """Validates that source is one of the allowed platforms."""
         val = v.lower()
-        allowed_sources = {"sms", "aa", "manual", "merchant_db", "user_correction", "mcc_codes", "fallback"}
+        allowed_sources = {"sms", "aa", "manual", "merchant_db", "user_correction", "mcc_codes", "fallback", "keyword_rules"}
         if val not in allowed_sources:
             raise ValueError(f"Source must be one of {allowed_sources}")
         return val
@@ -74,8 +74,24 @@ class TransactionResponse(TransactionBase):
     review_status: Optional[str] = "reviewed"
     notes: Optional[str] = None
     created_at: datetime
+    merchant_display: Optional[str] = None
+    merchant_raw: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def show_brand_name(self):
+        """
+        `merchant` in a response is what a screen should show: the recognised brand name when
+        there is one, otherwise exactly what the bank sent. The stored raw text is always in
+        `merchant_raw` (it is the key for user corrections). Only this response object is
+        changed - the database row is untouched, so older app builds keep working.
+        """
+        if self.merchant_raw is None:
+            self.merchant_raw = self.merchant
+        if self.merchant_display:
+            self.merchant = self.merchant_display
+        return self
 
 
 class TransactionSummaryResponse(BaseModel):
