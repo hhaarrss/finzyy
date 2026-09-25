@@ -29,7 +29,10 @@ class Transaction(Base):
         String(20), nullable=False
     )  # e.g., 'debit' or 'credit'
     category: Mapped[str] = mapped_column(String(100), default="Miscellaneous", server_default="Miscellaneous", nullable=False, index=True)
+    # Exactly what the bank / user gave us. Never replaced by a brand match.
     merchant: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # Clean brand name ("Swiggy") when the brand itself was recognised in `merchant`; else NULL.
+    merchant_display: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     subcategory: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     upi_ref: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     source: Mapped[Optional[str]] = mapped_column(

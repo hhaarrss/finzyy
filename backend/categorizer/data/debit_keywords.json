@@ -1,0 +1,34 @@
+{
+  "_comment": "Layer 3b: keyword rules for debit (spending) merchants that are not in merchants.json. Matched whole-word and case-insensitive against the merchant text; multi-word entries match across any spacing/punctuation. Spelling variants are separate entries. The longest matching keyword wins; on a tie the category listed first wins. Add words here - no code change needed.",
+  "confidence": "medium",
+  "rules": [
+    {
+      "category": "Healthcare",
+      "keywords": ["medical", "medicals", "pharmacy", "pharma", "chemist", "chemists", "clinic", "hospital", "diagnostic", "diagnostics", "dental", "dentist", "nursing home", "pathology"]
+    },
+    {
+      "category": "Personal Care",
+      "keywords": ["salon", "saloon", "parlour", "parlor", "beauty parlour", "beauty parlor", "spa", "barber", "hair cut", "haircut", "unisex"]
+    },
+    {
+      "category": "Fuel",
+      "keywords": ["petrol", "petrol pump", "diesel", "fuel", "filling station", "fuels", "cng"]
+    },
+    {
+      "category": "Groceries",
+      "keywords": ["kirana", "kiranas", "general store", "general stores", "provision", "provisions", "supermarket", "super market", "mart", "grocery", "groceries", "sabzi", "sabji", "vegetables", "dairy", "milk", "fruits"]
+    },
+    {
+      "category": "Food & Dining",
+      "keywords": ["cafe", "caffe", "restaurant", "restaurants", "dhaba", "hotel", "tiffin", "tiffins", "sweets", "sweet", "bakery", "bakers", "mess", "canteen", "chai", "tea", "juice", "bhojan", "bhojanalay", "biryani", "pizza", "burger", "kitchen", "foods", "food"]
+    },
+    {
+      "category": "Transportation",
+      "keywords": ["travels", "transport", "tours", "cab", "cabs", "taxi", "auto", "rickshaw"]
+    },
+    {
+      "category": "Shopping",
+      "keywords": ["traders", "trader", "electronics", "electricals", "stationery", "stationers", "garments", "garment", "textiles", "textile", "footwear", "boutique", "cloth store", "readymade"]
+    }
+  ]
+}
