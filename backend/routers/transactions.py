@@ -39,7 +39,7 @@ from utils.transfer_detector import detect_p2p_transfer
 from utils.notifications import check_budget_and_alert
 from categorizer.transaction_categorizer import (
     categorize_transaction,
-    normalize_name,
+    merchant_key,
     normalize_category_name,
 )
 from services.transaction_aggregates import (
@@ -52,6 +52,28 @@ from services.transaction_aggregates import (
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
 
+
+
+async def find_user_correction(
+    db: AsyncSession, user_id: int, merchant_raw: Optional[str]
+) -> Optional[MerchantMapping]:
+    """
+    Layer 1: the signed-in user's own correction for this merchant, if any.
+
+    Always filtered by user_id — one user's correction is never visible to another — and
+    keyed with merchant_key(), the same function recategorize uses to write it. The newest
+    mapping wins if duplicates exist (the table has no unique constraint).
+    """
+    key = merchant_key(merchant_raw)
+    if not key:
+        return None
+    result = await db.execute(
+        select(MerchantMapping)
+        .where(and_(MerchantMapping.user_id == user_id, MerchantMapping.merchant_key == key))
+        .order_by(MerchantMapping.last_used_at.desc(), MerchantMapping.id.desc())
+        .limit(1)
+    )
+    return result.scalars().first()
 
 
 def categorize_parsed_sms(merchant_raw: Optional[str]) -> dict:
@@ -491,8 +513,27 @@ async def ingest_sms(
     Returns:
         SMSIngestionResponse: Ingestion response with success, transaction object, and status message.
     """
-    # Categorize the merchant using categorization engine
-    cat_info = categorize_parsed_sms(sms_in.merchant_raw)
+    # Layer 1: this user's own correction for this merchant beats every automatic layer.
+    # A correction made on a credit must not be applied to a debit (or the reverse): that
+    # would fail the type check below and drop the SMS, so it is skipped instead.
+    correction = await find_user_correction(db, current_user.id, sms_in.merchant_raw)
+    if correction is not None and not validate_category_matches_type(correction.category, sms_in.transaction_type):
+        correction = None
+
+    if correction is not None:
+        cat_info = {
+            "category": correction.category,
+            "subcategory": correction.subcategory,
+            # This SMS's own merchant text, not the stored display name (which may carry
+            # the order number of the transaction that was corrected).
+            "merchant": sms_in.merchant_raw or correction.display_name or "Unknown Merchant",
+            "source": "user_correction",
+            "confidence": "high",
+            "review_status": "reviewed",
+        }
+    else:
+        # Layers 2-5: categorization engine
+        cat_info = categorize_parsed_sms(sms_in.merchant_raw)
     category = cat_info["category"]
     merchant = cat_info["merchant"] or sms_in.merchant_raw or "Unknown Merchant"
     subcategory = cat_info.get("subcategory")
@@ -525,8 +566,12 @@ async def ingest_sms(
     if tx_date.tzinfo is None:
         tx_date = tx_date.replace(tzinfo=timezone.utc)
 
-    # P2P Transfer detection
-    is_tx_transfer, recipient = detect_p2p_transfer(merchant, category=category)
+    # P2P Transfer detection — skipped when the user filed this merchant under a real
+    # category themselves; their choice is not overridden.
+    if correction is not None and category.strip().lower() != "transfer":
+        is_tx_transfer, recipient = False, None
+    else:
+        is_tx_transfer, recipient = detect_p2p_transfer(merchant, category=category)
     if is_tx_transfer:
         category = "Transfer"
 
@@ -683,26 +728,20 @@ async def recategorize_transaction(
     transaction.confidence = "high"
     transaction.review_status = "reviewed"
 
-    # Save or update MerchantMapping in database
-    merchant_key = normalize_name(body.merchant_raw)
-    mapping_query = select(MerchantMapping).where(
-        and_(
-            MerchantMapping.user_id == current_user.id,
-            MerchantMapping.merchant_key == merchant_key
-        )
-    )
-    mapping_res = await db.execute(mapping_query)
-    existing_mapping = mapping_res.scalars().first()
+    # Save or update MerchantMapping in database (Layer 1). Same key function and same
+    # lookup as ingest_sms uses to read it back.
+    key = merchant_key(body.merchant_raw)
+    existing_mapping = await find_user_correction(db, current_user.id, body.merchant_raw)
 
     if existing_mapping:
         existing_mapping.category = normalize_category_name(body.new_category)
         existing_mapping.subcategory = body.subcategory
         existing_mapping.display_name = body.display_name or body.merchant_raw
         existing_mapping.count += 1
-    else:
+    elif key:
         new_mapping = MerchantMapping(
             user_id=current_user.id,
-            merchant_key=merchant_key,
+            merchant_key=key,
             category=normalize_category_name(body.new_category),
             subcategory=body.subcategory,
             display_name=body.display_name or body.merchant_raw,
@@ -951,28 +990,22 @@ async def categorize_transaction_item(
     learned = False
     target_alias = (payload.target_merchant or transaction.merchant or "").strip()
     if target_alias:
-        # Check existing mapping
-        m_query = select(MerchantMapping).where(
-            and_(
-                MerchantMapping.user_id == current_user.id,
-                func.lower(MerchantMapping.merchant_key) == target_alias.lower()
-            )
-        )
-        m_res = await db.execute(m_query)
-        existing_map = m_res.scalars().first()
+        # Same key + lookup as recategorize and ingest (merchant_key / find_user_correction)
+        existing_map = await find_user_correction(db, current_user.id, target_alias)
 
         if existing_map:
             existing_map.category = cat_match
             existing_map.count += 1
-        else:
+            learned = True
+        elif merchant_key(target_alias):
             new_map = MerchantMapping(
                 user_id=current_user.id,
-                merchant_key=target_alias.lower(),
+                merchant_key=merchant_key(target_alias),
                 category=cat_match,
                 display_name=target_alias.title()
             )
             db.add(new_map)
-        learned = True
+            learned = True
 
     await db.commit()
     await db.refresh(transaction)

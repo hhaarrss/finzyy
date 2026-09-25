@@ -8,8 +8,10 @@ Flow:
 Data sources used:
   1. merchants.json      - Top 300 Indian merchants (local DB)
   2. mcc_codes.json      - greggles/mcc-codes (ISO MCC standard)
-User-specific corrections are stored in the database by the API layer. They
-must not be kept in this process-wide data directory.
+User-specific corrections (Layer 1) are stored in the merchant_mappings table and are
+looked up by the API layer (routers/transactions.py: find_user_correction) *before* this
+module runs. They must not be kept in this process-wide data directory. The key used to
+store and look them up is merchant_key() below — the only implementation of it.
 """
 
 import json
@@ -182,7 +184,7 @@ def parse_sms(sms: str) -> Optional[Dict[str, Any]]:
 
 # ─────────────────────────────────────────────
 # 3. MERCHANT MATCHING ENGINE
-# Priority: User DB mapping (API layer) -> Merchant DB -> MCC Codes -> Miscellaneous
+# Priority: User DB mapping (looked up by the API layer, see merchant_key) -> Merchant DB -> MCC Codes -> Miscellaneous
 # ─────────────────────────────────────────────
 
 def normalize_name(name: str) -> str:
@@ -199,6 +201,66 @@ def normalize_name(name: str) -> str:
     name_upper = re.sub(r"[^A-Z0-9\s]", "", name_upper)
     name_upper = re.sub(r"\s+", " ", name_upper)
     return name_upper.strip()
+
+
+# Order / reference suffixes that make otherwise-identical merchants look different:
+# "SWIGGY*ORDER8827" and "SWIGGY*ORDER9931" are the same merchant. Each pattern only
+# strips a *trailing* piece that follows a separator, and never the whole string.
+_REF_SEP = r"[\s*#/_:\-]+"
+_REF_STRIP_PATTERNS = (
+    # separator + a marker word + an ID containing a digit:  "*ORDER8827", " TXN 12AB34", "-INV#0042"
+    re.compile(
+        _REF_SEP
+        + r"(?:ORDER\s*ID|ORDERID|ORDER|ORD|TXN\s*ID|TXNID|TXN|TRANSACTION|TRN|REFERENCE|REF\s*NO|REFNO|REF|INVOICE|INV|BILL|BOOKING)"
+        + r"[\s#:._\-]*[A-Z0-9]*\d[A-Z0-9]*\s*$"
+    ),
+    # separator + a bare number of 6+ digits:  " 4829173"
+    re.compile(_REF_SEP + r"\d{6,}\s*$"),
+    # descriptor-style "*" + an alphanumeric reference of 5+ characters with a digit:  "AMAZON*2B7Y91H"
+    re.compile(r"\*\s*(?=[A-Z0-9]*\d)[A-Z0-9]{5,}\s*$"),
+)
+
+
+def merchant_key(name: Optional[str]) -> str:
+    """
+    The one key that identifies a merchant for user corrections (Layer 1).
+
+    Both writing a correction (recategorize) and looking one up at ingest must call this,
+    so a merchant always maps to the same key.
+
+    Rule, applied to the upper-cased text:
+      1. UPI handles (anything containing "@") are left alone — the digits in
+         "9876543210@ybl" identify the payee; they are not an order number.
+      2. Repeatedly (max 3 times) remove ONE trailing order/reference suffix:
+           a. separator + marker word (ORDER, ORD, ORDERID, TXN, TXNID, TRANSACTION, TRN,
+              REF, REFNO, REFERENCE, INV, INVOICE, BILL, BOOKING) + an ID containing a digit
+              -> "SWIGGY*ORDER8827", "SWIGGY ORDER 8827", "SHOP-INV#0042"
+           b. separator + a bare number of 6 or more digits
+              -> "BIGBASKET 4829173"
+           c. "*" + an alphanumeric reference of 5+ characters that contains a digit
+              -> "AMAZON*2B7Y91H"
+         A separator is any of whitespace * # / _ : -.
+      3. If stripping would leave nothing, the original text is kept.
+      4. The result goes through normalize_name (punctuation and company suffixes removed).
+
+    Digits glued to a name ("7ELEVEN", "3M") and short numbers ("SECTOR 21") are never
+    stripped, so different merchants are not merged.
+    """
+    text = (name or "").strip().upper()
+    if not text:
+        return ""
+    if "@" not in text:
+        for _ in range(3):
+            stripped = text
+            for pattern in _REF_STRIP_PATTERNS:
+                candidate = pattern.sub("", stripped, count=1).strip()
+                if candidate and candidate != stripped:
+                    stripped = candidate
+                    break
+            if stripped == text:
+                break
+            text = stripped
+    return normalize_name(text)
 
 
 def fuzzy_score(query: str, target: str) -> int:
@@ -466,8 +528,12 @@ def categorize_transaction(merchant_raw: Optional[str | Dict[str, Any]]) -> Dict
     """
     Run the categorization cascade using the parsed merchant value.
 
-    Priority layers:
-    1. User DB mapping (applied in authenticated API layer)
+    This function runs layers 2-5 only. Layer 1 (the user's own corrections) needs the
+    database, so the caller checks it first: routers/transactions.py ingest_sms calls
+    find_user_correction() and only reaches this function when that finds nothing.
+
+    Priority layers, in the order they are tried overall:
+    1. User corrections from merchant_mappings (NOT here — see above)
     2. Credit keyword matching (Salary, Refund, Interest, Cashback, etc.)
     3. Top 300 Indian Merchants DB matching
     4. MCC Code matching
