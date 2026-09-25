@@ -15,6 +15,7 @@ enum class Destination(val route: String) {
     CategoryDetail("category/{name}"),
     Trends("trends"),
     Insights("insights"),
+    Notifications("notifications"),
     Account("account"),
     EditProfile("edit_profile"),
     AddPhone("add_phone"),

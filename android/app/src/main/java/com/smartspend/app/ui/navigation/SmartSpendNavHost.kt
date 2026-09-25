@@ -25,6 +25,7 @@ import com.smartspend.app.ui.categories.CategoriesScreen
 import com.smartspend.app.ui.categories.CategoryDetailScreen
 import com.smartspend.app.ui.home.HomeScreen
 import com.smartspend.app.ui.insights.InsightsScreen
+import com.smartspend.app.ui.notifications.NotificationsScreen
 import com.smartspend.app.ui.permission.SmsConsentScreen
 import com.smartspend.app.RetrofitClient
 import com.smartspend.app.UserData
@@ -92,7 +93,8 @@ fun SmartSpendNavHost(
                 onCategories = { navController.navigateTo(Destination.Categories.route) },
                 onCategory = { navController.navigateTo(Destination.category(it)) },
                 onInsights = { navController.navigateTo(Destination.Insights.route) },
-                onEnableAutoSync = { navController.navigateTo(Destination.SmsConsent.route) }
+                onEnableAutoSync = { navController.navigateTo(Destination.SmsConsent.route) },
+                onNotifications = { navController.navigateTo(Destination.Notifications.route) }
             )
         }
 
@@ -136,6 +138,14 @@ fun SmartSpendNavHost(
             CategoryDetailScreen(
                 category = entry.arguments?.getString("name").orEmpty(),
                 onBack = { navController.back() }
+            )
+        }
+
+        composable(Destination.Notifications.route) {
+            NotificationsScreen(
+                onBack = { navController.popBackStack() },
+                onBudget = { navController.navigateTo(Destination.Budget.route) },
+                onCategory = { navController.navigateTo(Destination.category(it)) }
             )
         }
 
