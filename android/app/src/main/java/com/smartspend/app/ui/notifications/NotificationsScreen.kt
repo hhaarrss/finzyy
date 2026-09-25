@@ -155,8 +155,8 @@ fun NotificationsScreen(onBack: () -> Unit, onBudget: () -> Unit, onCategory: (S
             merchant = tx.title,
             current = null,
             onPick = { category ->
-                // For a payment the categoriser couldn't place, `merchant` is the text the bank sent.
-                val ok = fileTransaction(tx.id, tx.merchant, tx.merchant, category)
+                // The correction is keyed on what the bank sent, never on a cleaned brand name.
+                val ok = fileTransaction(tx.id, tx.merchantRaw ?: tx.merchant, tx.merchant, category)
                 if (ok) {
                     categorizing = null
                     Toast.makeText(context, "Filed under $category", Toast.LENGTH_SHORT).show()
