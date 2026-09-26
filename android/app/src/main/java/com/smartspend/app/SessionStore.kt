@@ -32,10 +32,32 @@ object SessionStore {
         appContext = context.applicationContext
     }
 
-    fun token(): String? = appContext
-        ?.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        ?.getString(KEY_TOKEN, null)
-        ?.takeIf { it.isNotBlank() }
+    fun token(): String? = appContext?.let { token(it) }
+
+    /** Last stored value seen and its decrypted form, so each request doesn't hit the Keystore. */
+    @Volatile
+    private var cache: Pair<String, String>? = null
+
+    /**
+     * The signed-in user's token, or null. It is stored encrypted ([LocalCrypto]); a copy left
+     * unencrypted by an older build is re-saved encrypted the first time it is read.
+     */
+    fun token(context: Context): String? {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val stored = prefs.getString(KEY_TOKEN, null)?.takeIf { it.isNotBlank() } ?: return null
+        cache?.let { (s, plain) -> if (s == stored) return plain }
+        val plain = LocalCrypto.decrypt(stored)?.takeIf { it.isNotBlank() } ?: return null
+        if (!LocalCrypto.isEncrypted(stored)) {
+            val encrypted = LocalCrypto.encrypt(plain)
+            if (LocalCrypto.isEncrypted(encrypted)) {
+                prefs.edit().putString(KEY_TOKEN, encrypted).apply()
+                cache = encrypted to plain
+                return plain
+            }
+        }
+        cache = stored to plain
+        return plain
+    }
 
     internal fun reportUnauthorized() {
         _unauthorized.tryEmit(Unit)

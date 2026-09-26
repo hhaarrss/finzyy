@@ -107,7 +107,7 @@ class SmsReceiver : BroadcastReceiver() {
             val sharedPrefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             synchronized(queueLock) {
                 try {
-                    val queueArray = JSONArray(sharedPrefs.getString(QUEUE_KEY, "[]") ?: "[]")
+                    val queueArray = readQueue(sharedPrefs)
                     val item = JSONObject().apply {
                         put("id", UUID.randomUUID().toString())
                         put("amount", payload.amount)
@@ -127,7 +127,7 @@ class SmsReceiver : BroadcastReceiver() {
                         }
                     }
                     queueArray.put(item)
-                    sharedPrefs.edit().putString(QUEUE_KEY, queueArray.toString()).commit() // Use commit() to ensure disk write
+                    writeQueue(sharedPrefs, queueArray.toString())
                     Log.d(TAG, "Queued structured SMS payload. Queue size: ${queueArray.length()}")
                     return true
                 } catch (e: Exception) {
@@ -141,11 +141,24 @@ class SmsReceiver : BroadcastReceiver() {
             val sharedPrefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             synchronized(queueLock) {
                 return try {
-                    JSONArray(sharedPrefs.getString(QUEUE_KEY, "[]") ?: "[]").length() > 0
+                    readQueue(sharedPrefs).length() > 0
                 } catch (e: Exception) {
                     false
                 }
             }
+        }
+
+        /**
+         * The queue holds parsed payments (amount, merchant, account digits, UPI ref) until they
+         * sync, so it is stored encrypted like the login token. A queue written unencrypted by an
+         * older build still reads; the next write stores it encrypted. Callers hold [queueLock].
+         */
+        private fun readQueue(prefs: android.content.SharedPreferences): JSONArray =
+            JSONArray(LocalCrypto.decrypt(prefs.getString(QUEUE_KEY, null)) ?: "[]")
+
+        /** commit(), not apply(): the receiver's process can die right after queuing. */
+        private fun writeQueue(prefs: android.content.SharedPreferences, json: String) {
+            prefs.edit().putString(QUEUE_KEY, LocalCrypto.encrypt(json)).commit()
         }
 
         private fun itemId(obj: JSONObject): String = obj.optString("id").ifEmpty { obj.toString() }
@@ -161,10 +174,10 @@ class SmsReceiver : BroadcastReceiver() {
                 val sharedPrefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 val snapshot = synchronized(queueLock) {
                     try {
-                        JSONArray(sharedPrefs.getString(QUEUE_KEY, "[]") ?: "[]")
+                        readQueue(sharedPrefs)
                     } catch (e: Exception) {
                         Log.e(TAG, "Corrupt offline SMS queue, resetting", e)
-                        sharedPrefs.edit().putString(QUEUE_KEY, "[]").commit()
+                        writeQueue(sharedPrefs, "[]")
                         JSONArray()
                     }
                 }
@@ -202,7 +215,8 @@ class SmsReceiver : BroadcastReceiver() {
                                 // Let any open screen reload so the new payment shows up immediately.
                                 TransactionEvents.notifyChanged()
                                 sharedPrefs.edit().apply {
-                                    putString("last_sms", "${payload.transaction_type} ${payload.amount} from ${payload.bank_sender_id}")
+                                    // Nothing reads it; older builds kept the last payment here in plain text.
+                                    remove("last_sms")
                                     putInt("total_synced", sharedPrefs.getInt("total_synced", 0) + 1)
                                     commit()
                                 }
@@ -230,7 +244,7 @@ class SmsReceiver : BroadcastReceiver() {
 
                 synchronized(queueLock) {
                     val current = try {
-                        JSONArray(sharedPrefs.getString(QUEUE_KEY, "[]") ?: "[]")
+                        readQueue(sharedPrefs)
                     } catch (e: Exception) {
                         JSONArray()
                     }
@@ -239,7 +253,7 @@ class SmsReceiver : BroadcastReceiver() {
                         val obj = current.getJSONObject(i)
                         if (itemId(obj) !in done) remaining.put(obj)
                     }
-                    sharedPrefs.edit().putString(QUEUE_KEY, remaining.toString()).commit()
+                    writeQueue(sharedPrefs, remaining.toString())
                     remaining.length() == 0
                 }
             }

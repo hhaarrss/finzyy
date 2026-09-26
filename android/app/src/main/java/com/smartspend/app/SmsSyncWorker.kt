@@ -43,7 +43,7 @@ class SmsSyncWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             Log.e(TAG, "Inbox catch-up scan failed", e)
         }
 
-        val token = prefs.getString("jwt_token", null)
+        val token = SessionStore.token(ctx)
         if (token.isNullOrEmpty()) {
             // Not logged in: keep the queue, it will be flushed after login.
             Log.w(TAG, "No JWT token, deferring SMS sync")

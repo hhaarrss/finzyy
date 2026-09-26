@@ -99,6 +99,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         SessionStore.init(this)
         ThemePreference.load(this)
+        // Older builds kept the last synced payment here in plain text; nothing reads it now.
+        getSharedPreferences("smart_spend_prefs", Context.MODE_PRIVATE).edit().remove("last_sms").apply()
 
         // Keeps bank SMS syncing (and retrying) in the background while the app is closed.
         SmsSyncWorker.schedulePeriodic(this)
@@ -147,7 +149,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        val token = sharedPrefs.getString("jwt_token", null)
+        val token = SessionStore.token(this)
         if (!token.isNullOrEmpty()) {
             // Push anything queued while offline / logged out and catch up on missed SMS.
             SmsSyncWorker.enqueueNow(this)

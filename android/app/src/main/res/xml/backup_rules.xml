@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Auto Backup, Android 11 and lower (Android 12+ reads data_extraction_rules.xml).
-     smart_spend_prefs holds the login token and per-install state. Restoring it after a
-     reinstall brought back a session for an account that may no longer exist; a credential
-     should never travel through backup. smartspend_prefs holds the device's FCM token. -->
+<!-- Android 11 and lower. Backup is also switched off in the manifest (allowBackup="false");
+     these exclusions are a second line in case that is ever turned back on. -->
 <full-backup-content>
-    <exclude domain="sharedpref" path="smart_spend_prefs.xml" />
-    <exclude domain="sharedpref" path="smartspend_prefs.xml" />
+    <exclude domain="root" />
+    <exclude domain="file" />
+    <exclude domain="database" />
+    <exclude domain="sharedpref" />
+    <exclude domain="external" />
 </full-backup-content>

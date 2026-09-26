@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Auto Backup / device transfer, Android 12+. Same exclusions as backup_rules.xml:
-     the login token and per-device state never leave this install. -->
+<!-- Android 12+: nothing from this app goes into cloud backup or device-to-device transfer.
+     Everything that matters lives on the server; what's on the phone is the login token, the
+     queue of parsed-but-unsynced bank payments, and per-install state — none of it should
+     leave the device. -->
 <data-extraction-rules>
     <cloud-backup>
-        <exclude domain="sharedpref" path="smart_spend_prefs.xml" />
-        <exclude domain="sharedpref" path="smartspend_prefs.xml" />
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
     </cloud-backup>
     <device-transfer>
-        <exclude domain="sharedpref" path="smart_spend_prefs.xml" />
-        <exclude domain="sharedpref" path="smartspend_prefs.xml" />
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
     </device-transfer>
 </data-extraction-rules>
