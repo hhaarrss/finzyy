@@ -48,6 +48,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import com.smartspend.app.ui.notifications.AttentionRepository
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -113,13 +116,21 @@ fun HomeScreen(
     onCategories: () -> Unit,
     onCategory: (String) -> Unit,
     onInsights: () -> Unit,
-    onEnableAutoSync: () -> Unit
+    onEnableAutoSync: () -> Unit,
+    onNotifications: () -> Unit
 ) {
+    val context = LocalContext.current
+    val attentionCount by AttentionRepository.unread.collectAsState()
     var state by remember { mutableStateOf<HomeUiState>(HomeUiState.Loading) }
     var refreshKey by remember { mutableIntStateOf(0) }
     val liveVersion = rememberTransactionsVersion()
     var refreshing by remember { mutableStateOf(false) }
     var openTx by remember { mutableStateOf<TxView?>(null) }
+
+    // The bell's badge: refreshed whenever Home reloads. Failures just leave the last count.
+    LaunchedEffect(refreshKey, liveVersion) {
+        runCatching { AttentionRepository.load(context) }
+    }
 
     LaunchedEffect(refreshKey, liveVersion) {
         if (state !is HomeUiState.Loaded) state = HomeUiState.Loading
@@ -152,15 +163,17 @@ fun HomeScreen(
         ) {
             when (val current = state) {
                 HomeUiState.Loading -> Column {
-                    TopBar(name = null, onAccount = onAccount, onSearch = { onSearch(false) })
+                    TopBar(name = null, attentionCount = attentionCount, onAccount = onAccount, onNotifications = onNotifications, onSearch = { onSearch(false) })
                     SkeletonBlocks(listOf(200.dp, 104.dp, 64.dp, 300.dp))
                 }
                 is HomeUiState.Error -> Column {
-                    TopBar(name = null, onAccount = onAccount, onSearch = { onSearch(false) })
+                    TopBar(name = null, attentionCount = attentionCount, onAccount = onAccount, onNotifications = onNotifications, onSearch = { onSearch(false) })
                     ErrorPanel(current.message, onRetry = { refreshKey++ })
                 }
                 is HomeUiState.Loaded -> HomeContent(
                     bundle = current.bundle,
+                    attentionCount = attentionCount,
+                    onNotifications = onNotifications,
                     onSearch = onSearch,
                     onAccount = onAccount,
                     onAddTransaction = onAddTransaction,
@@ -184,6 +197,8 @@ fun HomeScreen(
 @Composable
 private fun HomeContent(
     bundle: HomeBundle,
+    attentionCount: Int,
+    onNotifications: () -> Unit,
     onSearch: (Boolean) -> Unit,
     onAccount: () -> Unit,
     onAddTransaction: () -> Unit,
@@ -204,7 +219,15 @@ private fun HomeContent(
         contentPadding = PaddingValues(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { TopBar(name = displayName(data), onAccount = onAccount, onSearch = { onSearch(false) }) }
+        item {
+            TopBar(
+                name = displayName(data),
+                attentionCount = attentionCount,
+                onAccount = onAccount,
+                onNotifications = onNotifications,
+                onSearch = { onSearch(false) }
+            )
+        }
 
         item {
             SpendHero(
@@ -320,7 +343,13 @@ private fun HomeContent(
 }
 
 @Composable
-private fun TopBar(name: String?, onAccount: () -> Unit, onSearch: () -> Unit) {
+private fun TopBar(
+    name: String?,
+    attentionCount: Int,
+    onAccount: () -> Unit,
+    onNotifications: () -> Unit,
+    onSearch: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -364,6 +393,14 @@ private fun TopBar(name: String?, onAccount: () -> Unit, onSearch: () -> Unit) {
                 )
             }
         }
+        // Same button as search, same icon set and size; the count is items still needing attention.
+        RoundIconButton(
+            icon = Icons.Default.Notifications,
+            contentDescription = if (attentionCount > 0) "Notifications, $attentionCount need attention" else "Notifications",
+            onClick = onNotifications,
+            badgeCount = attentionCount
+        )
+        Spacer(Modifier.width(6.dp))
         RoundIconButton(icon = Icons.Default.Search, contentDescription = "Search transactions", onClick = onSearch)
     }
 }

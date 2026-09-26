@@ -83,7 +83,8 @@ async def get_home_data(
             "amount": float(tx.amount),
             "type": tx.type,
             "category": tx.category,
-            "merchant": tx.merchant,
+            "merchant": tx.merchant_display or tx.merchant,
+            "merchant_raw": tx.merchant,
             "date": tx.date.isoformat() if tx.date else None,
             "review_status": tx.review_status,
         })

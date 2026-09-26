@@ -78,6 +78,8 @@ data class HomeRecentTransactionData(
     val type: String,
     val category: String,
     val merchant: String?,
+    /** The merchant text exactly as the bank sent it; `merchant` may be a cleaned brand name. */
+    val merchant_raw: String? = null,
     val date: String?,
     val review_status: String?
 )

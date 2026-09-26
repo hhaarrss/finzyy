@@ -11,6 +11,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -116,7 +117,8 @@ fun RoundIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     showDot: Boolean = false,
-    filled: Boolean = true
+    filled: Boolean = true,
+    badgeCount: Int = 0
 ) {
     Box(modifier = modifier.size(44.dp), contentAlignment = Alignment.Center) {
         Box(
@@ -137,6 +139,25 @@ fun RoundIconButton(
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(19.dp)
             )
+        }
+        if (badgeCount > 0) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .defaultMinSize(minWidth = 20.dp, minHeight = 20.dp)
+                    .clip(CircleShape)
+                    .background(SmartSpendTheme.colors.accent)
+                    .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    if (badgeCount > 9) "9+" else badgeCount.toString(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = SmartSpendTheme.colors.onAccent,
+                    maxLines = 1
+                )
+            }
         }
         if (showDot) {
             Box(

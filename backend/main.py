@@ -154,10 +154,16 @@ AUTH_SCHEMA_STATEMENTS = [
 ]
 
 
+# Transaction columns added after the first release. Additive and idempotent, same as above.
+TRANSACTION_SCHEMA_STATEMENTS = [
+    "ALTER TABLE transactions ADD COLUMN IF NOT EXISTS merchant_display VARCHAR(255)",
+]
+
+
 async def ensure_auth_schema() -> None:
     from sqlalchemy import text
     async with engine.begin() as conn:
-        for statement in AUTH_SCHEMA_STATEMENTS:
+        for statement in AUTH_SCHEMA_STATEMENTS + TRANSACTION_SCHEMA_STATEMENTS:
             await conn.execute(text(statement))
 
 

@@ -134,6 +134,8 @@ data class TransactionData(
     val type: String,
     val category: String,
     val merchant: String?,
+    /** The merchant text exactly as the bank sent it; `merchant` may be a cleaned brand name. */
+    val merchant_raw: String? = null,
     val subcategory: String?,
     val bank: String?,
     val account_last4: String?,
