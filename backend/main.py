@@ -83,7 +83,7 @@ app = FastAPI(
     title="Smart Expense Tracker API",
     description=(
         "FastAPI Backend with async/await, SQLAlchemy, PostgreSQL, "
-        "JWT Authentication, Redis + Celery workers, and Alembic migrations."
+        "JWT Authentication, and Alembic migrations."
     ),
     version="1.0.0",
     docs_url="/docs",
@@ -116,11 +116,14 @@ async def global_exception_handler(request: Request, exc: Exception):
     Catch-all handler for unhandled exceptions.
     Returns a JSON response so CORSMiddleware can attach headers properly.
     """
-    print(f"[UNHANDLED ERROR] {request.method} {request.url}")
+    # Path only: query strings carry search terms, merchant names and filters. The traceback
+    # stays in the server log for debugging; the client gets no internals (SQL errors can
+    # quote the values that were being written).
+    print(f"[UNHANDLED ERROR] {request.method} {request.url.path}")
     tb.print_exception(type(exc), exc, exc.__traceback__)
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Internal server error: {str(exc)}"},
+        content={"detail": "Internal server error"},
     )
 
 
