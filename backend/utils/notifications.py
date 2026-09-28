@@ -47,7 +47,8 @@ async def send_fcm_notification(
         messaging.send(message)
         return True
     except Exception as e:
-        print(f"[Notifications] FCM Dispatch log (Simulated/Fallback): '{title}' - '{body}' (Token: {fcm_token[:10]}...)")
+        # No title, body or token here: the alert text carries the user's spending figures.
+        print(f"[Notifications] FCM send failed ({type(e).__name__}); alert not delivered")
         return True
 
 

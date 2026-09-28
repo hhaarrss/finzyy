@@ -22,7 +22,7 @@ object AuthSession {
 
     fun save(context: Context, auth: AuthResponse) {
         prefs(context).edit()
-            .putString(KEY_TOKEN, auth.access_token)
+            .putString(KEY_TOKEN, LocalCrypto.encrypt(auth.access_token))
             .putString(KEY_EMAIL, auth.email)
             .putString(KEY_PHONE, auth.phone_number)
             .putBoolean(KEY_PHONE_VERIFIED, auth.phone_number != null)

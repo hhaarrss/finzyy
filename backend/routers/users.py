@@ -8,10 +8,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
 
 from database import get_db
 from models.budget import BudgetLimit, OverallBudgetLimit
 from models.budget_alert_log import BudgetAlertLog
+from models.family import FamilyGroup
 from models.merchant_mapping import MerchantMapping
 from models.transaction import Transaction
 from models.user import User
@@ -19,6 +21,7 @@ from schemas.account import DeleteAccountRequest, DeleteAccountResponse
 from schemas.user import ProfileUpdate, UserResponse
 from services.accounts import build_user_response, get_overall_budget
 from utils.auth import verify_password
+from utils.firebase_admin_client import delete_firebase_users
 from utils.dependencies import get_current_user
 
 
@@ -141,6 +144,9 @@ async def delete_my_account(
             )
 
     user_id = current_user.id
+    # Read before the row is deleted; used to remove the matching Firebase sign-in users.
+    phone_number = current_user.phone_number
+    email = current_user.email
 
     # Explicit child deletes make the endpoint safe even where an existing
     # deployment has not yet applied all database-level cascade constraints.
@@ -148,8 +154,25 @@ async def delete_my_account(
     await db.execute(delete(BudgetLimit).where(BudgetLimit.user_id == user_id))
     await db.execute(delete(MerchantMapping).where(MerchantMapping.user_id == user_id))
     await db.execute(delete(BudgetAlertLog).where(BudgetAlertLog.user_id == user_id))
+    await db.execute(delete(OverallBudgetLimit).where(OverallBudgetLimit.user_id == user_id))
+    # A family group this user runs with nobody else in it would outlive the account (the FK
+    # only nulls its admin), keeping the name they typed. Groups other people are in stay.
+    other_members = (
+        select(func.count(User.id))
+        .where(User.family_id == FamilyGroup.id, User.id != user_id)
+        .scalar_subquery()
+    )
+    await db.execute(
+        delete(FamilyGroup)
+        .where(FamilyGroup.admin_user_id == user_id, other_members == 0)
+        .execution_options(synchronize_session=False)
+    )
     await db.execute(delete(User).where(User.id == user_id))
     await db.commit()
+
+    # After the commit, so a Firebase outage can't block or roll back deleting the data. The
+    # Admin SDK is blocking, hence the thread pool.
+    await run_in_threadpool(delete_firebase_users, phone_number, email)
 
     return DeleteAccountResponse(
         success=True,

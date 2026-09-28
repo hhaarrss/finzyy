@@ -19,3 +19,22 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# ── SmartSpend release rules ──────────────────────────────────────────────────
+# Gson fills API models by matching JSON keys to Kotlin field names via reflection, and
+# creates them without any constructor call the code can see. Every type Retrofit/Gson reads
+# or writes lives in the root package (BackendService.kt, ApiModels.kt). Without these rules
+# R8 decides those classes are never created and strips their fields — the release app then
+# gets empty data. Class names may still be obfuscated; field names may not.
+-keep,allowobfuscation class com.smartspend.app.* {
+    <init>(...);
+}
+-keepclassmembers class com.smartspend.app.* {
+    <fields>;
+}
+-keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod
+-keep class * extends com.google.gson.reflect.TypeToken
+-keep class * implements com.google.gson.JsonDeserializer
+
+# Readable crash stack traces once the mapping file is uploaded to Play Console.
+-keepattributes SourceFile, LineNumberTable
+-renamesourcefileattribute SourceFile

@@ -94,3 +94,49 @@ def verify_firebase_id_token(id_token: str) -> Dict[str, Any]:
             detail="Invalid or expired sign-in token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def delete_firebase_users(phone_number: Optional[str], email: Optional[str]) -> int:
+    """
+    Removes the Firebase Authentication users behind a SmartSpend account, so deleting the
+    account also deletes the phone number / Google identity Firebase holds for it.
+
+    SmartSpend doesn't store Firebase UIDs; accounts are matched on the verified phone number
+    (phone sign-in) or email (Google sign-in) — the same keys firebase_login uses. Best effort
+    and blocking: call it off the event loop, after the database deletion has committed.
+
+    Returns the number of Firebase users deleted (0 if Firebase isn't configured here).
+    """
+    app = _initialize()
+    if app is None:
+        print("[Firebase] Admin SDK not configured; Firebase users not removed")
+        return 0
+
+    from firebase_admin import auth as firebase_auth
+
+    lookups = []
+    if phone_number:
+        lookups.append(lambda: firebase_auth.get_user_by_phone_number(phone_number, app=app))
+    if email:
+        lookups.append(lambda: firebase_auth.get_user_by_email(email, app=app))
+
+    uids = set()
+    for lookup in lookups:
+        try:
+            uids.add(lookup().uid)
+        except firebase_auth.UserNotFoundError:
+            pass
+        except Exception as e:
+            # Never log the phone number or email.
+            print(f"[Firebase] user lookup failed ({type(e).__name__})")
+
+    deleted = 0
+    for uid in uids:
+        try:
+            firebase_auth.delete_user(uid, app=app)
+            deleted += 1
+        except firebase_auth.UserNotFoundError:
+            pass
+        except Exception as e:
+            print(f"[Firebase] user delete failed ({type(e).__name__})")
+    return deleted

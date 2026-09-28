@@ -10,7 +10,7 @@
   h2 { font-size: 20px; margin-top: 36px; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; }
   .updated { color: #666; font-size: 14px; margin-bottom: 32px; }
   table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e5e5e5; font-size: 15px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e5e5e5; font-size: 15px; vertical-align: top; }
   a { color: #1e8e3e; }
   footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #e5e5e5; font-size: 13px; color: #888; }
 </style>
@@ -18,76 +18,75 @@
 <body>
 
 <h1>Privacy Policy</h1>
-<p class="updated">Last updated: [DATE] &middot; Effective for: SmartSpend, developed by [YOUR NAME / COMPANY NAME]</p>
+<p class="updated">Last updated: 28 September 2026 &middot; Effective for: SmartSpend, developed by Harsh Rabadiya</p>
 
 <h2>1. Who we are</h2>
-<p>SmartSpend is an expense-tracking application for Android that helps users understand their spending by automatically reading and categorizing bank transaction SMS alerts.</p>
-<p><strong>Developer contact:</strong> <a href="mailto:smartspend4support@gmail.com">smartspend4support@gmail.com</a></p>
+<p>SmartSpend is an expense tracker for Android. It reads the payment SMS your bank sends you, turns them into transactions, and shows you where your money goes. SmartSpend is developed and operated by Harsh Rabadiya (&ldquo;we&rdquo;, &ldquo;us&rdquo;).</p>
+<p><strong>Contact:</strong> <a href="mailto:smartspend4support@gmail.com">smartspend4support@gmail.com</a></p>
 
-<h2>2. What data we collect</h2>
-<h3>SMS content (with your permission)</h3>
-<p>If you grant SMS read permission, SmartSpend reads incoming SMS messages only from a whitelisted list of known bank sender IDs (e.g. HDFCBK, ICICIB, SBIPSG, AXISBK).</p>
-<p><strong>All SMS parsing happens locally, on your device.</strong> The message is never transmitted to our servers in its original form. Our app extracts only the following structured details on-device: transaction amount, transaction type (debit/credit), merchant or payee name, masked account number (last 4 digits only), and date. Only this structured data — never the original SMS text — is sent to our backend for categorization, storage, and analytics.</p>
-<p>We do not read, store, or transmit SMS messages from any sender that is not on this bank whitelist. Personal messages, OTPs from non-financial senders, and messages from unrecognized numbers are never accessed, processed, or stored — not on your device, and never on our servers.</p>
-
-<h3>Account information</h3>
-<p>When you create an account, we collect your phone number for verification (via one-time password). Passwords, if you use email/password sign-in, are never stored in plain text — they are hashed using bcrypt before storage.</p>
-
-<h3>Transaction and financial data</h3>
-<p>Transaction records you create manually, or that are derived from parsed SMS or uploaded bank statements, including amount, category, merchant, date, and masked account identifiers.</p>
-
-<h3>Usage data</h3>
-<p>Basic app usage and crash diagnostics may be collected to help us fix bugs and improve reliability.</p>
-
-<h2>3. How we use your data</h2>
+<h2>2. The short version</h2>
 <ul>
-  <li>To automatically detect and categorize your transactions</li>
-  <li>To generate the spending analytics, budgets, and insights shown in the app</li>
-  <li>To authenticate you and keep your account secure</li>
-  <li>To respond to support requests</li>
-</ul>
-<p>We do <strong>not</strong> use your financial or SMS data for advertising, and we do <strong>not</strong> sell your data to third parties.</p>
-
-<h2>4. Data storage and security</h2>
-<ul>
-  <li>Your data is stored in a PostgreSQL database, accessed only through our backend API.</li>
-  <li>All data in transit between the app and our servers is encrypted using HTTPS/TLS.</li>
-  <li>Account passwords are hashed with bcrypt and never stored or transmitted in plain text.</li>
-  <li>Authentication uses JWT (JSON Web Token) bearer tokens; phone verification is handled via Firebase Authentication.</li>
-  <li>Account numbers are always stored and displayed in masked form (e.g. XX373) — full account numbers are never stored.</li>
+  <li>Your SMS messages are read <strong>on your phone</strong>. The text of an SMS is never sent to us.</li>
+  <li>From bank SMS only, we send the payment details (amount, merchant, date, bank, last 4 digits of the account, UPI reference) to our server so the app can categorise them and show your spending.</li>
+  <li>We don&rsquo;t sell your data, we don&rsquo;t use it for advertising, and the app has no analytics or advertising tools.</li>
+  <li>You can delete your account and all its data from the app at any time.</li>
 </ul>
 
-<h2>5. Data sharing</h2>
-<p>We do not share, sell, or rent your personal or financial data to third parties for marketing or advertising purposes. We may disclose data only:</p>
-<ul>
-  <li>When required by law, regulation, or legal process</li>
-  <li>To prevent fraud, security incidents, or abuse of the service</li>
-  <li>With service providers strictly necessary to operate the app (e.g. our cloud hosting provider, Firebase for authentication) — these providers only process data on our behalf</li>
-</ul>
+<h2>3. What we collect</h2>
+<p><strong>Account details.</strong> Your mobile number (verified by a one-time code) or your Google account email, and your name. Older accounts may have an email and password &mdash; passwords are stored only as a one-way hash, never in readable form.</p>
+<p><strong>Profile details you choose to add.</strong> Date of birth, gender, city, occupation, monthly income and a monthly budget. All optional.</p>
+<p><strong>Transactions.</strong> For each payment: amount, whether money went out or came in, merchant name, date, category, bank name, the last 4 digits of the account, and the UPI reference number. These come from bank SMS (see section 4) or from what you enter yourself, together with any notes you add. We also keep your category corrections (for example &ldquo;file this merchant under Food&rdquo;) so the app categorises that merchant the same way next time.</p>
+<p><strong>Budgets and family groups</strong> you create.</p>
+<p><strong>Device data.</strong> A notification token so we can send you budget alerts. We don&rsquo;t track how you use the app.</p>
 
-<h2>6. Your rights and controls</h2>
-<ul>
-  <li><strong>Access:</strong> view all your stored transaction and account data within the app.</li>
-  <li><strong>Export:</strong> export your transaction data as a CSV file from within the app.</li>
-  <li><strong>Correction:</strong> edit or recategorize any transaction at any time.</li>
-  <li><strong>Deletion:</strong> delete your account and all associated data at any time from <em>Profile &rarr; Privacy &amp; Data &rarr; Delete My Account</em>. If you're unable to access the app, you may request deletion via our <a href="delete-account.html">account deletion page</a>.</li>
-</ul>
+<h2>4. How the app uses SMS</h2>
+<p>If you allow it, SmartSpend reads SMS as they arrive, checks your inbox in the background for bank messages it may have missed (for example while your phone was offline), and &mdash; when you ask it to &mdash; imports older ones already in your inbox. It checks who each message is from and ignores everything that isn&rsquo;t from a known bank or payment sender.</p>
+<p>Each bank message is read on your phone, the payment details listed above are extracted on your phone, and only those details are sent to us. <strong>The message text itself never leaves your phone and is never stored by us.</strong> Personal conversations and OTPs are never read into the app&rsquo;s data.</p>
+<p>You can turn this off at any time by removing the SMS permission in your phone&rsquo;s settings; you can still add transactions by hand.</p>
 
-<h2>7. Permissions</h2>
+<h2>5. Why we use it</h2>
+<ul>
+  <li>To run the app: record your transactions, categorise them, show totals, trends and insights, track budgets and send you budget and transaction alerts.</li>
+  <li>To keep your account working and secure: sign-in, and preventing duplicate transactions.</li>
+</ul>
+<p>We don&rsquo;t use your data for advertising and we don&rsquo;t sell it.</p>
+
+<h2>6. Who processes your data for us</h2>
+<p>We use these providers to run SmartSpend. They process data on our instructions and not for their own purposes:</p>
 <table>
-  <tr><th>Permission</th><th>Why we need it</th><th>Optional?</th></tr>
-  <tr><td>SMS (READ_SMS, RECEIVE_SMS)</td><td>To detect bank transaction alerts and auto-log transactions</td><td>Yes — you can deny this and use manual entry instead</td></tr>
-  <tr><td>Internet</td><td>To sync your data with our backend so it's available across devices</td><td>No — required for core functionality</td></tr>
+  <tr><th>Provider</th><th>What for</th><th>Where</th></tr>
+  <tr><td>Neon</td><td>Database: stores your account, profile and transactions</td><td>Singapore</td></tr>
+  <tr><td>Render</td><td>Runs the SmartSpend server</td><td>Render cloud data centres</td></tr>
+  <tr><td>Google Firebase</td><td>Phone-number verification, Google sign-in, push notifications</td><td>Google&rsquo;s global infrastructure</td></tr>
 </table>
+<p>This means your data may be stored and processed outside India. We may also disclose data if the law requires it (for example a valid order from a court or government authority).</p>
 
-<h2>8. Children's privacy</h2>
-<p>SmartSpend is not directed at children under 13, and we do not knowingly collect data from children.</p>
+<h2>7. How we protect it</h2>
+<ul>
+  <li>All data between the app and our server is encrypted in transit (HTTPS).</li>
+  <li>Passwords are stored only as salted one-way hashes.</li>
+  <li>On your phone, your sign-in token and any not-yet-synced payments are encrypted with a key held in your phone&rsquo;s secure keystore, and the app&rsquo;s data is excluded from phone backups.</li>
+  <li>The database is encrypted at rest by our hosting provider, and access to it is restricted to the people who need it to run and support the service.</li>
+</ul>
+<p>No system is perfectly secure, but we work to protect your data and will tell you, as the law requires, if a breach affects it.</p>
 
-<h2>9. Changes to this policy</h2>
-<p>We may update this privacy policy from time to time. Material changes will be reflected with an updated "Last updated" date above.</p>
+<h2>8. How long we keep it</h2>
+<p>We keep your data while your account exists. When you delete your account, we delete your profile, transactions, budgets, category corrections, alerts, notification token and your sign-in record. Deleted data may remain in our database provider&rsquo;s short-term recovery history for up to 6 hours before it is gone for good. We don&rsquo;t keep a copy.</p>
 
-<h2>10. Contact us</h2>
-<p>For any questions, concerns, or data requests related to this privacy policy, contact: <a href="mailto:smartspend4support@gmail.com">smartspend4support@gmail.com</a></p>
+<h2>9. Your choices and rights</h2>
+<ul>
+  <li><strong>See and correct</strong> your data in the app (Account, and each transaction).</li>
+  <li><strong>Delete your account</strong> in the app (Account &rarr; Privacy &amp; legal &rarr; Delete account) or by request on our <a href="delete-account.html">account deletion page</a>.</li>
+  <li><strong>Stop SMS reading</strong> by removing the permission in your phone settings.</li>
+  <li><strong>Turn off notifications</strong> in the app or in your phone settings.</li>
+  <li><strong>Withdraw consent, ask a question or raise a grievance</strong> by writing to Harsh Rabadiya at <a href="mailto:smartspend4support@gmail.com">smartspend4support@gmail.com</a>. We aim to reply within 7 days.</li>
+</ul>
+
+<h2>10. Children</h2>
+<p>SmartSpend is not meant for anyone under 18, and we don&rsquo;t knowingly collect data from children.</p>
+
+<h2>11. Changes to this policy</h2>
+<p>If we change this policy we&rsquo;ll update the date at the top, and tell you in the app if the change is significant.</p>
 
 <footer>
   <a href="index.html">Home</a> &middot; <a href="terms.html">Terms of Service</a> &middot; <a href="support.html">Support</a> &middot; <a href="delete-account.html">Delete My Account</a>

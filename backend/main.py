@@ -83,7 +83,7 @@ app = FastAPI(
     title="Smart Expense Tracker API",
     description=(
         "FastAPI Backend with async/await, SQLAlchemy, PostgreSQL, "
-        "JWT Authentication, Redis + Celery workers, and Alembic migrations."
+        "JWT Authentication, and Alembic migrations."
     ),
     version="1.0.0",
     docs_url="/docs",
@@ -116,11 +116,14 @@ async def global_exception_handler(request: Request, exc: Exception):
     Catch-all handler for unhandled exceptions.
     Returns a JSON response so CORSMiddleware can attach headers properly.
     """
-    print(f"[UNHANDLED ERROR] {request.method} {request.url}")
+    # Path only: query strings carry search terms, merchant names and filters. The traceback
+    # stays in the server log for debugging; the client gets no internals (SQL errors can
+    # quote the values that were being written).
+    print(f"[UNHANDLED ERROR] {request.method} {request.url.path}")
     tb.print_exception(type(exc), exc, exc.__traceback__)
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Internal server error: {str(exc)}"},
+        content={"detail": "Internal server error"},
     )
 
 
@@ -181,9 +184,15 @@ async def on_startup() -> None:
                 from sqlalchemy import text
                 await conn.execute(text("SELECT 1"))
             print("Database connection verified.")
-            await ensure_auth_schema()
         except Exception as e:
             print(f"Warning: Database connectivity check failed: {e}")
+            return
+        try:
+            await ensure_auth_schema()
+        except Exception as e:
+            # Expected when the server connects with the restricted app login (no ALTER rights):
+            # the Render pre-deploy step runs the migrations with the owner login instead.
+            print(f"Schema safety net skipped ({type(e).__name__}); relying on Alembic migrations.")
         return
 
     try:

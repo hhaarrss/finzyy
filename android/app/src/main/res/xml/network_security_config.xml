@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Release: HTTPS only. The app talks to a single HTTPS backend, so nothing here needs plain
+     HTTP. Debug builds override this file (src/debug/res/xml) to reach a local dev backend. -->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true" />
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.29.227</domain>
-        <domain includeSubdomains="true">127.0.0.1</domain>
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">10.0.2.2</domain>
-        <domain includeSubdomains="true">expense-tracker-pk4d.onrender.com</domain>
-    </domain-config>
+    <base-config cleartextTrafficPermitted="false" />
 </network-security-config>
