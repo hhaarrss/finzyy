@@ -52,6 +52,11 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 class MainActivity : ComponentActivity() {
 
+    // A brand-new account is routed through ProfileSetupScreen once (existing accounts already
+    // have a complete profile and skip it) -- that one-time detour is the signal the guided
+    // tour uses to show itself only right after sign-up, not on every sign-in.
+    private var pendingHomeTour = false
+
     private lateinit var sharedPrefs: SharedPreferences
     private lateinit var googleSignInClient: GoogleSignInClient
 
@@ -311,7 +316,10 @@ class MainActivity : ComponentActivity() {
                 ProfileSetupScreen(
                     initial = initial,
                     editing = false,
-                    onSaved = { continueAfterSignIn() },
+                    onSaved = {
+                        pendingHomeTour = true
+                        continueAfterSignIn()
+                    },
                     onBack = null
                 )
             }
@@ -333,6 +341,9 @@ class MainActivity : ComponentActivity() {
             !sharedPrefs.getBoolean(PREF_CONSENT_PROMPTED, false)
         if (promptConsent) sharedPrefs.edit().putBoolean(PREF_CONSENT_PROMPTED, true).apply()
 
+        val showTour = pendingHomeTour
+        pendingHomeTour = false
+
         // Android 13+ drops every notification (sync alerts, budget pushes) until the app holds
         // POST_NOTIFICATIONS. Not stacked on the SMS consent screen — that launch asks for SMS;
         // the next one asks for this. The system itself stops showing it after two denials.
@@ -353,7 +364,8 @@ class MainActivity : ComponentActivity() {
             SmartSpendTheme(darkTheme = dark) {
                 SmartSpendNavHost(
                     onSignedOut = { performLogout() },
-                    promptSmsConsent = promptConsent
+                    promptSmsConsent = promptConsent,
+                    showHomeTour = showTour
                 )
             }
         }

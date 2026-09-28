@@ -32,6 +32,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -46,6 +48,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import com.smartspend.app.ui.notifications.AttentionRepository
@@ -88,6 +91,12 @@ import com.smartspend.app.ui.components.monthName
 import com.smartspend.app.ui.components.toView
 import com.smartspend.app.ui.permission.rememberSmsPermissionsGranted
 import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.tour.LocalTourController
+import com.smartspend.app.ui.tour.TourController
+import com.smartspend.app.ui.tour.TourOverlay
+import com.smartspend.app.ui.tour.TourStep
+import com.smartspend.app.ui.tour.tourTarget
+import kotlinx.coroutines.delay
 import com.smartspend.app.ui.theme.TabularAmount
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -117,11 +126,16 @@ fun HomeScreen(
     onCategory: (String) -> Unit,
     onInsights: () -> Unit,
     onEnableAutoSync: () -> Unit,
-    onNotifications: () -> Unit
+    onNotifications: () -> Unit,
+    showTour: Boolean = false,
+    onTourDone: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val attentionCount by AttentionRepository.unread.collectAsState()
     var state by remember { mutableStateOf<HomeUiState>(HomeUiState.Loading) }
+    val listState = rememberLazyListState()
+    val tour = remember(showTour) { if (showTour) TourController() else null }
+    var tourVisible by remember { mutableStateOf(false) }
     var refreshKey by remember { mutableIntStateOf(0) }
     val liveVersion = rememberTransactionsVersion()
     var refreshing by remember { mutableStateOf(false) }
@@ -154,6 +168,15 @@ fun HomeScreen(
     }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { innerPadding ->
+    val loaded = state is HomeUiState.Loaded
+    LaunchedEffect(showTour, loaded) {
+        if (showTour && loaded && !tourVisible) {
+            delay(TOUR_START_DELAY_MS) // let the screen settle so the first stop isn't a moving target
+            tourVisible = true
+        }
+    }
+
+    CompositionLocalProvider(LocalTourController provides tour) {
         PullToRefreshBox(
             isRefreshing = refreshing,
             onRefresh = { refreshing = true; refreshKey++ },
@@ -183,16 +206,43 @@ fun HomeScreen(
                     onCategory = onCategory,
                     onInsights = onInsights,
                     onEnableAutoSync = onEnableAutoSync,
-                    onOpenTx = { openTx = it }
+                    onOpenTx = { openTx = it },
+                    listState = listState
                 )
             }
         }
+    }
     }
 
     openTx?.let { tx ->
         TransactionSheet(tx = tx, onDismiss = { openTx = null }, onChanged = { refreshKey++ })
     }
+
+    if (tourVisible && tour != null) {
+        TourOverlay(
+            controller = tour,
+            steps = HomeTourSteps,
+            listState = listState,
+            onFinish = {
+                tourVisible = false
+                onTourDone()
+            }
+        )
+    }
 }
+
+private const val TOUR_START_DELAY_MS = 700L
+
+/** Top-to-bottom, so the tour never has to scroll back up. */
+private val HomeTourSteps = listOf(
+    TourStep("account", "Your account", "Profile, theme, alerts and SMS sync settings live here."),
+    TourStep("notifications", "What needs you", "Payments we couldn't categorise, budgets running over and unusual spending collect here. The badge counts what you haven't seen yet."),
+    TourStep("search", "Find any payment", "Search by merchant, category, bank or amount -- even \"499\"."),
+    TourStep("hero", "This month at a glance", "What you've spent so far. With a budget set, the bar shows how much is gone and the tick marks where today falls."),
+    TourStep("budget", "Set a monthly budget", "Cap your spending overall or per category -- we'll warn you before you go over, not after."),
+    TourStep("links", "Trends and categories", "See spending over time, or exactly where each rupee went."),
+    TourStep("add", "Add a payment by hand", "Paid in cash? Add it here. Bank SMS payments are added for you automatically.")
+)
 
 @Composable
 private fun HomeContent(
@@ -208,7 +258,8 @@ private fun HomeContent(
     onCategory: (String) -> Unit,
     onInsights: () -> Unit,
     onEnableAutoSync: () -> Unit,
-    onOpenTx: (TxView) -> Unit
+    onOpenTx: (TxView) -> Unit,
+    listState: LazyListState
 ) {
     val data = bundle.home
     val autoSyncOn = rememberSmsPermissionsGranted()
@@ -216,6 +267,7 @@ private fun HomeContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
+        state = listState,
         contentPadding = PaddingValues(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -233,7 +285,7 @@ private fun HomeContent(
             SpendHero(
                 data = data,
                 overallBudget = bundle.overallBudget,
-                modifier = Modifier.padding(horizontal = ScreenGutter)
+                modifier = Modifier.padding(horizontal = ScreenGutter).tourTarget("hero")
             )
         }
 
@@ -249,7 +301,7 @@ private fun HomeContent(
 
         item {
             Row(
-                modifier = Modifier.padding(horizontal = ScreenGutter),
+                modifier = Modifier.padding(horizontal = ScreenGutter).tourTarget("links"),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 LinkPill(SmartSpendIcons.Trends, "Trends", onTrends, Modifier.weight(1f))
@@ -290,7 +342,7 @@ private fun HomeContent(
                 "Recent",
                 modifier = Modifier.padding(start = ScreenGutter, end = ScreenGutter, top = 16.dp)
             ) {
-                AddPill(onClick = onAddTransaction)
+                AddPill(onClick = onAddTransaction, modifier = Modifier.tourTarget("add"))
             }
         }
         item {
@@ -360,6 +412,7 @@ private fun TopBar(
             modifier = Modifier
                 .weight(1f)
                 .clip(MaterialTheme.shapes.small)
+                .tourTarget("account")
                 .clickable(role = Role.Button, onClick = onAccount),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -398,10 +451,16 @@ private fun TopBar(
             icon = Icons.Default.Notifications,
             contentDescription = if (attentionCount > 0) "Notifications, $attentionCount need attention" else "Notifications",
             onClick = onNotifications,
-            badgeCount = attentionCount
+            badgeCount = attentionCount,
+            modifier = Modifier.tourTarget("notifications")
         )
         Spacer(Modifier.width(6.dp))
-        RoundIconButton(icon = Icons.Default.Search, contentDescription = "Search transactions", onClick = onSearch)
+        RoundIconButton(
+            icon = Icons.Default.Search,
+            contentDescription = "Search transactions",
+            onClick = onSearch,
+            modifier = Modifier.tourTarget("search")
+        )
     }
 }
 
@@ -550,6 +609,7 @@ private fun IncomeBudgetBlock(
             Column(
                 Modifier
                     .weight(1f)
+                    .tourTarget("budget")
                     .clickable(role = Role.Button, onClick = onBudget)
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(3.dp)
@@ -686,9 +746,10 @@ private fun AutoSyncPrompt(onEnable: () -> Unit, modifier: Modifier = Modifier) 
 }
 
 @Composable
-private fun AddPill(onClick: () -> Unit) {
+private fun AddPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         onClick = onClick,
+        modifier = modifier,
         shape = CircleShape,
         color = MaterialTheme.colorScheme.onBackground,
         contentColor = MaterialTheme.colorScheme.background
