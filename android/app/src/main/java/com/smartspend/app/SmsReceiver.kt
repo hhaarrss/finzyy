@@ -221,7 +221,7 @@ class SmsReceiver : BroadcastReceiver() {
                                     commit()
                                 }
                                 if (notify) {
-                                    TransactionNotifier.show(context, body.transaction, payload.amount, payload.merchant_raw)
+                                    TransactionNotifier.show(context, body.transaction, payload.amount, payload.merchant_raw, body.merchant_visit_count, body.month_spent)
                                 }
                             } else {
                                 Log.d(TAG, "SMS transaction was already on the server")

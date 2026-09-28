@@ -28,3 +28,11 @@ class SMSIngestionResponse(BaseModel):
     success: bool = Field(..., description="Indicates if the SMS was successfully parsed and saved.")
     transaction: Optional[TransactionResponse] = Field(None, description="The created transaction details if successful.")
     message: str = Field(..., description="Feedback message regarding the ingestion status.")
+    # For the app's "new transaction" notification, so it needs no extra request. Optional:
+    # absent on failures/duplicates, and older app builds simply ignore them.
+    merchant_visit_count: Optional[int] = Field(
+        None, description="How many debits this user now has at this merchant, including this one."
+    )
+    month_spent: Optional[float] = Field(
+        None, description="This month's total spend, the same figure the Home screen shows."
+    )
