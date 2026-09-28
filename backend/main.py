@@ -191,8 +191,8 @@ async def on_startup() -> None:
             await ensure_auth_schema()
         except Exception as e:
             # Expected when the server connects with the restricted app login (no ALTER rights):
-            # the Render pre-deploy step runs the migrations with the owner login instead.
-            print(f"Schema safety net skipped ({type(e).__name__}); relying on Alembic migrations.")
+            # scripts/ensure_schema.py applies the same statements with the owner login first.
+            print(f"Schema safety net skipped ({type(e).__name__}); expecting scripts/ensure_schema.py to have run.")
         return
 
     try:
