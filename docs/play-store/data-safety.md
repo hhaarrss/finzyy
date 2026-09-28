@@ -31,9 +31,7 @@ So every row below is **Collected: Yes, Shared: No**.
 | Financial info → **Purchase history** | Each payment: amount, debit/credit, merchant name, date, category | Required (core feature) | App functionality |
 | Financial info → **Other financial info** | Bank name, last 4 digits of the account, UPI reference number, monthly income (optional), budgets you set | Required (bank/UPI fields come with each payment; income is optional) | App functionality |
 | App activity → **Other user-generated content** | Notes you add to a transaction; family group names | Optional | App functionality |
-| App activity → **App interactions** | Firebase Analytics automatic events (app opens, screen views, sessions) | Required (no opt-out in the app today) | Analytics |
-| App info and performance → **Diagnostics** | Firebase Analytics device/OS/app-version data | Required | Analytics |
-| Device or other IDs → **Device or other IDs** | Firebase Cloud Messaging token (for budget alerts); Firebase Analytics app instance ID | Required | App functionality (notifications), Analytics |
+| Device or other IDs → **Device or other IDs** | Firebase Cloud Messaging token (for budget alerts) | Required | App functionality (notifications) |
 
 For each row Play also asks **"Is this data processed ephemerally?"** → **No** (it's stored),
 and **"Is this data collection required, or can users choose?"** → use the column above.
@@ -49,9 +47,9 @@ back each other up.
 
 ## Things that would change these answers
 
-- **Firebase Analytics.** The app includes it but never logs its own events — it only collects
-  Firebase's automatic ones. Removing the `firebase-analytics` dependency would remove the
-  *App interactions*, *Diagnostics* and the analytics half of *Device or other IDs* rows
-  entirely, and simplify the privacy policy. Worth deciding before the first release.
+- **No analytics or crash-reporting SDK is in the app** (Firebase Analytics was removed), so
+  *App activity → App interactions* and *App info and performance* are **not collected**, and
+  no data is used for the *Analytics* purpose. Adding Firebase Analytics, Crashlytics or any
+  similar SDK later means adding those rows back.
 - A new field in a profile/transaction API, a new SDK (ads, crash reporting), or sending any
   SMS text to the server — all require updating this form first.

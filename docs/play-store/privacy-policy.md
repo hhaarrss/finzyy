@@ -15,8 +15,10 @@
 >   **Account → Delete account**.
 > - It leaves out data the app does collect: bank name, UPI reference, the optional profile
 >   fields (date of birth, gender, city, occupation, income), Google sign-in email, the push
->   token, and Firebase Analytics usage data.
+>   token.
 > - It doesn't mention the background inbox check for missed bank SMS.
+> - Its "Usage data" line ("basic app usage and crash diagnostics") is wrong: the app has no
+>   analytics or crash-reporting SDK.
 > - Children: says under 13; for a finance app, 18 is the safer line (and matches this draft).
 > - The companion **delete-account.html** page has the same wrong in-app path, and should list
 >   profile details, family groups and the Firebase sign-in record among what gets deleted.
@@ -53,10 +55,8 @@ app categorises that merchant the same way next time.
 
 **Budgets and family groups** you create.
 
-**Device and usage data.** A notification token so we can send you budget alerts, and app usage
-data collected automatically by Google Firebase Analytics (app opens, screens viewed, device
-model, OS version, an app-instance identifier). [Remove this paragraph if Firebase Analytics is
-removed from the app.]
+**Device data.** A notification token so we can send you budget alerts. We don't use analytics
+or advertising tools, and we don't track how you use the app.
 
 ## 3. How the app uses SMS
 
@@ -74,7 +74,6 @@ your phone's settings; you can still add transactions by hand.
 - To run the app: record your transactions, categorise them, show totals, trends and insights,
   track budgets and send you budget alerts.
 - To keep your account working and secure: sign-in, and stopping duplicate transactions.
-- To understand how the app is used so we can improve it (Firebase Analytics).
 
 We don't use your data for advertising and we don't sell it.
 
@@ -87,7 +86,7 @@ their own purposes:
 |---|---|---|
 | Neon (database) | Stores your account, profile and transactions | Singapore |
 | Render (server hosting) | Runs the SmartSpend backend | [REGION — check the Render service's region] |
-| Google Firebase | Phone-number verification, Google sign-in, push notifications, usage analytics | Google's global infrastructure |
+| Google Firebase | Phone-number verification, Google sign-in, push notifications | Google's global infrastructure |
 
 We may disclose data if the law requires it (for example a valid order from a court or government
 authority).

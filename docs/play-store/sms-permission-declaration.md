@@ -65,8 +65,7 @@ unlisted YouTube video:
 - **Data safety**: *Financial info* declared; *SMS or MMS* answered as not collected
   (see [data-safety.md](data-safety.md)).
 - **In-app disclosure** (`SmsConsentScreen.kt`) says "Only messages from recognized bank
-  senders are parsed, on your device" — true, and matches. It doesn't yet mention the background
-  inbox check for missed bank SMS; adding one line there would make the disclosure match this
-  form exactly.
+  senders are parsed, on your device" and that the app "also checks your inbox in the background
+  for bank SMS it missed while your phone was offline" — matching this form.
 - If you ever send SMS text to the server, add a new SMS use, or add a new SDK that could read
   SMS data, you must submit this form again.

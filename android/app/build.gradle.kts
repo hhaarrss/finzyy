@@ -126,7 +126,6 @@ dependencies {
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
-    implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
     implementation(libs.google.services.auth)
 
