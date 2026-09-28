@@ -3,25 +3,30 @@
 ## 1. Deploy the backend to Render
 
 There is no `render.yaml`; the Render service (`firstproject-smartspend.onrender.com`) is
-configured in the Render dashboard.
+configured in the Render dashboard. As of 28 Sep 2026 it was still serving an old build hours
+after merges to `main`, so auto-deploy appears to be **off**.
 
-1. Merge the PR into `main` on GitHub.
-2. Render dashboard → the SmartSpend web service → **Settings → Build & Deploy**:
-   - **Branch** should be `main`.
-   - If **Auto-Deploy** is *Yes*, the merge deploys by itself — watch the **Events** tab.
-   - If it is *No*: **Manual Deploy → Deploy latest commit**.
-3. When the deploy is **Live**, check:
-   - `https://firstproject-smartspend.onrender.com/docs` loads.
-   - The app still loads Home, and a new bank SMS still syncs.
-4. `celery` and `redis` were removed from `requirements.txt`. If the Render **Start Command**
-   mentions `celery`, or there is a separate Render *worker* service running
-   `celery -A celery_app ...`, delete that worker service — the file it runs no longer exists.
-5. Account deletion now also removes the user's Firebase sign-in. That needs
-   `FIREBASE_SERVICE_ACCOUNT_JSON` in the service's **Environment** — it is already required for
-   phone sign-in, so it should be there. If it's missing, deletion still removes all data but
-   logs `[Firebase] Admin SDK not configured`.
+1. Render dashboard → the SmartSpend web service → **Settings → Build & Deploy**: check the
+   repository is `smartspend4support-eng/firstproject` and the branch is `main`. Turn
+   **Auto-Deploy** on if you want merges to go live by themselves.
+2. **Manual Deploy → Deploy latest commit**, and watch **Events/Logs** until it's *Live*.
+3. Confirm the new build is live: `https://firstproject-smartspend.onrender.com/openapi.json`
+   → `info.description` must **not** mention "Redis + Celery".
+4. **Environment** — check these while you're there:
+   - `JWT_SECRET_KEY` must be a new value, not the one that was committed to git history
+     (see PROJECT_NOTES). Changing it signs everyone out once.
+   - `APP_ENV=production`.
+   - `FIREBASE_SERVICE_ACCOUNT_JSON` is set (phone sign-in and the Firebase part of account
+     deletion need it).
+5. If there is a separate Render *worker* service running `celery -A celery_app ...`, delete it:
+   that file no longer exists.
+6. Then switch the server to the restricted database login — Step 3 of
+   [database-access.md](../security/database-access.md).
+7. Test on a phone: Home loads, a bank SMS syncs, recategorise works, and deleting a throwaway
+   account works.
 
-No database migration is needed for this release.
+No Alembic migration is part of this (production isn't managed by Alembic — see
+database-access.md).
 
 ## 2. Create the Play upload key (once, by you — never share or commit it)
 
