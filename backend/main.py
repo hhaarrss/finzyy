@@ -184,9 +184,15 @@ async def on_startup() -> None:
                 from sqlalchemy import text
                 await conn.execute(text("SELECT 1"))
             print("Database connection verified.")
-            await ensure_auth_schema()
         except Exception as e:
             print(f"Warning: Database connectivity check failed: {e}")
+            return
+        try:
+            await ensure_auth_schema()
+        except Exception as e:
+            # Expected when the server connects with the restricted app login (no ALTER rights):
+            # the Render pre-deploy step runs the migrations with the owner login instead.
+            print(f"Schema safety net skipped ({type(e).__name__}); relying on Alembic migrations.")
         return
 
     try:

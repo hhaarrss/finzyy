@@ -66,7 +66,7 @@ Upload `android/app/build/outputs/bundle/release/app-release.aab`.
 - Data safety → [data-safety.md](data-safety.md)
 - Privacy policy (must be a public URL) → [privacy-policy.md](privacy-policy.md)
 - Permissions Declaration Form for SMS → [sms-permission-declaration.md](sms-permission-declaration.md)
-- Account deletion web link: `https://hhaarrss.github.io/smart-spend/delete-account.html` already exists (email request, which Play accepts) — fix its wording first (see privacy-policy.md).
+- Account deletion web link: `https://hhaarrss.github.io/smart-spend/delete-account.html` (email request, which Play accepts) — corrected and live.
 
 ## 5. Before every release
 

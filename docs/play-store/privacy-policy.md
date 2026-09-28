@@ -1,31 +1,17 @@
 # SmartSpend Privacy Policy (draft)
 
-> **Before publishing:** fill every `[PLACEHOLDER]`, have it reviewed by someone qualified in
-> Indian data-protection law (the Digital Personal Data Protection Act, 2023 applies to you), and
-> host it at a public URL (Play requires a link, not a PDF). Keep it in step with
-> [data-safety.md](data-safety.md) — the two must say the same thing.
+> **Published version:** [`docs/privacy-policy.html`](../privacy-policy.html) is the finished
+> page, in the same style as the live site. Copy it to the `hhaarrss/smart-spend` repo, which
+> serves `https://hhaarrss.github.io/smart-spend/privacy-policy.html` (the URL the app and Play
+> Console use). This Markdown file is the readable source — keep the two in step, and keep both
+> in step with [data-safety.md](data-safety.md).
 >
-> **A policy is already live** at `https://hhaarrss.github.io/smart-spend/privacy-policy.html`
-> (the app links to it from the SMS consent screen and Account). It lives in the separate
-> `hhaarrss/smart-spend` GitHub Pages repo. Replace its content with this draft. What's wrong
-> with the live one today:
-> - It still shows `[DATE]` and `[YOUR NAME / COMPANY NAME]` placeholders.
-> - It promises **CSV export** and mentions **uploaded bank statements** — the app has neither.
-> - Wrong deletion path ("Profile → Privacy & Data → Delete My Account"); the app's is
->   **Account → Delete account**.
-> - It leaves out data the app does collect: bank name, UPI reference, the optional profile
->   fields (date of birth, gender, city, occupation, income), Google sign-in email, the push
->   token.
-> - It doesn't mention the background inbox check for missed bank SMS.
-> - Its "Usage data" line ("basic app usage and crash diagnostics") is wrong: the app has no
->   analytics or crash-reporting SDK.
-> - Children: says under 13; for a finance app, 18 is the safer line (and matches this draft).
-> - The companion **delete-account.html** page has the same wrong in-app path, and should list
->   profile details, family groups and the Firebase sign-in record among what gets deleted.
+> Still worth doing: have it read by someone who knows India's DPDP Act, and add the Render
+> region to the providers table once you've checked it in the Render dashboard.
 
-**Effective date:** [DATE]
-**Who we are:** SmartSpend is operated by [LEGAL NAME OF OWNER / COMPANY], [ADDRESS] ("we").
-**Contact:** [smartspend4support@gmail.com — confirm this is the address you want public]
+**Effective date:** 28 September 2026
+**Who we are:** SmartSpend is developed and operated by Harsh Rabadiya ("we").
+**Contact:** smartspend4support@gmail.com
 
 SmartSpend is an expense tracker. It reads the payment SMS your bank sends you, turns them into
 transactions, and shows you where your money goes.
@@ -85,7 +71,7 @@ their own purposes:
 | Provider | What for | Where |
 |---|---|---|
 | Neon (database) | Stores your account, profile and transactions | Singapore |
-| Render (server hosting) | Runs the SmartSpend backend | [REGION — check the Render service's region] |
+| Render (server hosting) | Runs the SmartSpend backend | Render cloud data centres |
 | Google Firebase | Phone-number verification, Google sign-in, push notifications | Google's global infrastructure |
 
 We may disclose data if the law requires it (for example a valid order from a court or government
@@ -113,12 +99,12 @@ Deleted data may remain in our database provider's short-term recovery history f
 ## 8. Your choices and rights
 
 - **See and correct** your data in the app (Account, and each transaction).
-- **Delete your account** in the app (Account → Delete account) or by requesting it at
+- **Delete your account** in the app (Account → Privacy & legal → Delete account) or by requesting it at
   https://hhaarrss.github.io/smart-spend/delete-account.html.
 - **Stop SMS reading** by removing the permission in your phone settings.
 - **Turn off notifications** in the app or in your phone settings.
-- **Withdraw consent, ask a question or make a complaint** by contacting us at the address
-  above. [If required under the DPDP Act / rules: name and contact of your Grievance Officer.]
+- **Withdraw consent, ask a question or raise a grievance** by writing to Harsh Rabadiya at
+  smartspend4support@gmail.com. We aim to reply within 7 days.
 
 ## 9. Children
 

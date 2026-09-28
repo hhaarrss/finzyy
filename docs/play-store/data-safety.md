@@ -14,7 +14,7 @@ Data that stays on the phone — the SMS text itself — is not "collected".
 | Does your app collect or share any of the required user data types? | **Yes** |
 | Is all of the user data collected by your app encrypted in transit? | **Yes** — release builds are HTTPS-only |
 | Which of the following methods of account creation does your app support? | Phone number (OTP), Google sign-in; older accounts: email + password |
-| Do you provide a way for users to request that their data is deleted? | **Yes** — in the app (Account → Delete account) and on the web: `https://hhaarrss.github.io/smart-spend/delete-account.html` (email request; fix its in-app path first — see privacy-policy.md) |
+| Do you provide a way for users to request that their data is deleted? | **Yes** — in the app (Account → Privacy & legal → Delete account) and on the web: `https://hhaarrss.github.io/smart-spend/delete-account.html` (email request) |
 
 ## Section 2 — Data types
 

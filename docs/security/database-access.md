@@ -100,12 +100,11 @@ Render dashboard → SmartSpend web service → **Environment**:
 4. **Manual Deploy → Deploy latest commit**, then check the app: Home loads, a bank SMS syncs,
    recategorising works, and Account → Delete account on a throwaway account succeeds.
 
-Expect one harmless log line on each start in production:
-`Warning: Database connectivity check failed: ... must be owner of table users`. The server tries
-a few "add column if missing" statements at startup as a safety net; the app login is (correctly)
+Expect one harmless line on each start in production:
+`Schema safety net skipped (ProgrammingError); relying on Alembic migrations.` The server tries a
+few "add column if missing" statements at startup as a safety net; the app login is (correctly)
 not allowed to, and the real migrations already ran in the pre-deploy step. The server keeps
-running normally. (That warning text is misleading — worth a one-line code fix later so it says
-"schema check skipped" instead.)
+running normally.
 
 ## Step 4 — Rotate the owner password and remove it from everywhere else
 
