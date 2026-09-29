@@ -4,7 +4,7 @@ SQLAlchemy ORM model for Transaction.
 
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
-from sqlalchemy import Integer, Numeric, String, DateTime, ForeignKey, Date, Text, Boolean
+from sqlalchemy import Integer, Numeric, String, DateTime, ForeignKey, Date, Text, Boolean, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from sqlalchemy.sql import func
 from database import Base
@@ -19,6 +19,8 @@ class Transaction(Base):
     """
 
     __tablename__ = "transactions"
+    # Same name as the statement in main.py, which adds it to existing databases.
+    __table_args__ = (Index("ix_transactions_user_id_date", "user_id", "date"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(

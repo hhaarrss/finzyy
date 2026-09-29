@@ -378,20 +378,14 @@ async def list_transactions(
     """
     query_target_user_id = current_user.id
 
+    # Reading another user's transactions is not allowed. It used to be allowed for "family
+    # members", but anyone could join any family by its number (no invite or approval), which
+    # exposed every member's payments. The app never sends user_id.
     if user_id and user_id != current_user.id:
-        if not current_user.family_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You must be part of a family group to query other users' transactions."
-            )
-        member_check = select(User).where(and_(User.id == user_id, User.family_id == current_user.family_id))
-        res = await db.execute(member_check)
-        if not res.scalars().first():
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only view transactions of members in your own family group."
-            )
-        query_target_user_id = user_id
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only view your own transactions."
+        )
 
     conditions = [Transaction.user_id == query_target_user_id]
 
@@ -688,6 +682,36 @@ async def list_known_merchants(
         key=lambda item: (-int(item.get("count", 0)), str(item.get("name", "")).lower()),
     )
 
+async def record_merchant_correction(
+    db: AsyncSession,
+    user_id: int,
+    merchant_raw: Optional[str],
+    category: str,
+    subcategory: Optional[str] = None,
+    display_name: Optional[str] = None,
+) -> None:
+    """
+    Categoriser Layer 1: remember the user's category for this merchant, keyed exactly the
+    way ingest_sms reads it back. Caller commits.
+    """
+    key = merchant_key(merchant_raw)
+    existing_mapping = await find_user_correction(db, user_id, merchant_raw)
+    if existing_mapping:
+        existing_mapping.category = category
+        existing_mapping.subcategory = subcategory
+        existing_mapping.display_name = display_name or merchant_raw
+        existing_mapping.count += 1
+    elif key:
+        db.add(MerchantMapping(
+            user_id=user_id,
+            merchant_key=key,
+            category=category,
+            subcategory=subcategory,
+            display_name=display_name or merchant_raw,
+            count=1,
+        ))
+
+
 @router.patch(
     "/{transaction_id}/recategorize",
     status_code=status.HTTP_200_OK,
@@ -736,26 +760,11 @@ async def recategorize_transaction(
     transaction.confidence = "high"
     transaction.review_status = "reviewed"
 
-    # Save or update MerchantMapping in database (Layer 1). Same key function and same
-    # lookup as ingest_sms uses to read it back.
-    key = merchant_key(body.merchant_raw)
-    existing_mapping = await find_user_correction(db, current_user.id, body.merchant_raw)
-
-    if existing_mapping:
-        existing_mapping.category = normalize_category_name(body.new_category)
-        existing_mapping.subcategory = body.subcategory
-        existing_mapping.display_name = body.display_name or body.merchant_raw
-        existing_mapping.count += 1
-    elif key:
-        new_mapping = MerchantMapping(
-            user_id=current_user.id,
-            merchant_key=key,
-            category=normalize_category_name(body.new_category),
-            subcategory=body.subcategory,
-            display_name=body.display_name or body.merchant_raw,
-            count=1,
-        )
-        db.add(new_mapping)
+    # Save or update MerchantMapping in database (Layer 1).
+    await record_merchant_correction(
+        db, current_user.id, body.merchant_raw, normalize_category_name(body.new_category),
+        body.subcategory, body.display_name,
+    )
 
     await db.commit()
 
@@ -777,13 +786,10 @@ class TransactionUpdateSchema(BaseModel):
     merchant: Optional[str] = None
 
 
+# Only /items/{id}. It was also registered on PATCH /{id}, ahead of edit_transaction, so it
+# answered that route and silently dropped amount/date/notes edits from the app.
 @router.patch(
     "/items/{transaction_id}",
-    response_model=TransactionResponse,
-    summary="Update transaction fields (category, review_status, merchant)",
-)
-@router.patch(
-    "/{transaction_id}",
     response_model=TransactionResponse,
     summary="Update transaction fields (category, review_status, merchant)",
 )
@@ -818,17 +824,11 @@ async def update_transaction_fields(
         transaction.source = "user_correction"
         transaction.confidence = "high"
 
-        # Save user learning correction
-        merchant_name = transaction.merchant or "Unknown Merchant"
-        try:
-            save_user_correction(
-                merchant_raw=merchant_name,
-                new_category=normalize_category_name(body.category),
-                subcategory=body.subcategory,
-                display_name=merchant_name,
-            )
-        except Exception as e:
-            pass
+        # Save user learning correction. This called an undefined function before and the
+        # NameError was swallowed, so nothing was ever learned through this route.
+        await record_merchant_correction(
+            db, current_user.id, transaction.merchant, transaction.category, body.subcategory,
+        )
 
     if body.subcategory is not None:
         transaction.subcategory = body.subcategory
@@ -869,11 +869,15 @@ async def edit_transaction(
             detail="Not authorized to edit this transaction"
         )
 
-    if updates.category is not None:
-        transaction.category = normalize_category_name(updates.category)
     if updates.merchant is not None:
         transaction.merchant = updates.merchant
         transaction.merchant_display = None  # the user's wording replaces any brand match
+    if updates.category is not None:
+        transaction.category = normalize_category_name(updates.category)
+        transaction.review_status = "reviewed"
+        transaction.source = "user_correction"
+        transaction.confidence = "high"
+        await record_merchant_correction(db, current_user.id, transaction.merchant, transaction.category)
     if updates.amount is not None:
         transaction.amount = updates.amount
     if updates.date is not None:

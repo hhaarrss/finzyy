@@ -76,6 +76,7 @@ from database import engine
 
 # App Configuration
 APP_ENV = os.getenv("APP_ENV", "development")
+IS_PRODUCTION = APP_ENV.strip().lower() == "production"
 APP_PORT = int(os.getenv("APP_PORT", "8000"))
 
 # Create FastAPI Instance
@@ -86,8 +87,11 @@ app = FastAPI(
         "JWT Authentication, and Alembic migrations."
     ),
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # The interactive docs and the schema are a map of every endpoint; only the app needs the
+    # API in production, so they're served in development only.
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+    openapi_url=None if IS_PRODUCTION else "/openapi.json",
 )
 
 # CORS: the only client is the Android app, which ignores CORS, so no browser origin is
@@ -131,9 +135,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(auth_router)
 app.include_router(transactions_router)
 app.include_router(budget_router)
-app.include_router(family_router)
 app.include_router(insights_router)
-app.include_router(seed_router)
+# Not in production:
+# - seed: any signed-in user could reset/create a demo account whose password is in this repo.
+# - family: anyone could join any family by its number (no invite or approval). The app has no
+#   family feature yet; bring these back only with an invite/approval flow.
+if not IS_PRODUCTION:
+    app.include_router(family_router)
+    app.include_router(seed_router)
 app.include_router(categories_router)
 app.include_router(users_router)
 app.include_router(home_router)
@@ -160,6 +169,8 @@ AUTH_SCHEMA_STATEMENTS = [
 # Transaction columns added after the first release. Additive and idempotent, same as above.
 TRANSACTION_SCHEMA_STATEMENTS = [
     "ALTER TABLE transactions ADD COLUMN IF NOT EXISTS merchant_display VARCHAR(255)",
+    # Almost every query is "this user's transactions in this date range"; user_id had no index.
+    "CREATE INDEX IF NOT EXISTS ix_transactions_user_id_date ON transactions (user_id, date)",
 ]
 
 
