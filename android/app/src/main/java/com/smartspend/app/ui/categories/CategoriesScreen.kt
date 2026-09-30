@@ -1,6 +1,8 @@
 package com.smartspend.app.ui.categories
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -236,8 +238,9 @@ private fun LazyListScope.categoriesTab(
  * The period's total as the headline figure, then its split as one engraved strip of ink
  * shades — the category rows below are the readable twin, so no shade is read alone.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DonutBlock(categories: List<CategoryTotal>, period: BreakdownPeriod) {
+internal fun DonutBlock(categories: List<CategoryTotal>, period: BreakdownPeriod) {
     val colors = SmartSpendTheme.colors
     val slices = remember(categories, colors) {
         foldToShares(categories, { it.total }, { it.category }, colors.shareShades)
@@ -255,7 +258,13 @@ private fun DonutBlock(categories: List<CategoryTotal>, period: BreakdownPeriod)
         Spacer(Modifier.height(12.dp))
         ShareStrip(slices)
         Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
+        // Wraps: three entries side by side ran off the edge on a narrow screen or with a large
+        // font. A single entry that is still too long ends in an ellipsis.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             slices.take(3).forEach { s ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     LegendSwatch(s.color)
@@ -264,7 +273,8 @@ private fun DonutBlock(categories: List<CategoryTotal>, period: BreakdownPeriod)
                         "${s.label} ${(s.value / total * 100).roundToInt()}%",
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.inkMuted,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

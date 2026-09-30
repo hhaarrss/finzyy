@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,6 +59,25 @@ import com.smartspend.app.ui.theme.SmartSpendTheme
 
 /** Horizontal gutter every screen shares, so edges line up when moving between pages. */
 val ScreenGutter: Dp = 20.dp
+
+/** Widest a screen's content gets. Phones are narrower, so nothing changes there. */
+val MaxContentWidth: Dp = 640.dp
+
+/**
+ * Keeps content a readable width and centred on tablets, foldables and landscape, instead of
+ * stretching every row across the whole screen. The page background still fills the window.
+ */
+@Composable
+fun CenteredContent(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Box(
+        modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Box(Modifier.widthIn(max = MaxContentWidth).fillMaxSize()) { content() }
+    }
+}
 
 /**
  * Page header for every screen below Home: a round back button and a heavy title, with
@@ -367,7 +387,7 @@ fun PrimaryButton(
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.height(52.dp),
+        modifier = modifier.heightIn(min = 52.dp),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
@@ -394,7 +414,7 @@ fun SecondaryButton(
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.height(52.dp),
+        modifier = modifier.heightIn(min = 52.dp),
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(1.dp, SmartSpendTheme.colors.hairline),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)

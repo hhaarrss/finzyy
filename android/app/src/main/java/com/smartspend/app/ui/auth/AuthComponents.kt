@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -275,7 +278,7 @@ internal fun LoadingButton(
         enabled = enabled && !loading,
         modifier = modifier
             .fillMaxWidth()
-            .height(54.dp),
+            .heightIn(min = 54.dp),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
@@ -334,7 +337,8 @@ internal fun OtpInput(
             .focusRequester(focusRequester)
             .semantics { contentDescription = "One-time code" },
         decorationBox = {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Min intrinsic height keeps the six boxes one height even if a large font makes some grow.
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 repeat(PhoneVerifier.OTP_LENGTH) { i ->
                     val char = code.getOrNull(i)
                     val active = i == code.length
@@ -347,7 +351,8 @@ internal fun OtpInput(
                     Box(
                         Modifier
                             .weight(1f)
-                            .height(58.dp)
+                            .fillMaxHeight()
+                            .heightIn(min = 58.dp)
                             .border(BorderStroke(if (active) 2.dp else 1.dp, borderColor), RoundedCornerShape(12.dp))
                             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp)),
                         contentAlignment = Alignment.Center

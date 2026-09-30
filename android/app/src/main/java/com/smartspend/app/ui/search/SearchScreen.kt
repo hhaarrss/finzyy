@@ -1,6 +1,9 @@
 package com.smartspend.app.ui.search
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.text.style.TextOverflow
 import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -122,7 +125,7 @@ fun SearchScreen(onBack: () -> Unit, startWithReview: Boolean) {
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp)
+                        .heightIn(min = 50.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surface)
                         .padding(horizontal = 16.dp),
@@ -130,12 +133,16 @@ fun SearchScreen(onBack: () -> Unit, startWithReview: Boolean) {
                 ) {
                     Icon(Icons.Default.Search, contentDescription = null, tint = SmartSpendTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
+                    // Placeholder sits on top of the field. Stacked in a Column the two took two
+                    // lines, which overflowed the pill at larger font sizes.
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                         if (query.isEmpty()) {
                             Text(
                                 "Merchant, category, bank or amount",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = SmartSpendTheme.colors.inkMuted
+                                color = SmartSpendTheme.colors.inkMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                         BasicTextField(
