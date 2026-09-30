@@ -2,48 +2,20 @@
 <resources>
     <!-- Liquid glass finance theme (Now Light Web Theme) -->
     <color name="dark_background">#FAFAF8</color> <!-- Off-white background -->
-    <color name="dark_surface">#FFFFFF</color> <!-- White surface -->
-    <color name="dark_card">#FFFFFF</color> <!-- White cards -->
-    <color name="dark_input">#F8FAFC</color> <!-- Slate 50 inputs -->
-    <color name="dark_border">#E2E8F0</color> <!-- Slate 200 borders -->
 
     <!-- Brand amber / olive (Now Emerald Green) -->
     <color name="indigo_primary">#16803C</color> <!-- Emerald Green -->
     <color name="indigo_dark">#136E33</color> <!-- Darker Emerald -->
-    <color name="indigo_light">#EAF7EF</color> <!-- Light Emerald bg -->
-    <color name="indigo_surface">#1A16803C</color> <!-- Semi-transparent green -->
     <color name="violet_accent">#22A447</color> <!-- Lighter green accent -->
 
     <!-- Semantic -->
-    <color name="emerald_success">#22A447</color>
-    <color name="emerald_surface">#EAF7EF</color>
-    <color name="rose_error">#EF4444</color>
-    <color name="rose_surface">#FEF2F2</color>
-    <color name="amber_warning">#F59E0B</color>
 
     <!-- Text -->
     <color name="text_primary">#17202A</color> <!-- Slate 900 -->
     <color name="text_secondary">#475569</color> <!-- Slate 600 -->
-    <color name="text_tertiary">#64748B</color> <!-- Slate 500 -->
 
     <!-- Sign-in / create-account screen. Mirrors the Compose tokens in ui/theme/Color.kt
          (Stone, Ink, Paper, hairline — the ledger look) so login matches onboarding and the app. -->
-    <color name="login_background">#FFF1F1EE</color>
-    <color name="login_surface">#FFFFFFFF</color>
-    <color name="login_ink">#FF0A0A0A</color>
-    <color name="login_ink_soft">#FF6B6B66</color>
-    <color name="login_field">#FFF7F7F4</color>
-    <color name="login_hairline">#FFE1E1DC</color>
-    <color name="login_brand">#FF0A0A0A</color>
-    <color name="login_brand_disabled">#800A0A0A</color>
-    <color name="login_on_brand">#FFFFFFFF</color>
-    <color name="login_hero_top">#FF1C1C1C</color>
-    <color name="login_hero_bottom">#FF000000</color>
-    <color name="login_error">#FFB5472F</color>
-    <color name="login_error_container">#1AB5472F</color>
-    <color name="login_mark_ink">#FF0A0A0A</color>
 
     <!-- Defaults -->
-    <color name="black">#000000</color>
-    <color name="white">#FFFFFF</color>
 </resources>

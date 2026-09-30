@@ -46,16 +46,6 @@ object SmartSpendIcons {
         }
     }
 
-    val Split: ImageVector by lazy {
-        stroked("Split") {
-            circle(9f, 8f, 3.2f)
-            moveTo(3f, 19.5f); curveTo(3f, 16f, 5.7f, 14f, 9f, 14f)
-            curveTo(12.3f, 14f, 15f, 16f, 15f, 19.5f)
-            circle(17f, 9f, 2.5f)
-            moveTo(17f, 14f); curveTo(19.4f, 14f, 21f, 15.8f, 21f, 18.5f)
-        }
-    }
-
     val Article: ImageVector by lazy {
         stroked("Article") {
             moveTo(6f, 3.5f); lineTo(18f, 3.5f); lineTo(18f, 20.5f); lineTo(6f, 20.5f); close()
