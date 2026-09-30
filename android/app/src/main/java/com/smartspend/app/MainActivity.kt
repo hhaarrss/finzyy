@@ -35,6 +35,7 @@ import com.smartspend.app.ui.auth.PhoneAuthController
 import com.smartspend.app.ui.auth.ProfileSetupScreen
 import com.smartspend.app.ui.auth.SignInScreen
 import com.smartspend.app.ui.auth.serverMessage
+import com.smartspend.app.ui.components.CenteredContent
 import com.smartspend.app.ui.navigation.SmartSpendNavHost
 import com.smartspend.app.ui.onboarding.OnboardingCarousel
 import com.smartspend.app.ui.onboarding.SplashScreen
@@ -247,11 +248,13 @@ class MainActivity : ComponentActivity() {
         mainAppShown = false
         setContent {
             SmartSpendTheme(darkTheme = ThemePreference.mode.isDark()) {
-                OnboardingCarousel(
-                    startPage = startPage,
-                    onSignUp = ::showSignIn,
-                    onLogIn = ::showSignIn
-                )
+                CenteredContent {
+                    OnboardingCarousel(
+                        startPage = startPage,
+                        onSignUp = ::showSignIn,
+                        onLogIn = ::showSignIn
+                    )
+                }
             }
         }
     }
@@ -267,7 +270,7 @@ class MainActivity : ComponentActivity() {
                     navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
                 )
             }
-            SmartSpendTheme(darkTheme = dark) { content() }
+            SmartSpendTheme(darkTheme = dark) { CenteredContent { content() } }
         }
     }
 
@@ -362,11 +365,13 @@ class MainActivity : ComponentActivity() {
                 )
             }
             SmartSpendTheme(darkTheme = dark) {
-                SmartSpendNavHost(
-                    onSignedOut = { performLogout() },
-                    promptSmsConsent = promptConsent,
-                    showHomeTour = showTour
-                )
+                CenteredContent {
+                    SmartSpendNavHost(
+                        onSignedOut = { performLogout() },
+                        promptSmsConsent = promptConsent,
+                        showHomeTour = showTour
+                    )
+                }
             }
         }
     }
