@@ -162,7 +162,11 @@ data class RecategorizePayload(
 data class SmsIngestionResponse(
     val success: Boolean,
     val transaction: TransactionData?,
-    val message: String
+    val message: String,
+    /** Debits at this merchant including this one; null on older servers or for credits. */
+    val merchant_visit_count: Int? = null,
+    /** This month's spend, the same figure Home shows; null on older servers. */
+    val month_spent: Double? = null
 )
 
 /**

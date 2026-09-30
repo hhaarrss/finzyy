@@ -610,10 +610,26 @@ async def ingest_sms(
     if new_tx.type == "debit":
         await check_budget_and_alert(db, current_user.id, new_tx.category, float(new_tx.amount))
 
+    # Notification extras. The new row is flushed, so both figures already include it.
+    visit_count: Optional[int] = None
+    if new_tx.type == "debit" and sms_in.merchant_raw:
+        visit_count = await db.scalar(
+            select(func.count(Transaction.id)).where(
+                Transaction.user_id == current_user.id,
+                Transaction.type == "debit",
+                func.lower(Transaction.merchant) == merchant.lower(),
+            )
+        )
+    # Same call and arguments as the Home screen, so the two numbers always agree.
+    now = datetime.now(tz=timezone.utc)
+    overview = await get_monthly_overview(db, current_user.id, now.year, now.month, include_transfers=False)
+
     return SMSIngestionResponse(
         success=True,
         transaction=new_tx,
-        message="Transaction ingested successfully"
+        message="Transaction ingested successfully",
+        merchant_visit_count=visit_count,
+        month_spent=float(overview["total_spent"]),
     )
 
 
