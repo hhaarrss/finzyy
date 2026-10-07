@@ -266,15 +266,3 @@ fun LegendSwatch(color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun ChartTitleValue(caption: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Eyebrow(caption)
-        Text(
-            value,
-            style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1
-        )
-    }
-}

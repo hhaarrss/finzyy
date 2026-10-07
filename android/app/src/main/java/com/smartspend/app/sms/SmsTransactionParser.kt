@@ -120,9 +120,6 @@ object SmsTransactionParser {
         RegexOption.IGNORE_CASE
     )
 
-    // Date extraction regex from sms_parser.py line 205
-    private val DATE_PATTERN = Regex("""(\d{1,2}[\/\-\.](?:\d{1,2}|[A-Za-z]{3})[\/\-\.]\d{2,4})""")
-
     // UPI / IMPS / RRN / transaction reference number extraction
     // Catches: UPI Ref 123456789012, IMPS Ref No 123456, RRN: 123456, Ref:ABC123
     private val UPI_REF_PATTERN = Regex(
@@ -239,36 +236,4 @@ object SmsTransactionParser {
         )
     }
 
-    /**
-     * Parses a date string from an SMS and converts it to ISO-8601 UTC timestamp.
-     * Supports formats: DD-MM-YY, DD-MM-YYYY, DD/MM/YY, DD/MM/YYYY, DD-MMM-YY, etc.
-     */
-    fun parseSmsDate(dateStr: String?): String {
-        if (dateStr.isNullOrBlank()) {
-            return OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        }
-
-        var cleaned = dateStr.trim().replace(".", "-").replace("/", "-")
-        cleaned = Regex("""(\d+)(st|nd|rd|th)""", RegexOption.IGNORE_CASE).replace(cleaned, "$1")
-
-        val formatters = listOf(
-            DateTimeFormatterBuilder().appendPattern("dd-MM-").appendValueReduced(ChronoField.YEAR, 2, 2, 2000).toFormatter(Locale.ENGLISH),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.ENGLISH),
-            DateTimeFormatterBuilder().appendPattern("dd-MMM-").appendValueReduced(ChronoField.YEAR, 2, 2, 2000).toFormatter(Locale.ENGLISH),
-            DateTimeFormatter.ofPattern("dd-MMM-yyyy", Locale.ENGLISH),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH),
-            DateTimeFormatter.ofPattern("dd-MMMM-yyyy", Locale.ENGLISH)
-        )
-
-        for (formatter in formatters) {
-            try {
-                val localDate = LocalDate.parse(cleaned, formatter)
-                return localDate.atStartOfDay().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-            } catch (_: Exception) {
-                // Continue to next formatter
-            }
-        }
-
-        return OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-    }
 }

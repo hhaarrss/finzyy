@@ -52,12 +52,6 @@ data class OverallBudgetPayload(
     val monthly_limit: Double
 )
 
-data class MerchantData(
-    val name: String,
-    val category: String?,
-    val count: Int
-)
-
 data class HomeUserData(
     val id: Int,
     val full_name: String?,

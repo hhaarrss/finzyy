@@ -976,10 +976,6 @@ async def get_needs_review_transactions(
     "/{transaction_id}/categorize",
     summary="1-click categorize transaction & learn merchant mapping"
 )
-@router.patch(
-    "/{transaction_id}/recategorize",
-    summary="Re-categorize transaction alias endpoint"
-)
 async def categorize_transaction_item(
     transaction_id: int,
     payload: CategorizeRequest,
