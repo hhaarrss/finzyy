@@ -22,6 +22,11 @@
         android:theme="@style/Theme.SmartSpend"
         android:networkSecurityConfig="@xml/network_security_config">
 
+        <!-- Crashlytics is on in release builds and off in debug builds (see build.gradle.kts). -->
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="${crashlyticsEnabled}" />
+
         <service
             android:name=".SmartSpendFirebaseMessagingService"
             android:exported="false">

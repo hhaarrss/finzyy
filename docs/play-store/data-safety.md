@@ -31,7 +31,9 @@ So every row below is **Collected: Yes, Shared: No**.
 | Financial info → **Purchase history** | Each payment: amount, debit/credit, merchant name, date, category | Required (core feature) | App functionality |
 | Financial info → **Other financial info** | Bank name, last 4 digits of the account, UPI reference number, monthly income (optional), budgets you set | Required (bank/UPI fields come with each payment; income is optional) | App functionality |
 | App activity → **Other user-generated content** | Notes you add to a transaction; family group names | Optional | App functionality |
-| Device or other IDs → **Device or other IDs** | Firebase Cloud Messaging token (for budget alerts) | Required | App functionality (notifications) |
+| Device or other IDs → **Device or other IDs** | Firebase Cloud Messaging token (for budget alerts); Crashlytics installation ID (ties a crash report to an install, not to a person) | Required | App functionality (notifications), Analytics (crash reports) |
+| App info and performance → **Crash logs** | Stack trace of a crash, with device model, Android version and app version (Firebase Crashlytics) | Required | Analytics |
+| App info and performance → **Diagnostics** | App start and session timing that Crashlytics records to work out how many sessions ended in a crash | Required | Analytics |
 
 For each row Play also asks **"Is this data processed ephemerally?"** → **No** (it's stored),
 and **"Is this data collection required, or can users choose?"** → use the column above.
@@ -47,9 +49,12 @@ back each other up.
 
 ## Things that would change these answers
 
-- **No analytics or crash-reporting SDK is in the app** (Firebase Analytics was removed), so
-  *App activity → App interactions* and *App info and performance* are **not collected**, and
-  no data is used for the *Analytics* purpose. Adding Firebase Analytics, Crashlytics or any
-  similar SDK later means adding those rows back.
+- **Crash reporting is in the app (Firebase Crashlytics); usage analytics is not.** So
+  *App info and performance → Crash logs* and *Diagnostics* are **collected** for the *Analytics*
+  purpose, and *App activity → App interactions* is **not collected**. Crashlytics is off in
+  debug builds, is given no user id, and gets no custom logs, so no SMS or transaction data is
+  attached to a report. Adding Firebase Analytics, or attaching a user id or logs to crash
+  reports, means updating this form first. Check the answers against Google's own table:
+  https://firebase.google.com/docs/android/play-data-disclosure
 - A new field in a profile/transaction API, a new SDK (ads, crash reporting), or sending any
   SMS text to the server — all require updating this form first.

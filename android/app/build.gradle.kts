@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 // Dev backend base URL, resolved in this order:
@@ -77,9 +78,12 @@ android {
         // hardcoded LAN IP.
         debug {
             buildConfigField("Boolean", "DEV_SKIP_AUTH", "false")
+            // Crash reports come from real users only; development crashes are not sent.
+            manifestPlaceholders["crashlyticsEnabled"] = "false"
         }
         release {
             buildConfigField("Boolean", "DEV_SKIP_AUTH", "false")
+            manifestPlaceholders["crashlyticsEnabled"] = "true"
             // R8: removes unused code and obfuscates what's left, so the shipped app is much
             // harder to pick apart. Rules for reflection-based code live in proguard-rules.pro.
             if (hasReleaseKey) signingConfig = signingConfigs.getByName("release")
@@ -127,6 +131,10 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.auth)
+    // Crash reports only (stack trace, device model, OS version, an install id). No analytics,
+    // no user id, no custom logs: nothing from SMS or transactions is attached. Declared in
+    // docs/play-store/data-safety.md and the privacy policy - keep the three in step.
+    implementation(libs.firebase.crashlytics)
     implementation(libs.google.services.auth)
 
     testImplementation(libs.junit)
