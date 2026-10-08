@@ -58,14 +58,14 @@ unlisted YouTube video:
 
 ## Make sure these match before you submit
 
-- **Store listing description** must lead with the SMS feature ("tracks your spending
-  automatically from your bank's SMS alerts…"). The policy requires the core feature to be
-  prominently described.
+- **Store listing description**: ready-to-paste text is in [store-listing.md](store-listing.md). It states the SMS feature ("tracks your spending
+  automatically from your bank's SMS alerts…"), as the policy requires of a core feature.
 - **Privacy policy** section 3 says the same as the form (see [privacy-policy.md](privacy-policy.md)).
 - **Data safety**: *Financial info* declared; *SMS or MMS* answered as not collected
   (see [data-safety.md](data-safety.md)).
 - **In-app disclosure** (`SmsConsentScreen.kt`) says "Only messages from recognized bank
   senders are parsed, on your device" and that the app "also checks your inbox in the background
-  for bank SMS it missed while your phone was offline" — matching this form.
+  for bank SMS it missed while your phone was offline", and that only the amount, merchant, date,
+  bank and last 4 digits are sent to the server while the message text stays on the phone — matching this form.
 - If you ever send SMS text to the server, add a new SMS use, or add a new SDK that could read
   SMS data, you must submit this form again.
