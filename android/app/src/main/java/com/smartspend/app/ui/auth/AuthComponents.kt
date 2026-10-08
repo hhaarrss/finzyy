@@ -260,7 +260,7 @@ internal fun BrandMark() {
             Text("S", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Black, fontSize = 18.sp)
         }
         Spacer(Modifier.width(10.dp))
-        Text("SmartSpend", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+        Text("Finzyy", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
     }
 }
 

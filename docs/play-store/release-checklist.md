@@ -6,7 +6,7 @@ There is no `render.yaml`; the Render service (`firstproject-smartspend.onrender
 configured in the Render dashboard. As of 28 Sep 2026 it was still serving an old build hours
 after merges to `main`, so auto-deploy appears to be **off**.
 
-1. Render dashboard → the SmartSpend web service → **Settings → Build & Deploy**: check the
+1. Render dashboard → the Finzyy web service → **Settings → Build & Deploy**: check the
    repository is `smartspend4support-eng/firstproject` and the branch is `main`. Turn
    **Auto-Deploy** on if you want merges to go live by themselves.
 2. **Manual Deploy → Deploy latest commit**, and watch **Events/Logs** until it's *Live*.

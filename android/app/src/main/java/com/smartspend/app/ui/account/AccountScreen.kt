@@ -287,7 +287,7 @@ fun AccountScreen(
                 RowDivider()
                 SettingRow(Icons.Default.Email, "Contact support", subtitle = SUPPORT_EMAIL, onClick = {
                     try {
-                        context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$SUPPORT_EMAIL")).putExtra(Intent.EXTRA_SUBJECT, "SmartSpend support"))
+                        context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$SUPPORT_EMAIL")).putExtra(Intent.EXTRA_SUBJECT, "Finzyy support"))
                     } catch (_: ActivityNotFoundException) {
                         toast("No email app found")
                     }
@@ -323,7 +323,7 @@ fun AccountScreen(
             }
 
             Text(
-                "SmartSpend ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\nSMS are read on your phone; only the amount, merchant and date are sent.",
+                "Finzyy ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\nSMS are read on your phone; only the amount, merchant and date are sent.",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = ScreenGutter + 8.dp, vertical = 8.dp),

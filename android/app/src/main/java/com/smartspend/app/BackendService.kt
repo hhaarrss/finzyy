@@ -244,7 +244,7 @@ data class DeleteAccountResponse(
 )
 
 /**
- * Retrofit service interface for all SmartSpend backend API calls.
+ * Retrofit service interface for all Finzyy backend API calls.
  */
 interface BackendService {
 
@@ -314,7 +314,7 @@ interface BackendService {
         @Field("password") password: String
     ): Response<AuthResponse>
 
-    /** Exchanges a Firebase ID token (Phone OTP or Google) for a SmartSpend session. */
+    /** Exchanges a Firebase ID token (Phone OTP or Google) for a Finzyy session. */
     @POST("auth/firebase")
     suspend fun firebaseLogin(@Body payload: FirebaseTokenPayload): Response<AuthResponse>
 

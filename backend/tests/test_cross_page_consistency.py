@@ -1,5 +1,5 @@
 """
-Cross-Page Consistency Test Suite for SmartSpend backend.
+Cross-Page Consistency Test Suite for Finzyy backend.
 
 Validates that cross-page metrics (Dashboard, Budget Limits, Insights)
 use the shared backend data-service layer (`services/transaction_aggregates.py`)

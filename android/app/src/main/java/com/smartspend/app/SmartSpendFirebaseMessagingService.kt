@@ -15,14 +15,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * Firebase Cloud Messaging service for SmartSpend budget alerts and notifications.
+ * Firebase Cloud Messaging service for Finzyy budget alerts and notifications.
  */
 class SmartSpendFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        val title = remoteMessage.notification?.title ?: remoteMessage.data["title"] ?: "SmartSpend Alert"
+        val title = remoteMessage.notification?.title ?: remoteMessage.data["title"] ?: "Finzyy Alert"
         val body = remoteMessage.notification?.body ?: remoteMessage.data["body"] ?: ""
         val alertType = remoteMessage.data["type"] ?: "budget_alert"
 
@@ -58,7 +58,7 @@ class SmartSpendFirebaseMessagingService : FirebaseMessagingService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "SmartSpend Budget Alerts",
+                "Finzyy Budget Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Budget warning and threshold notifications"

@@ -135,7 +135,7 @@ fun ProfileSetupScreen(
             val response = runCatching { RetrofitClient.apiService.updateProfile(payload) }.getOrNull()
             val body = response?.body()
             when {
-                response == null -> error = "Can't reach SmartSpend. Check your internet and try again."
+                response == null -> error = "Can't reach Finzyy. Check your internet and try again."
                 response.isSuccessful && body != null -> {
                     AuthSession.update(context, body)
                     onSaved(body)
@@ -173,7 +173,7 @@ fun ProfileSetupScreen(
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        "A few details help SmartSpend tailor your budgets and insights. Only your name is required.",
+                        "A few details help Finzyy tailor your budgets and insights. Only your name is required.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = SmartSpendTheme.colors.inkMuted
                     )

@@ -1,4 +1,4 @@
-# SmartSpend — Project Notes
+# Finzyy — Project Notes
 
 Read this file fully before starting any task. It contains architectural
 decisions, current status, and hard rules — do not deviate from these
@@ -268,7 +268,7 @@ In progress / not yet done:
 - Second security audit pass — scheduled for after colleague's auth
   work lands
 - CSV export — backend endpoint does not exist yet
-- App name — "SmartSpend" is taken on Play Store by 6+ apps, needs a
+- App name — "Finzyy" is taken on Play Store by 6+ apps, needs a
   final decision before Play Store submission (candidates discussed:
   Paisa Pilot, AutoLedger, PocketPilot, SpendSync, NudgeSpend,
   TrackLess, RupeeRadar — none verified for availability)
