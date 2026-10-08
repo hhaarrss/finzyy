@@ -54,9 +54,10 @@ import kotlinx.coroutines.withTimeoutOrNull
 class MainActivity : ComponentActivity() {
 
     // A brand-new account is routed through ProfileSetupScreen once (existing accounts already
-    // have a complete profile and skip it) -- that one-time detour is the signal the guided
-    // tour uses to show itself only right after sign-up, not on every sign-in.
-    private var pendingHomeTour = false
+    // have a complete profile and skip it) -- that one-time detour is what arms the guided
+    // tour, so it shows right after sign-up and not on every sign-in. Stored in prefs rather
+    // than memory: first run also asks for two permissions, and if the user leaves the app
+    // during those (or Android kills it), an in-memory flag would lose the tour for good.
 
     private lateinit var sharedPrefs: SharedPreferences
     private lateinit var googleSignInClient: GoogleSignInClient
@@ -320,7 +321,7 @@ class MainActivity : ComponentActivity() {
                     initial = initial,
                     editing = false,
                     onSaved = {
-                        pendingHomeTour = true
+                        sharedPrefs.edit().putBoolean(PREF_TOUR_PENDING, true).commit()
                         continueAfterSignIn()
                     },
                     onBack = null
@@ -338,23 +339,20 @@ class MainActivity : ComponentActivity() {
         if (mainAppShown) return
         mainAppShown = true
 
-        // First sign-in on this device: show the SMS disclosure once, instead of the old
-        // unexplained permission prompt at launch.
+        // First sign-in on this device: show the SMS disclosure, instead of the old unexplained
+        // permission prompt at launch. The "already prompted" flag is written when the screen is
+        // finished with (see onSmsConsentFinished), never when it is merely opened -- otherwise a
+        // user who closes the app on the consent screen is never asked for SMS again, and
+        // auto-sync silently never works for them.
         val promptConsent = !smsPermissionsGranted(this) &&
             !sharedPrefs.getBoolean(PREF_CONSENT_PROMPTED, false)
-        if (promptConsent) sharedPrefs.edit().putBoolean(PREF_CONSENT_PROMPTED, true).apply()
 
-        val showTour = pendingHomeTour
-        pendingHomeTour = false
+        val showTour = sharedPrefs.getBoolean(PREF_TOUR_PENDING, false)
 
-        // Android 13+ drops every notification (sync alerts, budget pushes) until the app holds
-        // POST_NOTIFICATIONS. Not stacked on the SMS consent screen — that launch asks for SMS;
-        // the next one asks for this. The system itself stops showing it after two denials.
-        if (!promptConsent && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
+        // When the consent screen is coming up it asks for SMS first; notifications are then
+        // requested as it finishes, so the two prompts don't stack. With no consent screen this
+        // is the only chance to ask.
+        if (!promptConsent) requestNotificationPermissionIfNeeded()
 
         setContent {
             val dark = ThemePreference.mode.isDark()
@@ -369,11 +367,39 @@ class MainActivity : ComponentActivity() {
                     SmartSpendNavHost(
                         onSignedOut = { performLogout() },
                         promptSmsConsent = promptConsent,
-                        showHomeTour = showTour
+                        showHomeTour = showTour,
+                        onSmsConsentFinished = ::onSmsConsentFinished,
+                        onHomeTourFinished = ::onHomeTourFinished
                     )
                 }
             }
         }
+    }
+
+    /**
+     * The SMS consent screen has been seen through to the end (granted, declined, or dismissed).
+     * Only now is it marked as prompted, and only now is the notification prompt raised, so the
+     * user sees one permission dialog at a time.
+     */
+    private fun onSmsConsentFinished() {
+        sharedPrefs.edit().putBoolean(PREF_CONSENT_PROMPTED, true).commit()
+        requestNotificationPermissionIfNeeded()
+    }
+
+    /**
+     * Android 13+ drops every notification -- sync alerts, budget warnings, the transaction
+     * notifications with their Categorize action -- until the app holds POST_NOTIFICATIONS.
+     * Android itself stops showing the dialog after two denials, so this is safe to call again.
+     */
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    /** The tour ran to its end (or was skipped); don't arm it again on this device. */
+    private fun onHomeTourFinished() {
+        sharedPrefs.edit().putBoolean(PREF_TOUR_PENDING, false).commit()
     }
 
     private fun handleUnauthorized() {
@@ -424,5 +450,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val PREF_CONSENT_PROMPTED = "sms_consent_prompted"
+        private const val PREF_TOUR_PENDING = "home_tour_pending"
     }
 }
