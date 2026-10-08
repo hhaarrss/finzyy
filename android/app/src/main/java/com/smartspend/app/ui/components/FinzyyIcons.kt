@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
  * for six icons would add thousands of unused vectors to an unminified APK, so these are drawn
  * here on the same 24dp grid and 2dp round stroke as the core set they sit beside.
  */
-object SmartSpendIcons {
+object FinzyyIcons {
 
     val Filter: ImageVector by lazy {
         stroked("Filter") {

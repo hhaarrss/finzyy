@@ -61,7 +61,7 @@ import com.smartspend.app.ui.components.ScreenHeader
 import com.smartspend.app.ui.components.SecondaryButton
 import com.smartspend.app.ui.components.SegmentedControl
 import com.smartspend.app.ui.components.SkeletonBlocks
-import com.smartspend.app.ui.components.SmartSpendIcons
+import com.smartspend.app.ui.components.FinzyyIcons
 import com.smartspend.app.ui.components.SpendBarChart
 import com.smartspend.app.ui.components.SpendData
 import com.smartspend.app.ui.components.TextAction
@@ -70,7 +70,7 @@ import com.smartspend.app.ui.components.isFromSms
 import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.components.parseTxDate
 import com.smartspend.app.ui.components.pickable
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -162,7 +162,7 @@ fun TrendsScreen(onBack: () -> Unit, onBudget: () -> Unit) {
             ) {
                 ScreenHeader(title = "Trends", onBack = onBack) {
                     RoundIconButton(
-                        icon = SmartSpendIcons.Filter,
+                        icon = FinzyyIcons.Filter,
                         contentDescription = if (filters.activeCount > 0) "Filters, ${filters.activeCount} active" else "Filters",
                         onClick = { filterOpen = true },
                         showDot = filters.activeCount > 0
@@ -201,7 +201,7 @@ fun TrendsScreen(onBack: () -> Unit, onBudget: () -> Unit) {
                     Text(
                         "A monthly budget turns this chart into a pace check.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = SmartSpendTheme.colors.inkMuted
+                        color = FinzyyTheme.colors.inkMuted
                     )
                     Spacer(Modifier.height(14.dp))
                     PrimaryButton("Set monthly budget", onClick = onBudget, modifier = Modifier.fillMaxWidth())
@@ -255,7 +255,7 @@ private fun ActiveFilterLine(filters: TrendFilters, onClear: () -> Unit) {
             "Filtered: " + parts.joinToString(" · "),
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodySmall,
-            color = SmartSpendTheme.colors.inkMuted
+            color = FinzyyTheme.colors.inkMuted
         )
         TextAction("Clear", onClick = onClear)
     }
@@ -287,7 +287,7 @@ private fun ChartBlock(
             if (sel != null) "Tap the bar again to see the whole period"
             else "About ${money(average)} a ${period.bucket.per} · tap a bar for detail",
             style = MaterialTheme.typography.bodySmall,
-            color = SmartSpendTheme.colors.inkMuted
+            color = FinzyyTheme.colors.inkMuted
         )
         Spacer(Modifier.height(18.dp))
         if (total <= 0) {
@@ -295,7 +295,7 @@ private fun ChartBlock(
                 Text(
                     if (filters.activeCount > 0) "Nothing matches these filters in this period" else "Nothing recorded in this period",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
             }
         } else {
@@ -309,11 +309,11 @@ private fun ChartBlock(
                     in 15..20 -> 4
                     else -> 5
                 },
-                barColor = if (filters.flow == Flow.Income) SmartSpendTheme.colors.positive else MaterialTheme.colorScheme.primary,
+                barColor = if (filters.flow == Flow.Income) FinzyyTheme.colors.positive else MaterialTheme.colorScheme.primary,
                 accessibilitySummary = "$verb ${money(total)} over ${period.label.lowercase(Locale.ENGLISH)}"
             )
             Spacer(Modifier.height(14.dp))
-            HorizontalDivider(color = SmartSpendTheme.colors.hairline)
+            HorizontalDivider(color = FinzyyTheme.colors.hairline)
             Spacer(Modifier.height(14.dp))
             Row {
                 Stat("Highest ${period.bucket.per}", peakIndex?.let { bars[it].detail } ?: "—", Modifier.weight(1f))
@@ -388,7 +388,7 @@ private fun FilterPanel(
             ) {
                 val options = lists?.let { if (draft.flow == Flow.Income) it.credit else it.debit }?.pickable()
                 if (options == null) {
-                    Text("Loading…", style = MaterialTheme.typography.bodyMedium, color = SmartSpendTheme.colors.inkMuted)
+                    Text("Loading…", style = MaterialTheme.typography.bodyMedium, color = FinzyyTheme.colors.inkMuted)
                 } else {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Chip("All", selected = draft.categories.isEmpty(), onClick = { draft = draft.copy(categories = emptySet()) })
@@ -426,7 +426,7 @@ private fun FilterPanel(
                             Text(
                                 "Money sent to people or your own accounts",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = SmartSpendTheme.colors.inkMuted
+                                color = FinzyyTheme.colors.inkMuted
                             )
                         }
                         Spacer(Modifier.width(12.dp))
@@ -458,7 +458,7 @@ private fun FilterSection(title: String, hint: String? = null, content: @Composa
     Block {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-            if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall, color = SmartSpendTheme.colors.inkMuted)
+            if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall, color = FinzyyTheme.colors.inkMuted)
         }
         Spacer(Modifier.height(12.dp))
         content()

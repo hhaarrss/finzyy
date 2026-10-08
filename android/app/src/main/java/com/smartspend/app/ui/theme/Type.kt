@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.sp
  * mono face for statement-style detail. Hierarchy comes from width and scale, not from
  * colour or boxes — the steep step from display to body is what makes the amount dominate.
  */
-val SmartSpendTypography = Typography(
+val FinzyyTypography = Typography(
     // Hero amount — the one number the screen exists for.
     displayLarge = TextStyle(fontFamily = WideFamily, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 46.sp, letterSpacing = (-1.3).sp),
     displayMedium = TextStyle(fontFamily = WideFamily, fontWeight = FontWeight.Bold, fontSize = 36.sp, lineHeight = 40.sp, letterSpacing = (-1.0).sp),

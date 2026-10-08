@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 /**
  * Firebase Cloud Messaging service for Finzyy budget alerts and notifications.
  */
-class SmartSpendFirebaseMessagingService : FirebaseMessagingService() {
+class FinzyyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)

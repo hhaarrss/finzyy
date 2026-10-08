@@ -19,7 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
-# ── SmartSpend release rules ──────────────────────────────────────────────────
+# ── Finzyy release rules ──────────────────────────────────────────────────
 # Gson fills API models by matching JSON keys to Kotlin field names via reflection, and
 # creates them without any constructor call the code can see. Every type Retrofit/Gson reads
 # or writes lives in the root package (BackendService.kt, ApiModels.kt). Without these rules

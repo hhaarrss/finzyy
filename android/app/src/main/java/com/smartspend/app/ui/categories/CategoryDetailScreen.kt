@@ -43,7 +43,7 @@ import com.smartspend.app.ui.components.budgetColor
 import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.components.toView
 import com.smartspend.app.ui.components.transactionDays
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -81,7 +81,7 @@ fun CategoryDetailScreen(category: String, onBack: () -> Unit) {
 
     val month = months[selected]
     val monthLong = month.format(DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH))
-    val accent = SmartSpendTheme.categories[category].accent
+    val accent = FinzyyTheme.categories[category].accent
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { innerPadding ->
         LazyColumn(
@@ -112,7 +112,7 @@ fun CategoryDetailScreen(category: String, onBack: () -> Unit) {
                         Text(
                             comparison(spent, previous),
                             style = MaterialTheme.typography.bodySmall,
-                            color = SmartSpendTheme.colors.inkMuted
+                            color = FinzyyTheme.colors.inkMuted
                         )
                         val limit = current?.budget_limit ?: 0.0
                         if (limit > 0) {
@@ -123,7 +123,7 @@ fun CategoryDetailScreen(category: String, onBack: () -> Unit) {
                             Text(
                                 "${money(spent)} of ${money(limit)} budget",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = SmartSpendTheme.colors.inkMuted
+                                color = FinzyyTheme.colors.inkMuted
                             )
                         }
                         Spacer(Modifier.height(18.dp))

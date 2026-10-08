@@ -36,11 +36,11 @@ import com.smartspend.app.ui.auth.ProfileSetupScreen
 import com.smartspend.app.ui.auth.SignInScreen
 import com.smartspend.app.ui.auth.serverMessage
 import com.smartspend.app.ui.components.CenteredContent
-import com.smartspend.app.ui.navigation.SmartSpendNavHost
+import com.smartspend.app.ui.navigation.FinzyyNavHost
 import com.smartspend.app.ui.onboarding.OnboardingCarousel
 import com.smartspend.app.ui.onboarding.SplashScreen
 import com.smartspend.app.ui.permission.smsPermissionsGranted
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import com.smartspend.app.ui.theme.ThemePreference
 import com.smartspend.app.ui.theme.isDark
 import kotlinx.coroutines.launch
@@ -229,7 +229,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
         )
         setContent {
-            SmartSpendTheme(darkTheme = ThemePreference.mode.isDark()) {
+            FinzyyTheme(darkTheme = ThemePreference.mode.isDark()) {
                 SplashScreen(onFinished = ::afterSplash)
             }
         }
@@ -247,7 +247,7 @@ class MainActivity : ComponentActivity() {
     private fun showOnboarding(startPage: Int = 0) {
         mainAppShown = false
         setContent {
-            SmartSpendTheme(darkTheme = ThemePreference.mode.isDark()) {
+            FinzyyTheme(darkTheme = ThemePreference.mode.isDark()) {
                 CenteredContent {
                     OnboardingCarousel(
                         startPage = startPage,
@@ -270,7 +270,7 @@ class MainActivity : ComponentActivity() {
                     navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
                 )
             }
-            SmartSpendTheme(darkTheme = dark) { CenteredContent { content() } }
+            FinzyyTheme(darkTheme = dark) { CenteredContent { content() } }
         }
     }
 
@@ -364,9 +364,9 @@ class MainActivity : ComponentActivity() {
                     navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
                 )
             }
-            SmartSpendTheme(darkTheme = dark) {
+            FinzyyTheme(darkTheme = dark) {
                 CenteredContent {
-                    SmartSpendNavHost(
+                    FinzyyNavHost(
                         onSignedOut = { performLogout() },
                         promptSmsConsent = promptConsent,
                         showHomeTour = showTour

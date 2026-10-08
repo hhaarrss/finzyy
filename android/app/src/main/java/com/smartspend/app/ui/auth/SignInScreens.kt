@@ -51,7 +51,7 @@ import com.smartspend.app.RetrofitClient
 import com.smartspend.app.UserData
 import com.smartspend.app.ui.components.SecondaryButton
 import com.smartspend.app.ui.permission.findComponentActivity
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import retrofit2.Response
@@ -111,7 +111,7 @@ fun SignInScreen(
                 TextButton(onClick = { mode = SignInMode.Email }, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         buildAnnotatedString {
-                            withStyle(SpanStyle(color = SmartSpendTheme.colors.inkMuted)) { append("Signed up with email earlier? ") }
+                            withStyle(SpanStyle(color = FinzyyTheme.colors.inkMuted)) { append("Signed up with email earlier? ") }
                             withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)) { append("Use email") }
                         },
                         style = MaterialTheme.typography.bodyMedium
@@ -120,7 +120,7 @@ fun SignInScreen(
                 Text(
                     "By continuing, you agree to Finzyy's Terms of Service and Privacy Policy.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkFaint,
+                    color = FinzyyTheme.colors.inkFaint,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -165,7 +165,7 @@ fun LinkPhoneScreen(
             footer = {
                 if (onSkip != null) {
                     TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
-                        Text("Skip for now", color = SmartSpendTheme.colors.inkMuted, style = MaterialTheme.typography.titleMedium)
+                        Text("Skip for now", color = FinzyyTheme.colors.inkMuted, style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
@@ -257,7 +257,7 @@ private fun OtpStep(verifier: PhoneVerifier, onBack: () -> Unit) {
                 Text(
                     "Resend code in 0:%02d".format(verifier.resendIn),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
             } else {
                 Text(

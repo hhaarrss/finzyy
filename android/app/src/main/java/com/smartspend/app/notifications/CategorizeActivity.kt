@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import com.smartspend.app.SessionStore
 import com.smartspend.app.ui.notifications.CategorizeSheet
 import com.smartspend.app.ui.notifications.fileTransaction
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import com.smartspend.app.ui.theme.ThemePreference
 import com.smartspend.app.ui.theme.isDark
 
@@ -33,7 +33,7 @@ class CategorizeActivity : ComponentActivity() {
         val credit = intent.getBooleanExtra(TransactionNotifier.EXTRA_CREDIT, false)
 
         setContent {
-            SmartSpendTheme(darkTheme = ThemePreference.mode.isDark()) {
+            FinzyyTheme(darkTheme = ThemePreference.mode.isDark()) {
                 CategorizeSheet(
                     amount = amount,
                     credit = credit,

@@ -411,7 +411,7 @@ On app start in `MainActivity.onCreate()`:
 - Refresh token on FirebaseMessagingService.onNewToken()
 ```
 
-Create `SmartSpendFirebaseMessagingService.kt`:
+Create `FinzyyFirebaseMessagingService.kt`:
 ```kotlin
 - Extend FirebaseMessagingService
 - Override onMessageReceived(message: RemoteMessage)

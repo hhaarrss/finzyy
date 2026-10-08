@@ -6,10 +6,10 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * Semantic colors Material3's [androidx.compose.material3.ColorScheme] has no slot for.
- * Read these through [SmartSpendTheme.colors], never as literals.
+ * Read these through [FinzyyTheme.colors], never as literals.
  */
 @Immutable
-data class SmartSpendColors(
+data class FinzyyColors(
     /** Money in: credits, income, refunds. */
     val positive: Color,
     val positiveContainer: Color,
@@ -40,7 +40,7 @@ data class SmartSpendColors(
     val shareShades: List<Color>
 )
 
-val LightSmartSpendColors = SmartSpendColors(
+val LightFinzyyColors = FinzyyColors(
     positive = MoneyInLight,
     positiveContainer = MoneyInLight.copy(alpha = 0.10f),
     negative = OverBudgetLight,
@@ -58,7 +58,7 @@ val LightSmartSpendColors = SmartSpendColors(
     shareShades = listOf(Color(0xFF0A0A0A), Color(0xFF4A4A47), Color(0xFF7A7A75), Color(0xFFA6A6A0), Color(0xFFCFCFC9))
 )
 
-val DarkSmartSpendColors = SmartSpendColors(
+val DarkFinzyyColors = FinzyyColors(
     positive = MoneyIn,
     positiveContainer = MoneyIn.copy(alpha = 0.12f),
     negative = OverBudget,
@@ -80,4 +80,4 @@ val DarkSmartSpendColors = SmartSpendColors(
  * Static rather than dynamic: the whole set swaps at once on a theme change, so tracking
  * reads individually would cost recompositions for a value that changes about twice a day.
  */
-internal val LocalSmartSpendColors = staticCompositionLocalOf { DarkSmartSpendColors }
+internal val LocalFinzyyColors = staticCompositionLocalOf { DarkFinzyyColors }

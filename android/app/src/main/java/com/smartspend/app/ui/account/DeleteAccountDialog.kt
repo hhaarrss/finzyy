@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.smartspend.app.BuildConfig
 import com.smartspend.app.DeleteAccountPayload
 import com.smartspend.app.RetrofitClient
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.launch
 
 @Composable
@@ -74,13 +74,13 @@ fun DeleteAccountDialog(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(SmartSpendTheme.colors.negativeContainer),
+                        .background(FinzyyTheme.colors.negativeContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = "Warning",
-                        tint = SmartSpendTheme.colors.negative,
+                        tint = FinzyyTheme.colors.negative,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -89,7 +89,7 @@ fun DeleteAccountDialog(
                     text = "Delete My Account",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = SmartSpendTheme.colors.negative
+                    color = FinzyyTheme.colors.negative
                 )
             }
         },
@@ -109,7 +109,7 @@ fun DeleteAccountDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(SmartSpendTheme.colors.negativeContainer, RoundedCornerShape(8.dp))
+                        .background(FinzyyTheme.colors.negativeContainer, RoundedCornerShape(8.dp))
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
@@ -123,7 +123,7 @@ fun DeleteAccountDialog(
                     text = "Password (required for password accounts):",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
 
                 OutlinedTextField(
@@ -152,15 +152,15 @@ fun DeleteAccountDialog(
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = if (isDeleteTyped) SmartSpendTheme.colors.negative else SmartSpendTheme.colors.inkMuted,
-                        unfocusedBorderColor = SmartSpendTheme.colors.hairline
+                        focusedBorderColor = if (isDeleteTyped) FinzyyTheme.colors.negative else FinzyyTheme.colors.inkMuted,
+                        unfocusedBorderColor = FinzyyTheme.colors.hairline
                     )
                 )
 
                 if (errorMessage != null) {
                     Text(
                         text = errorMessage ?: "",
-                        color = SmartSpendTheme.colors.negative,
+                        color = FinzyyTheme.colors.negative,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium
                     )
@@ -213,8 +213,8 @@ fun DeleteAccountDialog(
                 },
                 enabled = isDeleteTyped && !isLoading,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SmartSpendTheme.colors.negative,
-                    disabledContainerColor = SmartSpendTheme.colors.negative.copy(alpha = 0.4f)
+                    containerColor = FinzyyTheme.colors.negative,
+                    disabledContainerColor = FinzyyTheme.colors.negative.copy(alpha = 0.4f)
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
@@ -236,7 +236,7 @@ fun DeleteAccountDialog(
                 onClick = onDismiss,
                 enabled = !isLoading
             ) {
-                Text("Cancel", color = SmartSpendTheme.colors.inkMuted)
+                Text("Cancel", color = FinzyyTheme.colors.inkMuted)
             }
         }
     )
@@ -245,7 +245,7 @@ fun DeleteAccountDialog(
 @Composable
 private fun DeletedItemRow(text: String) {
     Row(verticalAlignment = Alignment.Top) {
-        Text("•", color = SmartSpendTheme.colors.negative, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text("•", color = FinzyyTheme.colors.negative, fontWeight = FontWeight.Bold, fontSize = 14.sp)
         Spacer(Modifier.width(8.dp))
         Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
     }

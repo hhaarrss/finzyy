@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smartspend.app.ui.theme.CategoryIcon
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import com.smartspend.app.ui.theme.WideFamily
 import java.util.Locale
 
@@ -39,7 +39,7 @@ fun MerchantAvatar(
     merchant: String? = null,
     size: Dp = 44.dp
 ) {
-    val colors = SmartSpendTheme.categories[category]
+    val colors = FinzyyTheme.categories[category]
     val hasMerchant = !merchant.isNullOrBlank()
     val logo = if (hasMerchant) MerchantIcon(merchant) else null
 
@@ -52,7 +52,7 @@ fun MerchantAvatar(
             // Logos carry their own colours, so they sit on plain white; everything else is an
             // outlined tile in the ledger's ink, with no tint.
             .background(if (logo != null) Color.White else colors.container)
-            .border(1.dp, SmartSpendTheme.colors.hairline, RoundedCornerShape(percent = 30)),
+            .border(1.dp, FinzyyTheme.colors.hairline, RoundedCornerShape(percent = 30)),
         contentAlignment = Alignment.Center
     ) {
         when {

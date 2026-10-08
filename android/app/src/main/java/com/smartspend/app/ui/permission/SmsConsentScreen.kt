@@ -49,7 +49,7 @@ import androidx.core.app.ActivityCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.smartspend.app.sms.HistoricalSmsSync
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -199,7 +199,7 @@ private fun DisclosureContent(onContinue: () -> Unit) {
         Text(
             "We don't need your personal conversations or OTPs. Only messages from recognized bank senders are parsed, on your device. " +
                 "Finzyy also checks your inbox in the background for bank SMS it missed while your phone was offline.",
-            color = SmartSpendTheme.colors.inkMuted,
+            color = FinzyyTheme.colors.inkMuted,
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -245,7 +245,7 @@ private fun ScanningContent() {
         Spacer(Modifier.height(6.dp))
         Text(
             "Importing recent bank SMS. Only amounts, merchants and dates leave your phone.",
-            color = SmartSpendTheme.colors.inkMuted,
+            color = FinzyyTheme.colors.inkMuted,
             style = MaterialTheme.typography.bodySmall
         )
     }
@@ -273,7 +273,7 @@ private fun PermanentlyDeniedContent(onOpenSettings: () -> Unit, onBackToHome: (
                 Text("SMS permission is blocked", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text(
                     "You've denied SMS access more than once, so Android won't show the prompt again. To enable auto-sync, allow SMS permission from your device Settings.",
-                    color = SmartSpendTheme.colors.inkMuted,
+                    color = FinzyyTheme.colors.inkMuted,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Button(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {

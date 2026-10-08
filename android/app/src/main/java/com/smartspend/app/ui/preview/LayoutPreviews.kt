@@ -27,7 +27,7 @@ import com.smartspend.app.ui.components.SpendBarChart
 import com.smartspend.app.ui.components.TransactionRow
 import com.smartspend.app.ui.components.TxView
 import com.smartspend.app.ui.onboarding.OnboardingCarousel
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 
 /*
  * Layout previews: the same component at several screen sizes and font scales, with awkward
@@ -58,7 +58,7 @@ annotation class DevicePreviews
 
 @Composable
 private fun Frame(content: @Composable () -> Unit) {
-    SmartSpendTheme(darkTheme = isSystemInDarkTheme()) {
+    FinzyyTheme(darkTheme = isSystemInDarkTheme()) {
         Surface(color = MaterialTheme.colorScheme.background) { content() }
     }
 }

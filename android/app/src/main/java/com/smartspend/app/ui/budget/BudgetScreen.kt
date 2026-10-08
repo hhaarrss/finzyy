@@ -67,7 +67,7 @@ import com.smartspend.app.ui.components.budgetWord
 import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.components.monthName
 import com.smartspend.app.ui.components.pickable
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -186,11 +186,11 @@ fun BudgetScreen(onBack: () -> Unit) {
                 Eyebrow("Monthly limit")
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("₹", style = MaterialTheme.typography.displaySmall, color = SmartSpendTheme.colors.inkMuted)
+                    Text("₹", style = MaterialTheme.typography.displaySmall, color = FinzyyTheme.colors.inkMuted)
                     Spacer(Modifier.width(6.dp))
                     Column(Modifier.weight(1f)) {
                         if (overallInput.isEmpty()) {
-                            Text("0", style = MaterialTheme.typography.displaySmall, color = SmartSpendTheme.colors.hairline)
+                            Text("0", style = MaterialTheme.typography.displaySmall, color = FinzyyTheme.colors.hairline)
                         }
                         BasicTextField(
                             value = overallInput,
@@ -206,7 +206,7 @@ fun BudgetScreen(onBack: () -> Unit) {
                 Text(
                     "One cap for everything you spend in a month.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
 
                 val limit = savedOverall
@@ -306,7 +306,7 @@ fun BudgetScreen(onBack: () -> Unit) {
                     )
                 }
                 utilization.forEachIndexed { i, item ->
-                    if (i > 0) HorizontalDivider(Modifier.padding(start = 70.dp), color = SmartSpendTheme.colors.hairline)
+                    if (i > 0) HorizontalDivider(Modifier.padding(start = 70.dp), color = FinzyyTheme.colors.hairline)
                     CategoryBudgetRow(item, onClick = { openForm(item.category, item.limit) })
                 }
             }
@@ -344,7 +344,7 @@ private fun CategoryBudgetRow(item: BudgetUtilizationData, onClick: () -> Unit) 
                 if (item.spent > item.limit) "${money(item.spent - item.limit)} over ${money(item.limit)}"
                 else "${money(item.spent)} of ${money(item.limit)}",
                 style = MaterialTheme.typography.bodySmall,
-                color = SmartSpendTheme.colors.inkMuted
+                color = FinzyyTheme.colors.inkMuted
             )
         }
     }

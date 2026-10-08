@@ -65,22 +65,22 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 @Composable
-fun SmartSpendTheme(
+fun FinzyyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    val extended = if (darkTheme) DarkSmartSpendColors else LightSmartSpendColors
+    val extended = if (darkTheme) DarkFinzyyColors else LightFinzyyColors
     val categories = remember(darkTheme) { categoryPalette(darkTheme) }
 
     CompositionLocalProvider(
-        LocalSmartSpendColors provides extended,
+        LocalFinzyyColors provides extended,
         LocalCategoryPalette provides categories
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = SmartSpendTypography,
-            shapes = SmartSpendShapes,
+            typography = FinzyyTypography,
+            shapes = FinzyyShapes,
             content = content
         )
     }
@@ -88,11 +88,11 @@ fun SmartSpendTheme(
 
 /**
  * Accessors for the tokens Material3 does not carry. Mirrors the `MaterialTheme.colorScheme`
- * shape so call sites read the same way: `SmartSpendTheme.colors.positive`.
+ * shape so call sites read the same way: `FinzyyTheme.colors.positive`.
  */
-object SmartSpendTheme {
-    val colors: SmartSpendColors
-        @Composable @ReadOnlyComposable get() = LocalSmartSpendColors.current
+object FinzyyTheme {
+    val colors: FinzyyColors
+        @Composable @ReadOnlyComposable get() = LocalFinzyyColors.current
 
     val categories: CategoryPalette
         @Composable @ReadOnlyComposable get() = LocalCategoryPalette.current

@@ -32,7 +32,7 @@ import com.smartspend.app.ui.components.Eyebrow
 import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.components.pickable
 import com.smartspend.app.ui.theme.Categories
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.launch
 
 /**
@@ -102,7 +102,7 @@ fun CategorizeSheet(
                 Text(
                     "Pick a category. We'll file $merchant the same way next time.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
             }
             Eyebrow(if (busy != null) "Saving…" else "Category")

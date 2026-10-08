@@ -71,7 +71,7 @@ import com.smartspend.app.ui.components.SegmentedControl
 import com.smartspend.app.ui.components.dayHeader
 import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.components.pickable
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -197,7 +197,7 @@ fun AddTransactionScreen(onBack: () -> Unit) {
                     Text(
                         "₹",
                         style = MaterialTheme.typography.displayMedium,
-                        color = if (amount.isEmpty()) SmartSpendTheme.colors.hairline else MaterialTheme.colorScheme.onBackground
+                        color = if (amount.isEmpty()) FinzyyTheme.colors.hairline else MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(Modifier.width(4.dp))
                     BasicTextField(
@@ -205,7 +205,7 @@ fun AddTransactionScreen(onBack: () -> Unit) {
                         onValueChange = { v -> amount = sanitiseAmount(v) },
                         singleLine = true,
                         textStyle = MaterialTheme.typography.displayLarge.copy(
-                            color = if (isCredit) SmartSpendTheme.colors.positive else MaterialTheme.colorScheme.onBackground,
+                            color = if (isCredit) FinzyyTheme.colors.positive else MaterialTheme.colorScheme.onBackground,
                             textAlign = TextAlign.Start
                         ),
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -215,7 +215,7 @@ fun AddTransactionScreen(onBack: () -> Unit) {
                             .focusRequester(amountFocus),
                         decorationBox = { inner ->
                             if (amount.isEmpty()) {
-                                Text("0", style = MaterialTheme.typography.displayLarge, color = SmartSpendTheme.colors.hairline)
+                                Text("0", style = MaterialTheme.typography.displayLarge, color = FinzyyTheme.colors.hairline)
                             }
                             inner()
                         }
@@ -253,7 +253,7 @@ fun AddTransactionScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
                 val options = lists?.let { if (isCredit) it.credit else it.debit }?.pickable()
                 if (options == null) {
-                    Text("Loading categories…", style = MaterialTheme.typography.bodyMedium, color = SmartSpendTheme.colors.inkMuted)
+                    Text("Loading categories…", style = MaterialTheme.typography.bodyMedium, color = FinzyyTheme.colors.inkMuted)
                 } else {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -317,16 +317,16 @@ internal fun DateField(label: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .border(1.dp, SmartSpendTheme.colors.hairline, MaterialTheme.shapes.small)
+            .border(1.dp, FinzyyTheme.colors.hairline, MaterialTheme.shapes.small)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text("Date", style = MaterialTheme.typography.bodySmall, color = SmartSpendTheme.colors.inkMuted)
+            Text("Date", style = MaterialTheme.typography.bodySmall, color = FinzyyTheme.colors.inkMuted)
             Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         }
-        Icon(Icons.Default.DateRange, contentDescription = "Change date", tint = SmartSpendTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
+        Icon(Icons.Default.DateRange, contentDescription = "Change date", tint = FinzyyTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
     }
 }
 

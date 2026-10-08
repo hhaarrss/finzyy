@@ -78,9 +78,9 @@ import com.smartspend.app.ui.components.Eyebrow
 import com.smartspend.app.ui.components.ScreenGutter
 import com.smartspend.app.ui.components.ScreenHeader
 import com.smartspend.app.ui.components.SegmentedControl
-import com.smartspend.app.ui.components.SmartSpendIcons
+import com.smartspend.app.ui.components.FinzyyIcons
 import com.smartspend.app.ui.permission.smsPermissionsGranted
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import com.smartspend.app.ui.theme.ThemeMode
 import com.smartspend.app.ui.theme.ThemePreference
 import kotlinx.coroutines.launch
@@ -217,11 +217,11 @@ fun AccountScreen(
                     Column(Modifier.weight(1f)) {
                         Text(displayName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (email != null) {
-                            Text(email, style = MaterialTheme.typography.bodySmall, color = SmartSpendTheme.colors.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(email, style = MaterialTheme.typography.bodySmall, color = FinzyyTheme.colors.inkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         Text("Edit profile", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     }
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = SmartSpendTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FinzyyTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
                 }
                 RowDivider()
                 SettingRow(
@@ -236,7 +236,7 @@ fun AccountScreen(
                     chevron = phone == null,
                     trailing = {
                         if (phone != null && phoneVerified) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = "Verified", tint = SmartSpendTheme.colors.positive, modifier = Modifier.size(22.dp))
+                            Icon(Icons.Default.CheckCircle, contentDescription = "Verified", tint = FinzyyTheme.colors.positive, modifier = Modifier.size(22.dp))
                         }
                     }
                 )
@@ -261,7 +261,7 @@ fun AccountScreen(
                 RowDivider()
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconChip(SmartSpendIcons.Theme)
+                        IconChip(FinzyyIcons.Theme)
                         Spacer(Modifier.width(14.dp))
                         Text("Theme", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                     }
@@ -283,7 +283,7 @@ fun AccountScreen(
 
             // ── Help ─────────────────────────────────────────────────────
             Group("Help & more") {
-                SettingRow(SmartSpendIcons.Help, "Help & FAQ", onClick = { open(SUPPORT_FAQ_URL) }, chevron = true)
+                SettingRow(FinzyyIcons.Help, "Help & FAQ", onClick = { open(SUPPORT_FAQ_URL) }, chevron = true)
                 RowDivider()
                 SettingRow(Icons.Default.Email, "Contact support", subtitle = SUPPORT_EMAIL, onClick = {
                     try {
@@ -295,7 +295,7 @@ fun AccountScreen(
                 RowDivider()
                 SettingRow(Icons.Default.Star, "Rate us", subtitle = "Tell others what you think", onClick = { rateApp() }, chevron = true)
                 RowDivider()
-                SettingRow(SmartSpendIcons.Article, "Blog", subtitle = "Money tips and product news", onClick = { open(BLOG_URL) }, chevron = true)
+                SettingRow(FinzyyIcons.Article, "Blog", subtitle = "Money tips and product news", onClick = { open(BLOG_URL) }, chevron = true)
             }
 
             // ── Legal ────────────────────────────────────────────────────
@@ -308,7 +308,7 @@ fun AccountScreen(
                     Icons.Default.Delete,
                     "Delete account",
                     subtitle = "Erase your account and all its data",
-                    tint = SmartSpendTheme.colors.negative,
+                    tint = FinzyyTheme.colors.negative,
                     onClick = { showDelete = true }
                 )
             }
@@ -317,7 +317,7 @@ fun AccountScreen(
                 SettingRow(
                     Icons.AutoMirrored.Filled.ExitToApp,
                     "Log out",
-                    tint = SmartSpendTheme.colors.negative,
+                    tint = FinzyyTheme.colors.negative,
                     onClick = { confirmLogout = true }
                 )
             }
@@ -328,7 +328,7 @@ fun AccountScreen(
                     .fillMaxWidth()
                     .padding(horizontal = ScreenGutter + 8.dp, vertical = 8.dp),
                 style = MaterialTheme.typography.bodySmall,
-                color = SmartSpendTheme.colors.inkMuted,
+                color = FinzyyTheme.colors.inkMuted,
                 textAlign = TextAlign.Center
             )
         }
@@ -366,7 +366,7 @@ private fun Group(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun RowDivider() = HorizontalDivider(Modifier.padding(start = 66.dp), color = SmartSpendTheme.colors.hairline)
+private fun RowDivider() = HorizontalDivider(Modifier.padding(start = 66.dp), color = FinzyyTheme.colors.hairline)
 
 @Composable
 private fun IconChip(icon: ImageVector, tint: Color = MaterialTheme.colorScheme.primary) {
@@ -403,12 +403,12 @@ private fun SettingRow(
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium, color = tint ?: MaterialTheme.colorScheme.onSurface)
             if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = SmartSpendTheme.colors.inkMuted)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = FinzyyTheme.colors.inkMuted)
             }
         }
         trailing()
         if (chevron) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = SmartSpendTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FinzyyTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
         }
     }
 }

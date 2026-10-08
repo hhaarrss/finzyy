@@ -82,15 +82,15 @@ Design system (built, not yet device-verified):
 - `ui/theme/` is now a real token system instead of the Android Studio
   template (it was still `Purple80`/`Pink40`, which nothing referenced —
   that is why every screen hardcoded hex): `Color.kt` (palette),
-  `SmartSpendColors.kt` (semantic tokens M3 has no slot for — positive /
+  `FinzyyColors.kt` (semantic tokens M3 has no slot for — positive /
   negative / caution / accent / inkMuted / subtleSurface / hairline),
   `CategoryPalette.kt` (per-category accent + chip tint, looked up by name
   so a server-added category degrades instead of crashing), `Type.kt`
   (chunky scale, display 56sp down to 10sp labels, tight negative tracking
   on large sizes, `TabularAmount` for decimal-aligned money), `Shape.kt`
   (12–34dp radii), `Theme.kt` (light + dark schemes, both provided via
-  CompositionLocal). Read tokens as `SmartSpendTheme.colors.x` /
-  `SmartSpendTheme.categories[name]`.
+  CompositionLocal). Read tokens as `FinzyyTheme.colors.x` /
+  `FinzyyTheme.categories[name]`.
 - **Material You dynamic color was removed deliberately.** It overrides the
   palette with the user's wallpaper colours, which would erase the brand
   direction on every device that supports it.
@@ -107,7 +107,7 @@ Design system (built, not yet device-verified):
   than "-12.4% MoM", an income-usage bar, and a burn-rate/days-left insight
   strip. Zero hardcoded hex remains in it.
 - **Known issue, deliberately not fixed yet:** `res/values/themes.xml` sets
-  `Theme.SmartSpend` to `Theme.Material3.Dark.NoActionBar` with a hardcoded
+  `Theme.Finzyy` to `Theme.Material3.Dark.NoActionBar` with a hardcoded
   dark window/status/nav bar. In light mode that mismatches the Compose
   background and shows a dark launch flash. The proper fix is a DayNight
   parent plus `values-night/`, but that also restyles the legacy XML login
@@ -155,7 +155,7 @@ UI redesign — Sept 2026 (code complete; see verification note):
 - **The Compose app is now the real post-login UI.** Before this, `DEV_SKIP_AUTH=false` meant every
   real user got the legacy XML dashboard (Home/Add/Budget/Insights/Profile tabs in
   `activity_main.xml` + `MainActivity`), and the Compose screens only ran in the dev stub path.
-  `MainActivity.showDashboard()` now hands the window to `SmartSpendNavHost`; the XML dashboard
+  `MainActivity.showDashboard()` now hands the window to `FinzyyNavHost`; the XML dashboard
   section, its adapters/chart views/item layouts were deleted. **Login/register/Google sign-in
   functions were carried over byte-for-byte (verified by script) — colleague's scope untouched.**
 - Auth for Compose calls: `SessionStore` + `AuthHeaderInterceptor` (OkHttp) add the stored JWT to
@@ -184,7 +184,7 @@ UI redesign — Sept 2026 (code complete; see verification note):
 
 In progress / not yet done:
 - Navigation rebuilt on Navigation Compose (`ui/navigation/`): `Destination`
-  enum holds the route ids, `SmartSpendNavHost` owns the graph. Replaces the
+  enum holds the route ids, `FinzyyNavHost` owns the graph. Replaces the
   hand-rolled `when(route)` + `DevRoute` enum that lived in `MainActivity`,
   which had no back stack (system back exited the app from any screen) and
   lost its position on process death. Also fixed while in there: a

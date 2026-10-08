@@ -54,7 +54,7 @@ import com.smartspend.app.RecategorizePayload
 import com.smartspend.app.RetrofitClient
 import com.smartspend.app.TransactionData
 import com.smartspend.app.TransactionUpdatePayload
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import com.smartspend.app.ui.theme.LedgerAmount
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -127,7 +127,7 @@ fun TransactionRow(
             Text(
                 ledgerMeta(tx, showDate),
                 style = MaterialTheme.typography.labelSmall,
-                color = SmartSpendTheme.colors.inkMuted,
+                color = FinzyyTheme.colors.inkMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -136,7 +136,7 @@ fun TransactionRow(
         Text(
             text = if (tx.isCredit) "+${money(tx.amount)}" else money(tx.amount),
             style = LedgerAmount,
-            color = if (tx.isCredit) SmartSpendTheme.colors.positive else MaterialTheme.colorScheme.onSurface
+            color = if (tx.isCredit) FinzyyTheme.colors.positive else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -321,7 +321,7 @@ fun TransactionSheet(
                                 Icon(
                                     Icons.Rounded.AccountBalance,
                                     contentDescription = null,
-                                    tint = SmartSpendTheme.colors.inkMuted,
+                                    tint = FinzyyTheme.colors.inkMuted,
                                     modifier = Modifier.size(14.dp)
                                 )
                             }
@@ -330,7 +330,7 @@ fun TransactionSheet(
                         Text(
                             sourceLine(tx),
                             style = MaterialTheme.typography.bodySmall,
-                            color = SmartSpendTheme.colors.inkMuted
+                            color = FinzyyTheme.colors.inkMuted
                         )
                     }
                 }
@@ -339,11 +339,11 @@ fun TransactionSheet(
             Text(
                 (if (tx.isCredit) "+" else "") + moneyExact(tx.amount),
                 style = MaterialTheme.typography.displayMedium,
-                color = if (tx.isCredit) SmartSpendTheme.colors.positive else MaterialTheme.colorScheme.onSurface
+                color = if (tx.isCredit) FinzyyTheme.colors.positive else MaterialTheme.colorScheme.onSurface
             )
 
             if (tx.needsReview && category == tx.category) {
-                Block(color = SmartSpendTheme.colors.cautionContainer, padding = PaddingValues(14.dp)) {
+                Block(color = FinzyyTheme.colors.cautionContainer, padding = PaddingValues(14.dp)) {
                     Text(
                         "We couldn't tell what this was. Pick a category below — we'll file this merchant the same way next time.",
                         style = MaterialTheme.typography.bodyMedium,
@@ -356,7 +356,7 @@ fun TransactionSheet(
                 Eyebrow("Category")
                 val options = categories?.let { if (tx.isCredit) it.credit else it.debit }?.pickable()
                 if (options == null) {
-                    Text("Loading categories…", style = MaterialTheme.typography.bodyMedium, color = SmartSpendTheme.colors.inkMuted)
+                    Text("Loading categories…", style = MaterialTheme.typography.bodyMedium, color = FinzyyTheme.colors.inkMuted)
                 } else {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -425,7 +425,7 @@ fun TransactionSheet(
             text = { Text("${money(tx.amount)} · ${tx.title}. This can't be undone.") },
             confirmButton = {
                 TextButton(onClick = { confirmDelete = false; delete() }) {
-                    Text("Delete", color = SmartSpendTheme.colors.negative)
+                    Text("Delete", color = FinzyyTheme.colors.negative)
                 }
             },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Keep it") } }

@@ -58,7 +58,7 @@ private fun NavHostController.back() {
  * slide in from the right on push and back out on pop, so depth reads spatially.
  */
 @Composable
-fun SmartSpendNavHost(
+fun FinzyyNavHost(
     onSignedOut: () -> Unit,
     modifier: Modifier = Modifier,
     promptSmsConsent: Boolean = false,
