@@ -53,7 +53,7 @@ import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private const val PRIVACY_POLICY_URL = "https://hhaarrss.github.io/smart-spend/privacy-policy.html"
+private const val PRIVACY_POLICY_URL = "https://hhaarrss.github.io/finzyy/privacy-policy.html"
 private const val PREFS_NAME = "smart_spend_prefs"
 private const val PREF_SMS_PERMISSION_REQUESTED = "sms_permission_requested_once"
 

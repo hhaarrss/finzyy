@@ -1,8 +1,8 @@
 # Finzyy Privacy Policy (draft)
 
 > **Published version:** [`docs/privacy-policy.html`](../privacy-policy.html) is the finished
-> page, in the same style as the live site. Copy it to the `hhaarrss/smart-spend` repo, which
-> serves `https://hhaarrss.github.io/smart-spend/privacy-policy.html` (the URL the app and Play
+> page, in the same style as the live site. Copy it to the `hhaarrss/finzyy` repo, which
+> serves `https://hhaarrss.github.io/finzyy/privacy-policy.html` (the URL the app and Play
 > Console use). This Markdown file is the readable source — keep the two in step, and keep both
 > in step with [data-safety.md](data-safety.md).
 >
@@ -100,7 +100,7 @@ Deleted data may remain in our database provider's short-term recovery history f
 
 - **See and correct** your data in the app (Account, and each transaction).
 - **Delete your account** in the app (Account → Privacy & legal → Delete account) or by requesting it at
-  https://hhaarrss.github.io/smart-spend/delete-account.html.
+  https://hhaarrss.github.io/finzyy/delete-account.html.
 - **Stop SMS reading** by removing the permission in your phone settings.
 - **Turn off notifications** in the app or in your phone settings.
 - **Withdraw consent, ask a question or raise a grievance** by writing to Harsh Rabadiya at

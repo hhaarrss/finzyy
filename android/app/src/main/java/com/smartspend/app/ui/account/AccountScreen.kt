@@ -85,11 +85,11 @@ import com.smartspend.app.ui.theme.ThemeMode
 import com.smartspend.app.ui.theme.ThemePreference
 import kotlinx.coroutines.launch
 
-private const val PRIVACY_POLICY_URL = "https://hhaarrss.github.io/smart-spend/privacy-policy.html"
-private const val TERMS_OF_SERVICE_URL = "https://hhaarrss.github.io/smart-spend/terms.html"
-private const val SUPPORT_FAQ_URL = "https://hhaarrss.github.io/smart-spend/support.html"
+private const val PRIVACY_POLICY_URL = "https://hhaarrss.github.io/finzyy/privacy-policy.html"
+private const val TERMS_OF_SERVICE_URL = "https://hhaarrss.github.io/finzyy/terms.html"
+private const val SUPPORT_FAQ_URL = "https://hhaarrss.github.io/finzyy/support.html"
 // No blog exists yet; this opens the product site until one does. Swap the URL, nothing else.
-private const val BLOG_URL = "https://hhaarrss.github.io/smart-spend/"
+private const val BLOG_URL = "https://hhaarrss.github.io/finzyy/"
 private const val SUPPORT_EMAIL = "smartspend4support@gmail.com"
 
 private const val PREFS = "smart_spend_prefs"
