@@ -28,6 +28,8 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Warning
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
@@ -84,11 +86,11 @@ import com.smartspend.app.ui.theme.ThemeMode
 import com.smartspend.app.ui.theme.ThemePreference
 import kotlinx.coroutines.launch
 
-private const val PRIVACY_POLICY_URL = "https://hhaarrss.github.io/smart-spend/privacy-policy.html"
-private const val TERMS_OF_SERVICE_URL = "https://hhaarrss.github.io/smart-spend/terms.html"
-private const val SUPPORT_FAQ_URL = "https://hhaarrss.github.io/smart-spend/support.html"
+private const val PRIVACY_POLICY_URL = "https://hhaarrss.github.io/finzyy/privacy-policy.html"
+private const val TERMS_OF_SERVICE_URL = "https://hhaarrss.github.io/finzyy/terms.html"
+private const val SUPPORT_FAQ_URL = "https://hhaarrss.github.io/finzyy/support.html"
 // No blog exists yet; this opens the product site until one does. Swap the URL, nothing else.
-private const val BLOG_URL = "https://hhaarrss.github.io/smart-spend/"
+private const val BLOG_URL = "https://hhaarrss.github.io/finzyy/"
 private const val SUPPORT_EMAIL = "smartspend4support@gmail.com"
 
 private const val PREFS = "smart_spend_prefs"
@@ -286,7 +288,7 @@ fun AccountScreen(
                 RowDivider()
                 SettingRow(Icons.Default.Email, "Contact support", subtitle = SUPPORT_EMAIL, onClick = {
                     try {
-                        context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$SUPPORT_EMAIL")).putExtra(Intent.EXTRA_SUBJECT, "SmartSpend support"))
+                        context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$SUPPORT_EMAIL")).putExtra(Intent.EXTRA_SUBJECT, "Finzyy support"))
                     } catch (_: ActivityNotFoundException) {
                         toast("No email app found")
                     }
@@ -312,6 +314,20 @@ fun AccountScreen(
                 )
             }
 
+            // ── Developer / Crash Testing ──────────────────────────────
+            Group("Developer & Testing") {
+                SettingRow(
+                    Icons.Default.Warning,
+                    "Test Crash",
+                    subtitle = "Triggers a test RuntimeException for Firebase Crashlytics",
+                    tint = SmartSpendTheme.colors.negative,
+                    onClick = {
+                        FirebaseCrashlytics.getInstance().log("Manual test crash triggered from AccountScreen")
+                        throw RuntimeException("Test Crash - Firebase Crashlytics")
+                    }
+                )
+            }
+
             Block(modifier = Modifier.padding(horizontal = ScreenGutter), padding = PaddingValues(0.dp)) {
                 SettingRow(
                     Icons.AutoMirrored.Filled.ExitToApp,
@@ -322,7 +338,7 @@ fun AccountScreen(
             }
 
             Text(
-                "SmartSpend ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\nSMS are read on your phone; only the amount, merchant and date are sent.",
+                "Finzyy ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\nSMS are read on your phone; only the amount, merchant and date are sent.",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = ScreenGutter + 8.dp, vertical = 8.dp),

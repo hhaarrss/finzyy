@@ -92,7 +92,7 @@ fun InsightsScreen(onBack: () -> Unit, onBudget: () -> Unit, onCategory: (String
                 }
             }
         } catch (e: Exception) {
-            error = e.localizedMessage ?: "Can't reach SmartSpend right now."
+            error = e.localizedMessage ?: "Can't reach Finzyy right now."
         }
     }
 

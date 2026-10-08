@@ -257,6 +257,7 @@ fun TransactionSheet(
                 category = newCategory
                 toast("Filed under $newCategory")
                 onChanged()
+                onDismiss()
             } else toast("Couldn't change the category")
         }
     }

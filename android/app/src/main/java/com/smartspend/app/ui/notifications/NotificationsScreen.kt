@@ -85,7 +85,7 @@ fun NotificationsScreen(onBack: () -> Unit, onBudget: () -> Unit, onCategory: (S
             bundle = loaded
             AttentionRepository.markRead(context, loaded)
         } catch (e: Exception) {
-            if (bundle == null) error = e.localizedMessage ?: "Can't reach SmartSpend right now."
+            if (bundle == null) error = e.localizedMessage ?: "Can't reach Finzyy right now."
         }
     }
 

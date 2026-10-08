@@ -108,7 +108,7 @@ async def link_phone(
     if owner is not None and owner.id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This number is already linked to another SmartSpend account.",
+            detail="This number is already linked to another Finzyy account.",
         )
 
     current_user.phone_number = phone_number

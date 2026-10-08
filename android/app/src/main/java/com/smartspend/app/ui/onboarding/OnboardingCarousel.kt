@@ -82,7 +82,7 @@ private data class PageCopy(val headline: String, val subcopy: String)
 private val pages = listOf(
     PageCopy(
         "Detected the moment\nyou pay",
-        "SmartSpend reads your bank SMS and turns it into a categorized transaction — no typing, nothing to remember."
+        "Finzyy reads your bank SMS and turns it into a categorized transaction — no typing, nothing to remember."
     ),
     PageCopy(
         "Sorted into the\nright category",

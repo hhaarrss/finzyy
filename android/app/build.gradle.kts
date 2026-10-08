@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 // Dev backend base URL, resolved in this order:
@@ -105,6 +106,7 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.google.services.auth)
 
     testImplementation(libs.junit)

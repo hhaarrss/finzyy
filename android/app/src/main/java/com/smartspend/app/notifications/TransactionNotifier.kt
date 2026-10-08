@@ -158,7 +158,7 @@ object TransactionNotifier {
         inbox.setSummaryText(summary)
         val n = baseBuilder(context, group)
             .setContentTitle(summary)
-            .setContentText("Tap to review them in SmartSpend")
+            .setContentText("Tap to review them in Finzyy")
             .setStyle(inbox)
             .setGroupSummary(true)
             .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)

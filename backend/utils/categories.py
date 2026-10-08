@@ -1,5 +1,5 @@
 """
-Canonical list of categories for SmartSpend.
+Canonical list of categories for Finzyy.
 Single source of truth for the backend and the Android app.
 """
 

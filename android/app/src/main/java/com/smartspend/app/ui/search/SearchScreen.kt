@@ -94,7 +94,7 @@ fun SearchScreen(onBack: () -> Unit, startWithReview: Boolean) {
             val end = LocalDate.now()
             SpendData.transactions(end.minusMonths(SEARCH_WINDOW_MONTHS), end)
         } catch (e: Exception) {
-            error = e.localizedMessage ?: "Can't reach SmartSpend right now."
+            error = e.localizedMessage ?: "Can't reach Finzyy right now."
             null
         }
     }

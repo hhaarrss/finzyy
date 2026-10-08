@@ -148,7 +148,7 @@ fun HomeScreen(
                 }
             }
         } catch (e: Exception) {
-            (state as? HomeUiState.Loaded) ?: HomeUiState.Error(e.localizedMessage ?: "Can't reach SmartSpend right now.")
+            (state as? HomeUiState.Loaded) ?: HomeUiState.Error(e.localizedMessage ?: "Can't reach Finzyy right now.")
         }
         refreshing = false
     }

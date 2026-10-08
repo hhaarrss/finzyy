@@ -141,7 +141,7 @@ fun TrendsScreen(onBack: () -> Unit, onBudget: () -> Unit) {
         txs = try {
             SpendData.transactions(period.start, LocalDate.now(), includeTransfers = true)
         } catch (e: Exception) {
-            error = e.localizedMessage ?: "Can't reach SmartSpend right now."
+            error = e.localizedMessage ?: "Can't reach Finzyy right now."
             null
         }
     }

@@ -1,15 +1,15 @@
-# SmartSpend — Privacy Policy
+# Finzyy — Privacy Policy
 
-*Placeholder fields marked in [brackets] — fill in before publishing. This draft is based on SmartSpend's actual documented architecture (SMS parsing, PostgreSQL storage, JWT/Firebase auth). Have this reviewed against your actual final implementation before it goes live — this is a strong starting draft, not a substitute for your own final check that it matches exactly what the shipped app does.*
+*Placeholder fields marked in [brackets] — fill in before publishing. This draft is based on Finzyy's actual documented architecture (SMS parsing, PostgreSQL storage, JWT/Firebase auth). Have this reviewed against your actual final implementation before it goes live — this is a strong starting draft, not a substitute for your own final check that it matches exactly what the shipped app does.*
 
 **Last updated:** [DATE]
-**Effective for:** SmartSpend, developed by [YOUR NAME / COMPANY NAME]
+**Effective for:** Finzyy, developed by [YOUR NAME / COMPANY NAME]
 
 ---
 
 ## 1. Who we are
 
-SmartSpend is an expense-tracking application for Android that helps users understand their spending by automatically reading and categorizing bank transaction SMS alerts.
+Finzyy is an expense-tracking application for Android that helps users understand their spending by automatically reading and categorizing bank transaction SMS alerts.
 
 **Developer contact:** [your.email@example.com]
 
@@ -18,7 +18,7 @@ If you have any privacy-related questions or requests, you can reach us at the e
 ## 2. What data we collect
 
 ### SMS content (with your permission)
-If you grant SMS read permission, SmartSpend reads incoming SMS messages **only from a whitelisted list of known bank sender IDs** (e.g. HDFCBK, ICICIB, SBIPSG, AXISBK). We extract only the following from these messages: transaction amount, transaction type (debit/credit), merchant or payee name, masked account number (last 4 digits only), and date. The full raw SMS text may be temporarily stored to support the categorization pipeline and can be viewed by you in the transaction detail screen.
+If you grant SMS read permission, Finzyy reads incoming SMS messages **only from a whitelisted list of known bank sender IDs** (e.g. HDFCBK, ICICIB, SBIPSG, AXISBK). We extract only the following from these messages: transaction amount, transaction type (debit/credit), merchant or payee name, masked account number (last 4 digits only), and date. The full raw SMS text may be temporarily stored to support the categorization pipeline and can be viewed by you in the transaction detail screen.
 
 **We do not read, store, or process SMS messages from any sender that is not on this bank whitelist.** Personal messages, OTPs from non-financial senders, and messages from unrecognized numbers are never accessed or stored.
 
@@ -44,7 +44,7 @@ Basic app usage and crash diagnostics may be collected to help us fix bugs and i
 - Your data is stored in a PostgreSQL database, accessed only through our backend API.
 - All data in transit between the app and our servers is encrypted using HTTPS/TLS.
 - Account passwords are hashed with bcrypt and never stored or transmitted in plain text.
-- Authentication uses JWT (JSON Web Token) bearer tokens; Google Sign-In is handled via Firebase Authentication, and Firebase ID tokens are verified server-side before any SmartSpend session is issued.
+- Authentication uses JWT (JSON Web Token) bearer tokens; Google Sign-In is handled via Firebase Authentication, and Firebase ID tokens are verified server-side before any Finzyy session is issued.
 - Account numbers are always stored and displayed in masked form (e.g. `XX373`) — full account numbers are never stored.
 
 ## 5. Data sharing
@@ -71,7 +71,7 @@ We do not share, sell, or rent your personal or financial data to third parties 
 
 ## 8. Children's privacy
 
-SmartSpend is not directed at children under 13 (or the applicable minimum age in your jurisdiction), and we do not knowingly collect data from children.
+Finzyy is not directed at children under 13 (or the applicable minimum age in your jurisdiction), and we do not knowingly collect data from children.
 
 ## 9. Changes to this policy
 

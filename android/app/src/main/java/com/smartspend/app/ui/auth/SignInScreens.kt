@@ -76,7 +76,7 @@ fun SignInScreen(
 
     val verifier = rememberPhoneVerifier { idToken ->
         val response = runCatching { RetrofitClient.apiService.firebaseLogin(FirebaseTokenPayload(idToken)) }
-            .getOrElse { return@rememberPhoneVerifier "Can't reach SmartSpend. Check your internet and try again." }
+            .getOrElse { return@rememberPhoneVerifier "Can't reach Finzyy. Check your internet and try again." }
         val body = response.body()
         if (response.isSuccessful && body != null) {
             AuthSession.save(context, body)
@@ -118,7 +118,7 @@ fun SignInScreen(
                     )
                 }
                 Text(
-                    "By continuing, you agree to SmartSpend's Terms of Service and Privacy Policy.",
+                    "By continuing, you agree to Finzyy's Terms of Service and Privacy Policy.",
                     style = MaterialTheme.typography.bodySmall,
                     color = SmartSpendTheme.colors.inkFaint,
                     textAlign = TextAlign.Center,
@@ -142,7 +142,7 @@ fun LinkPhoneScreen(
     val context = LocalContext.current
     val verifier = rememberPhoneVerifier { idToken ->
         val response = runCatching { RetrofitClient.apiService.linkPhone(FirebaseTokenPayload(idToken)) }
-            .getOrElse { return@rememberPhoneVerifier "Can't reach SmartSpend. Check your internet and try again." }
+            .getOrElse { return@rememberPhoneVerifier "Can't reach Finzyy. Check your internet and try again." }
         val body = response.body()
         if (response.isSuccessful && body != null) {
             AuthSession.update(context, body)
@@ -159,7 +159,7 @@ fun LinkPhoneScreen(
         PhoneStep(
             verifier = verifier,
             title = "Add your mobile number",
-            subtitle = "SmartSpend now signs you in with your phone. Verify your number once and it's linked to this account and all its data.",
+            subtitle = "Finzyy now signs you in with your phone. Verify your number once and it's linked to this account and all its data.",
             onBack = onBack,
             showBrand = false,
             footer = {
@@ -299,7 +299,7 @@ private fun EmailSignIn(onSignedIn: (AuthResponse) -> Unit, onBack: () -> Unit) 
             val response = runCatching { RetrofitClient.apiService.login(email.trim(), password) }.getOrNull()
             val body = response?.body()
             when {
-                response == null -> error = "Can't reach SmartSpend. Check your internet and try again."
+                response == null -> error = "Can't reach Finzyy. Check your internet and try again."
                 response.isSuccessful && body != null -> {
                     AuthSession.save(context, body)
                     onSignedIn(body)

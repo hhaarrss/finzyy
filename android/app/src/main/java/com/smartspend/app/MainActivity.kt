@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { }
 
-    /** Google account picker result -> Firebase credential -> SmartSpend session. */
+    /** Google account picker result -> Firebase credential -> Finzyy session. */
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -392,7 +392,7 @@ class MainActivity : ComponentActivity() {
             val response = runCatching { RetrofitClient.apiService.firebaseLogin(FirebaseTokenPayload(firebaseToken)) }.getOrNull()
             val body = response?.body()
             when {
-                response == null -> googleError = "Can't reach SmartSpend. Check your internet and try again."
+                response == null -> googleError = "Can't reach Finzyy. Check your internet and try again."
                 response.isSuccessful && body != null -> {
                     AuthSession.save(this@MainActivity, body)
                     continueAfterSignIn()

@@ -1,6 +1,6 @@
-# 🏛️ SmartSpend Technical Architecture & Engineering Notes
+# 🏛️ Finzyy Technical Architecture & Engineering Notes
 
-This document provides in-depth technical documentation on SmartSpend's core architectural decisions, data flow pipelines, deduplication strategy, classification engine, and 1M+ user scaling roadmap.
+This document provides in-depth technical documentation on Finzyy's core architectural decisions, data flow pipelines, deduplication strategy, classification engine, and 1M+ user scaling roadmap.
 
 ---
 
@@ -45,7 +45,7 @@ graph TD
 
 ## 🧠 1. The 5-Layer Categorization Pipeline & Confidence Scoring
 
-SmartSpend implements a multi-tier categorization engine (`backend/categorizer/transaction_categorizer.py`) that evaluates incoming transactions against 5 fallback layers to achieve 98%+ auto-categorization accuracy for Indian financial data.
+Finzyy implements a multi-tier categorization engine (`backend/categorizer/transaction_categorizer.py`) that evaluates incoming transactions against 5 fallback layers to achieve 98%+ auto-categorization accuracy for Indian financial data.
 
 ```
 Incoming Transaction / SMS
@@ -93,7 +93,7 @@ Incoming Transaction / SMS
 
 ## 🔒 2. Deduplication Strategy Across Multiple Ingestion Paths
 
-Because transactions can enter the system through multiple channels (**Background Android SMS Ingest**, **Manual AI SMS Ingest**, and **Manual Form Entry**), SmartSpend enforces SHA-256 fingerprint deduplication at the database query level.
+Because transactions can enter the system through multiple channels (**Background Android SMS Ingest**, **Manual AI SMS Ingest**, and **Manual Form Entry**), Finzyy enforces SHA-256 fingerprint deduplication at the database query level.
 
 ### Fingerprint Generation Formula
 
@@ -117,7 +117,7 @@ hash_fingerprint = SHA256(user_id + "_" + amount + "_" + date_YYYY_MM_DD + "_" +
 
 ## 🚀 3. Scaling Considerations: Moving to 1M+ Users
 
-To scale SmartSpend from a single-instance setup to supporting **1,000,000+ active users**, the architecture is designed for horizontal scaling across three primary bottlenecks:
+To scale Finzyy from a single-instance setup to supporting **1,000,000+ active users**, the architecture is designed for horizontal scaling across three primary bottlenecks:
 
 ```
                                   ┌───────────────┐
