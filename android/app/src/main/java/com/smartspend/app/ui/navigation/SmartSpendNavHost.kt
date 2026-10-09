@@ -63,6 +63,8 @@ fun SmartSpendNavHost(
     modifier: Modifier = Modifier,
     promptSmsConsent: Boolean = false,
     showHomeTour: Boolean = false,
+    onSmsConsentFinished: () -> Unit = {},
+    onHomeTourFinished: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
     startDestination: Destination = Destination.Home
 ) {
@@ -100,7 +102,10 @@ fun SmartSpendNavHost(
                 // Starts once Home is actually on screen -- after the first-run SMS consent
                 // screen, if that was pushed on top.
                 showTour = tourPending,
-                onTourDone = { tourPending = false }
+                onTourDone = {
+                    tourPending = false
+                    onHomeTourFinished()
+                }
             )
         }
 
@@ -198,10 +203,14 @@ fun SmartSpendNavHost(
             // from the previous screen must not re-enter the disclosure flow.
             val done = {
                 navController.popBackStack()
-                Unit
+                // Marks SMS as asked and raises the notification prompt next, one dialog at a time.
+                onSmsConsentFinished()
             }
             SmsConsentScreen(
-                onBack = { navController.back() },
+                onBack = {
+                    navController.back()
+                    onSmsConsentFinished()
+                },
                 onAutoSyncReady = done,
                 onManualEntry = done
             )
