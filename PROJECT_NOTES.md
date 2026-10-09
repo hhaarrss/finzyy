@@ -25,6 +25,19 @@ dashboard (frontend/) was removed in Sept 2026, along with its CORS origins.
 ## Current status (update this section after every completed phase)
 
 Done and verified:
+- Privacy hardening, merged 28 Sep 2026 (PR #2): HTTPS-only release builds,
+  Keystore-encrypted token + offline SMS queue, backup off, R8 on (with
+  Gson keep rules — verified in the release dex), full account deletion
+  incl. Firebase Auth record, no personal data in logs/500 responses,
+  Celery/Redis raw-SMS task removed, Firebase Analytics removed. Play drafts
+  in `docs/play-store/`, DB access plan in `docs/security/database-access.md`.
+- Neon: `dev` branch (empty, marker table `__dev_branch_marker`) and
+  restricted roles `smartspend_app` / `smartspend_readonly` created on
+  production 28 Sep 2026, without passwords. Production has no
+  `alembic_version`; its schema is kept by `scripts/ensure_schema.py`
+  (never run `alembic upgrade head` there).
+- Transaction notifications with Categorize action (on main); guided tour
+  for new accounts (PR #4). Visit count + month total: PR #3, open.
 - Backend data layer: single source of truth service layer
   (`transaction_aggregates.py`), category dedup, MIN_MEANINGFUL_BASELINE
   guard (₹100) for MoM %, "Needs Review" excluded from category
@@ -43,7 +56,8 @@ Done and verified:
 - On-device SMS parser (`SmsTransactionParser.kt`) — ported from real
   `backend/utils/sms_parser.py` regex patterns, not invented. Backend
   `ingest-sms` schema uses `extra="forbid"`, rejects any raw SMS field.
-  `raw_sms` column already dropped from DB (dev only, not production yet).
+  No `raw_sms` (or any SMS-text) column exists in production — checked
+  28 Sep 2026 — so the raw-SMS purge migration has nothing left to do.
 - Hosted compliance pages (GitHub Pages): Privacy Policy, Terms of
   Service, Support/FAQ, Account Deletion — all live, HTTP 200.
 - Security audit pass 1: CORS fixed (was `["*"]` + credentials, invalid
@@ -245,8 +259,10 @@ In progress / not yet done:
   on a real incoming bank SMS, before it counts as done.
 - Auth stub (`AUTH_STUB=true`) still used for local dev — real auth is
   colleague's work, not yet integrated
-- Render production deployment — not yet updated with Phases 1-6
-- Production fingerprint purge + raw-SMS purge migrations — MUST NOT
+- Render production deployment — still serving an old build as of
+  28 Sep 2026 (auto-deploy from `main` appears to be off); needs a manual
+  deploy, then the restricted-login switch in docs/security/database-access.md
+- Production fingerprint purge migration — MUST NOT
   run until Render deployment is confirmed working AND colleague's
   auth work is stable
 - Second security audit pass — scheduled for after colleague's auth

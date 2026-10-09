@@ -1,22 +1,4 @@
 <resources>
     <string name="app_name">Finzyy</string>
-    <string name="brand_subtitle">Smart Expense Tracker</string>
-    <string name="login_title">Sign In</string>
-    <string name="login_subtitle">Enter your credentials to continue</string>
-    <string name="hint_email">Email Address</string>
-    <string name="hint_password">Password</string>
-    <string name="btn_login">Sign In</string>
-    <string name="btn_logging_in">Signing In…</string>
-    <string name="btn_test_sms">Send Test SMS</string>
-    <string name="btn_logout">Logout</string>
-    <string name="label_connection_status">Connection Status</string>
-    <string name="status_connected">Connected to Backend</string>
-    <string name="status_disconnected">Not Connected</string>
-    <string name="label_total_synced">Total Transactions Synced</string>
-    <string name="label_last_sms">Last SMS Received</string>
-    <string name="label_no_sms">No SMS received yet</string>
-    <string name="label_logged_in_as">Logged in as</string>
-    <string name="dashboard_title">Dashboard</string>
-    <string name="dashboard_subtitle">SMS auto-sync is active in the background</string>
     <string name="default_web_client_id">1054030131838-placeholder.apps.googleusercontent.com</string>
 </resources>

@@ -68,7 +68,14 @@ object TransactionNotifier {
      * @param merchantRaw the merchant as parsed on the phone — the Layer 1 mapping key, same
      *   field the backend already received in the ingest payload.
      */
-    fun show(context: Context, tx: TransactionData?, fallbackAmount: Double, merchantRaw: String?) {
+    fun show(
+        context: Context,
+        tx: TransactionData?,
+        fallbackAmount: Double,
+        merchantRaw: String?,
+        visitCount: Int? = null,
+        monthSpent: Double? = null
+    ) {
         try {
             ensureChannel(context)
             val nm = NotificationManagerCompat.from(context)
@@ -83,18 +90,24 @@ object TransactionNotifier {
 
             val amountText = (if (credit) "+" else "") + money(amount)
             val title = if (needsReview) "$amountText · $merchant — needs a category" else "$amountText · $merchant"
+            val visit = visitCount?.takeIf { !credit && it > 0 }?.let {
+                if (it == 1) "your first visit here" else "your ${ordinal(it)} visit here"
+            }
             val text = when {
                 needsReview -> "Tap Categorize — we'll remember it for next time"
                 credit -> "$category · received"
-                else -> category ?: "Synced from your bank SMS"
+                else -> listOfNotNull(category ?: "Synced from your bank SMS", visit).joinToString(" · ")
             }
+            // Both extras come with the sync response, so there's no extra request; an older
+            // server simply leaves them out.
+            val expanded = monthSpent?.let { "$text\n${money(it)} spent this month" } ?: text
             val id = tx?.id ?: (System.currentTimeMillis() and 0x7fffffff).toInt()
             val group = groupKey()
 
             val builder = baseBuilder(context, group)
                 .setContentTitle(title)
                 .setContentText(text)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setStyle(NotificationCompat.BigTextStyle().bigText(expanded))
                 .setLargeIcon(iconBitmap(context, if (needsReview) Icons.Rounded.QuestionMark else CategoryIcon(category), needsReview))
 
             if (tx != null) {
@@ -168,6 +181,12 @@ object TransactionNotifier {
         } catch (e: SecurityException) {
             Log.w(TAG, "Notification permission missing", e)
         }
+    }
+
+    /** 2 → "2nd", 3 → "3rd", 11 → "11th", 22 → "22nd". */
+    internal fun ordinal(n: Int): String {
+        val suffix = if (n % 100 in 11..13) "th" else when (n % 10) { 1 -> "st"; 2 -> "nd"; 3 -> "rd"; else -> "th" }
+        return "$n$suffix"
     }
 
     private fun groupKey() = "transactions_${LocalDate.now()}"

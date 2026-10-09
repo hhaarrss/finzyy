@@ -76,6 +76,7 @@ from database import engine
 
 # App Configuration
 APP_ENV = os.getenv("APP_ENV", "development")
+IS_PRODUCTION = APP_ENV.strip().lower() == "production"
 APP_PORT = int(os.getenv("APP_PORT", "8000"))
 
 # Create FastAPI Instance
@@ -83,11 +84,14 @@ app = FastAPI(
     title="Smart Expense Tracker API",
     description=(
         "FastAPI Backend with async/await, SQLAlchemy, PostgreSQL, "
-        "JWT Authentication, Redis + Celery workers, and Alembic migrations."
+        "JWT Authentication, and Alembic migrations."
     ),
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # The interactive docs and the schema are a map of every endpoint; only the app needs the
+    # API in production, so they're served in development only.
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+    openapi_url=None if IS_PRODUCTION else "/openapi.json",
 )
 
 # CORS: the only client is the Android app, which ignores CORS, so no browser origin is
@@ -116,11 +120,14 @@ async def global_exception_handler(request: Request, exc: Exception):
     Catch-all handler for unhandled exceptions.
     Returns a JSON response so CORSMiddleware can attach headers properly.
     """
-    print(f"[UNHANDLED ERROR] {request.method} {request.url}")
+    # Path only: query strings carry search terms, merchant names and filters. The traceback
+    # stays in the server log for debugging; the client gets no internals (SQL errors can
+    # quote the values that were being written).
+    print(f"[UNHANDLED ERROR] {request.method} {request.url.path}")
     tb.print_exception(type(exc), exc, exc.__traceback__)
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Internal server error: {str(exc)}"},
+        content={"detail": "Internal server error"},
     )
 
 
@@ -128,9 +135,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(auth_router)
 app.include_router(transactions_router)
 app.include_router(budget_router)
-app.include_router(family_router)
 app.include_router(insights_router)
-app.include_router(seed_router)
+# Not in production:
+# - seed: any signed-in user could reset/create a demo account whose password is in this repo.
+# - family: anyone could join any family by its number (no invite or approval). The app has no
+#   family feature yet; bring these back only with an invite/approval flow.
+if not IS_PRODUCTION:
+    app.include_router(family_router)
+    app.include_router(seed_router)
 app.include_router(categories_router)
 app.include_router(users_router)
 app.include_router(home_router)
@@ -157,6 +169,8 @@ AUTH_SCHEMA_STATEMENTS = [
 # Transaction columns added after the first release. Additive and idempotent, same as above.
 TRANSACTION_SCHEMA_STATEMENTS = [
     "ALTER TABLE transactions ADD COLUMN IF NOT EXISTS merchant_display VARCHAR(255)",
+    # Almost every query is "this user's transactions in this date range"; user_id had no index.
+    "CREATE INDEX IF NOT EXISTS ix_transactions_user_id_date ON transactions (user_id, date)",
 ]
 
 
@@ -181,9 +195,15 @@ async def on_startup() -> None:
                 from sqlalchemy import text
                 await conn.execute(text("SELECT 1"))
             print("Database connection verified.")
-            await ensure_auth_schema()
         except Exception as e:
             print(f"Warning: Database connectivity check failed: {e}")
+            return
+        try:
+            await ensure_auth_schema()
+        except Exception as e:
+            # Expected when the server connects with the restricted app login (no ALTER rights):
+            # scripts/ensure_schema.py applies the same statements with the owner login first.
+            print(f"Schema safety net skipped ({type(e).__name__}); expecting scripts/ensure_schema.py to have run.")
         return
 
     try:

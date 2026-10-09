@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.smartspend.app.RecategorizePayload
 import com.smartspend.app.RetrofitClient
@@ -95,7 +96,8 @@ fun CategorizeSheet(
                     (if (credit) "+" else "") + money(amount) + " · " + merchant,
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     "Pick a category. We'll file $merchant the same way next time.",

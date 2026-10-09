@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -34,8 +35,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
@@ -151,7 +154,7 @@ fun OnboardingCarousel(
                     onClick = { if (last) onSignUp() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
+                        .heightIn(min = 52.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -172,7 +175,7 @@ fun OnboardingCarousel(
                         modifier = Modifier
                             .padding(top = 12.dp)
                             .fillMaxWidth()
-                            .height(52.dp),
+                            .heightIn(min = 52.dp),
                         shape = RoundedCornerShape(14.dp),
                         border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f)),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
@@ -231,7 +234,9 @@ private fun OnboardingPage(index: Int, isCurrent: Boolean) {
     val t = if (runs == 0) 0L else clock.value
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    Column(Modifier.fillMaxSize()) {
+    // Scrolls: the hero is a fixed 300dp scene, so on a short screen or at a large font size the
+    // headline and body would otherwise run under the pinned buttons with no way to read them.
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         // Hero sits above the content so the page-1 result card can break out over it.
         Box(
             Modifier

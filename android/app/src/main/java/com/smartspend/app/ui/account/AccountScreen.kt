@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.smartspend.app.AuthSession
+import com.smartspend.app.SessionStore
 import com.smartspend.app.BuildConfig
 import com.smartspend.app.RetrofitClient
 import com.smartspend.app.UserData
@@ -361,7 +362,7 @@ fun AccountScreen(
 
     if (showDelete) {
         DeleteAccountDialog(
-            jwtToken = prefs.getString("jwt_token", null),
+            jwtToken = SessionStore.token(context),
             onDismiss = { showDelete = false },
             onDeleted = {
                 showDelete = false

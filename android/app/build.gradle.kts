@@ -31,6 +31,14 @@ val devBackendBaseUrl: String = (project.findProperty("devBackendBaseUrl") as St
     ?: localProperties.getProperty("dev.backend.base.url")
     ?: "https://firstproject-smartspend.onrender.com/"
 
+// Release signing (Play upload key). Read from android/keystore.properties, which is never
+// committed — see docs/play-store/release-checklist.md. Without it, release builds are unsigned.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
+
 android {
     namespace = "com.smartspend.app"
     compileSdk {
@@ -50,6 +58,17 @@ android {
         buildConfigField("String", "DEV_BACKEND_BASE_URL", "\"$devBackendBaseUrl\"")
     }
 
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         // DEV_SKIP_AUTH must never be true outside debug: it also gates the cleartext
         // LAN dev-backend URL and a fabricated login token (see BackendService.kt and
@@ -62,7 +81,11 @@ android {
         }
         release {
             buildConfigField("Boolean", "DEV_SKIP_AUTH", "false")
-            isMinifyEnabled = false
+            // R8: removes unused code and obfuscates what's left, so the shipped app is much
+            // harder to pick apart. Rules for reflection-based code live in proguard-rules.pro.
+            if (hasReleaseKey) signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -104,7 +127,6 @@ dependencies {
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
-    implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.crashlytics)
     implementation(libs.google.services.auth)

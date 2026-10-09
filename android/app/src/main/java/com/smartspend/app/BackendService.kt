@@ -93,15 +93,6 @@ data class ProfilePayload(
 )
 
 /**
- * Payload for registering a new user.
- */
-data class RegisterPayload(
-    val email: String,
-    val full_name: String,
-    val password: String
-)
-
-/**
  * Data model for a User profile.
  */
 data class UserData(
@@ -150,7 +141,11 @@ data class RecategorizePayload(
 data class SmsIngestionResponse(
     val success: Boolean,
     val transaction: TransactionData?,
-    val message: String
+    val message: String,
+    /** Debits at this merchant including this one; null on older servers or for credits. */
+    val merchant_visit_count: Int? = null,
+    /** This month's spend, the same figure Home shows; null on older servers. */
+    val month_spent: Double? = null
 )
 
 /**
@@ -215,12 +210,6 @@ data class TransactionUpdatePayload(
     val notes: String? = null
 )
 
-data class CategoriesResponse(
-    val categories: List<String> = emptyList(),
-    val debit: List<String> = emptyList(),
-    val credit: List<String> = emptyList()
-)
-
 data class FcmTokenPayload(
     val fcm_token: String
 )
@@ -229,11 +218,6 @@ data class NeedsReviewResponse(
     val count: Int,
     val transactions: List<TransactionData>,
     val message: String
-)
-
-data class CategorizePayload(
-    val category: String,
-    val merchant_alias: String? = null
 )
 
 data class DeleteAccountPayload(
@@ -278,16 +262,6 @@ interface BackendService {
     ): Response<NeedsReviewResponse>
 
     /**
-     * 1-click categorize transaction and record merchant learning.
-     */
-    @PATCH("transactions/{id}/categorize")
-    suspend fun categorizeTransaction(
-        @Header("Authorization") token: String,
-        @Path("id") id: Int,
-        @Body payload: CategorizePayload
-    ): Response<Map<String, Any>>
-
-    /**
      * Register device FCM push notification token.
      */
     @POST("users/fcm-token")
@@ -295,12 +269,6 @@ interface BackendService {
         @Header("Authorization") token: String,
         @Body payload: FcmTokenPayload
     ): Response<Map<String, String>>
-
-    /**
-     * Fetch single canonical category list.
-     */
-    @GET("categories")
-    suspend fun getCategories(): Response<CategoriesResponse>
 
     @GET("categories")
     suspend fun getCategoryLists(): Response<CategoryListsResponse>
@@ -334,11 +302,6 @@ interface BackendService {
         @Field("password") password: String
     ): Response<AuthResponse>
 
-    @POST("auth/register")
-    suspend fun register(
-        @Body payload: RegisterPayload
-    ): Response<AuthResponse>
-
     /** Exchanges a Firebase ID token (Phone OTP or Google) for a Finzyy session. */
     @POST("auth/firebase")
     suspend fun firebaseLogin(@Body payload: FirebaseTokenPayload): Response<AuthResponse>
@@ -364,21 +327,6 @@ interface BackendService {
         @Body payload: SmsPayload
     ): Response<SmsIngestionResponse>
 
-    /**
-     * Fetch user's transactions list.
-     */
-    @GET("transactions/")
-    suspend fun getTransactions(
-        @Header("Authorization") token: String,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 50,
-        @Query("month") month: Int? = null,
-        @Query("year") year: Int? = null,
-        @Query("start_date") startDate: String? = null,
-        @Query("end_date") endDate: String? = null,
-        @Query("include_transfers") includeTransfers: Boolean? = null
-    ): Response<PaginatedTransactionResponse>
-
     @GET("transactions/")
     suspend fun getTransactionsNoAuth(
         @Query("page") page: Int = 1,
@@ -392,44 +340,11 @@ interface BackendService {
         @Query("include_transfers") includeTransfers: Boolean? = null
     ): Response<PaginatedTransactionResponse>
 
-    /**
-     * Fetch monthly category spending summary with budget utilization.
-     */
-    @GET("transactions/monthly-category-summary")
-    suspend fun getMonthlyCategorySummary(
-        @Header("Authorization") token: String,
-        @Query("month") month: Int,
-        @Query("year") year: Int
-    ): Response<MonthlyCategorySummaryResponse>
-
     @GET("transactions/monthly-category-summary")
     suspend fun getMonthlyCategorySummaryNoAuth(
         @Query("month") month: Int,
         @Query("year") year: Int
     ): Response<MonthlyCategorySummaryResponse>
-
-    @GET("transactions/merchants")
-    suspend fun getMerchants(): Response<List<MerchantData>>
-
-    /**
-     * Fetch category totals summary for a given month (YYYY-MM).
-     */
-    @GET("transactions/summary")
-    suspend fun getCategorySummary(
-        @Header("Authorization") token: String,
-        @Query("month") month: String
-    ): Response<Map<String, Double>>
-
-    /**
-     * Fetch configured budget limits.
-     */
-    @GET("budget/")
-    suspend fun getBudgets(
-        @Header("Authorization") token: String
-    ): Response<List<BudgetLimitData>>
-
-    @GET("budget/")
-    suspend fun getBudgetsNoAuth(): Response<List<BudgetLimitData>>
 
     @GET("budget/utilization")
     suspend fun getBudgetUtilization(): Response<List<BudgetUtilizationData>>
@@ -442,28 +357,10 @@ interface BackendService {
         @Body payload: OverallBudgetPayload
     ): Response<OverallBudgetData>
 
-    /**
-     * Create or update category budget limit.
-     */
-    @POST("budget/")
-    suspend fun setBudget(
-        @Header("Authorization") token: String,
-        @Body payload: BudgetSetPayload
-    ): Response<BudgetLimitData>
-
     @POST("budget/")
     suspend fun setBudgetNoAuth(
         @Body payload: BudgetSetPayload
     ): Response<BudgetLimitData>
-
-    /**
-     * Manually create a transaction.
-     */
-    @POST("transactions/")
-    suspend fun createTransaction(
-        @Header("Authorization") token: String,
-        @Body payload: TransactionCreatePayload
-    ): Response<TransactionData>
 
     @POST("transactions/")
     suspend fun createTransactionNoAuth(
@@ -479,14 +376,6 @@ interface BackendService {
         @Path("id") id: Int,
         @Body payload: RecategorizePayload
     ): Response<Map<String, Any>>
-
-    /**
-     * Fetch analytical financial insights summary.
-     */
-    @GET("insights/summary")
-    suspend fun getInsightsSummary(
-        @Header("Authorization") token: String
-    ): Response<InsightsSummaryData>
 
     @GET("insights/summary")
     suspend fun getInsightsSummaryNoAuth(): Response<InsightsSummaryData>

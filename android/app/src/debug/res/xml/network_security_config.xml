@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: allows plain HTTP so the app can reach a backend running on this
+     computer (LAN IP, 10.0.2.2 on the emulator, localhost). Never packaged into release. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -39,7 +39,7 @@ class SmartSpendFirebaseMessagingService : FirebaseMessagingService() {
         val prefs = getSharedPreferences("smartspend_prefs", Context.MODE_PRIVATE)
         prefs.edit().putString("fcm_token", token).apply()
 
-        val jwtToken = prefs.getString("jwt_token", null)
+        val jwtToken = SessionStore.token(this)
         if (!jwtToken.isNullOrEmpty()) {
             CoroutineScope(Dispatchers.IO).launch {
                 try {

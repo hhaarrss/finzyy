@@ -82,9 +82,6 @@ val TransactionData.needsReview: Boolean
     get() = review_status?.contains("needs_review", ignoreCase = true) == true ||
         category.equals("Needs Review", ignoreCase = true)
 
-val TransactionData.displayName: String
-    get() = merchant?.takeIf { it.isNotBlank() } ?: category
-
 fun greetingFor(hour: Int): String = when (hour) {
     in 0..11 -> "Good morning"
     in 12..16 -> "Good afternoon"

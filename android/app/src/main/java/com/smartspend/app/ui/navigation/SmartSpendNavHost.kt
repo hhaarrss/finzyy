@@ -62,11 +62,13 @@ fun SmartSpendNavHost(
     onSignedOut: () -> Unit,
     modifier: Modifier = Modifier,
     promptSmsConsent: Boolean = false,
+    showHomeTour: Boolean = false,
     navController: NavHostController = rememberNavController(),
     startDestination: Destination = Destination.Home
 ) {
     val slide = tween<androidx.compose.ui.unit.IntOffset>(280)
     var consentShown by rememberSaveable { mutableStateOf(false) }
+    var tourPending by rememberSaveable { mutableStateOf(showHomeTour) }
     NavHost(
         navController = navController,
         startDestination = startDestination.route,
@@ -94,7 +96,11 @@ fun SmartSpendNavHost(
                 onCategory = { navController.navigateTo(Destination.category(it)) },
                 onInsights = { navController.navigateTo(Destination.Insights.route) },
                 onEnableAutoSync = { navController.navigateTo(Destination.SmsConsent.route) },
-                onNotifications = { navController.navigateTo(Destination.Notifications.route) }
+                onNotifications = { navController.navigateTo(Destination.Notifications.route) },
+                // Starts once Home is actually on screen -- after the first-run SMS consent
+                // screen, if that was pushed on top.
+                showTour = tourPending,
+                onTourDone = { tourPending = false }
             )
         }
 

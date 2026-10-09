@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" role="img" aria-label="Finzyy">
+  <!-- Same mark as the Android launcher icon: graphite ground, white tile, black rupee. -->
+  <defs>
+    <linearGradient id="g" x1="18" y1="0" x2="90" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1C1C1C"/>
+      <stop offset=".55" stop-color="#0B0B0B"/>
+      <stop offset="1" stop-color="#000"/>
+    </linearGradient>
+    <linearGradient id="t" x1="40" y1="30" x2="68" y2="78" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF"/>
+      <stop offset="1" stop-color="#EDEDEA"/>
+    </linearGradient>
+  </defs>
+  <rect width="108" height="108" rx="24" fill="url(#g)"/>
+  <path d="M44 32.5h20a14 14 0 0 1 14 14v20a14 14 0 0 1-14 14H44a14 14 0 0 1-14-14v-20a14 14 0 0 1 14-14z" fill="#000" opacity=".22"/>
+  <path d="M44 30h20a14 14 0 0 1 14 14v20a14 14 0 0 1-14 14H44a14 14 0 0 1-14-14V44a14 14 0 0 1 14-14z" fill="url(#t)"/>
+  <g transform="translate(54 54) scale(.82) translate(-54 -54)" fill="none" stroke="#0A0A0A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M41 36h26M41 45.5h26M47 36c9.5 0 13 4 13 9.5 0 6-4.5 9.5-12.5 9.5H42M42 55l20 17"/>
+  </g>
+</svg>

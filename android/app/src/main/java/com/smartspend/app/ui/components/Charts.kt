@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -75,17 +76,25 @@ fun SpendBarChart(
     val grow = remember(bars) { Animatable(0f) }
     LaunchedEffect(bars) { grow.animateTo(1f, tween(450)) }
 
-    val xBand = 22.dp
+    // The right-hand axis strip and the bottom label band follow the text. They were a fixed
+    // 40dp / 22dp while the labels are in sp, so at a large font size the labels were cut off.
+    val density = LocalDensity.current
+    val axisPx = with(density) {
+        val widest = listOf(0.0, 0.5, 1.0).maxOf { measurer.measure(moneyShort(axisMax * it), tickStyle).size.width }
+        maxOf(40.dp.toPx(), widest + 8.dp.toPx())
+    }
+    val xBand = with(density) {
+        maxOf(22.dp, measurer.measure("Wg", labelStyle).size.height.toDp() + 10.dp)
+    }
     Canvas(
         modifier = modifier
             .fillMaxWidth()
             .height(plotHeight + xBand)
             .semantics { contentDescription = accessibilitySummary }
-            .pointerInput(bars, selectedIndex) {
+            .pointerInput(bars, selectedIndex, axisPx) {
                 detectTapGestures { offset ->
                     val x = offset.x
-                    val axisWidth = 40.dp.toPx()
-                    val plotWidth = size.width - axisWidth
+                    val plotWidth = size.width - axisPx
                     if (bars.isEmpty() || x > plotWidth) return@detectTapGestures
                     val slot = plotWidth / bars.size
                     val index = (x / slot).toInt().coerceIn(0, bars.lastIndex)
@@ -93,7 +102,7 @@ fun SpendBarChart(
                 }
             }
     ) {
-        val axisWidth = 40.dp.toPx()
+        val axisWidth = axisPx
         val plotWidth = size.width - axisWidth
         val plotH = plotHeight.toPx()
         val hair = 1.dp.toPx()
@@ -257,15 +266,3 @@ fun LegendSwatch(color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun ChartTitleValue(caption: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Eyebrow(caption)
-        Text(
-            value,
-            style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1
-        )
-    }
-}

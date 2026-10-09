@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Finzyy reads your bank SMS without sending them anywhere — Finzyy</title>
+<meta name="description" content="The message stays on your phone. Here's exactly what happens between your bank's alert and the line in your ledger.">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F1F1EE" media="(prefers-color-scheme: light)">
+<meta property="og:title" content="How Finzyy reads your bank SMS without sending them anywhere — Finzyy">
+<meta property="og:description" content="The message stays on your phone. Here's exactly what happens between your bank's alert and the line in your ledger.">
+<meta property="og:image" content="../assets/logo.svg">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="30" height="30"><span>Finzyy</span></a>
+    <nav class="nav" aria-label="Main"><a href="../index.html">Home</a><a href="../blog/index.html" aria-current="page">Blog</a><a href="../support.html">Support & FAQ</a><a href="../privacy-policy.html">Privacy</a><a href="../terms.html">Terms</a></nav>
+  </div>
+</header>
+<main id="main">
+<div class="wrap"><div class="article">
+<a class="back mono" href="../blog/index.html">&larr; All posts</a>
+<header><span class="tag">Privacy</span><h1>How Finzyy reads your bank SMS without sending them anywhere</h1><p class="lead">The message stays on your phone. Here&rsquo;s exactly what happens between your bank&rsquo;s alert and the line in your ledger.</p><div class="meta"><span>30 Sep 2026</span><span>5 min read</span><span>Finzyy team</span></div></header>
+<div class="prose">
+<p>Most of us already get a text for every payment: a UPI transfer, a card swipe, a salary credit. Those messages are a complete record of where money goes &mdash; they&rsquo;re just scattered across an inbox. Finzyy&rsquo;s job is to gather them into one ledger without asking you to type anything, and without the messages themselves ever leaving your phone.</p>
+<h2>1. Only bank messages get a look</h2>
+<p>When an SMS arrives, the first thing Finzyy checks is who sent it. Indian banks and payment apps send alerts from short sender IDs (the <em>HDFCBK</em> or <em>ICICIB</em> you see at the top of the message). If the sender isn&rsquo;t on Finzyy&rsquo;s list of known bank and payment senders, the message is ignored right there &mdash; your conversations, delivery updates and OTPs from other apps never go any further.</p>
+<h2>2. The details are picked out on your phone</h2>
+<p>For a bank alert, the app reads the text on the device and picks out just the parts that describe the payment:</p>
+<div class="figure"><div class="fig-head mono"><span>Example alert &middot; simplified</span><span>made-up message</span></div><div class="fig-body">
+<div class="sms">Rs.<mark>420.00</mark> <mark>debited</mark> from A/c XX<mark>1021</mark> on <mark>28-09-26</mark> to VPA <mark>swiggy@icici</mark> UPI Ref <mark>426171234567</mark>. Not you? Call your bank.</div>
+<div class="fields">
+<div><span class="k">amount</span><div class="v mono">&#8377;420.00</div></div>
+<div><span class="k">type</span><div class="v">Debit</div></div>
+<div><span class="k">merchant</span><div class="v">swiggy@icici</div></div>
+<div><span class="k">date</span><div class="v mono">28 Sep 2026</div></div>
+<div><span class="k">account</span><div class="v mono">••1021</div></div>
+<div><span class="k">UPI ref</span><div class="v mono">426171234567</div></div>
+<div><span class="k">message text</span><div class="v off">never sent</div></div>
+</div></div></div>
+<p>This is a simplified example &mdash; every bank words its alerts differently, and not every alert carries every field. Everything outside those fields &mdash; including the wording of the message and the phone numbers banks print in them &mdash; stays on the phone.</p>
+<h2>3. Only the details travel, encrypted</h2>
+<p>Those fields are sent over an encrypted connection to your account. On our side, the payment is categorised (<em>Food &amp; Dining</em>, <em>Transportation</em>&hellip;), checked against your earlier payments so the same SMS can never be counted twice, and added to your totals, budgets and trends.</p>
+<div class="callout"><p>If you&rsquo;re offline when a payment comes in, the details wait on your phone &mdash; encrypted with a key kept in the phone&rsquo;s secure keystore &mdash; and sync the moment you&rsquo;re back online. The app also checks your inbox in the background for bank alerts it might have missed.</p></div>
+<h2>What if I&rsquo;d rather not share SMS at all?</h2>
+<p>That&rsquo;s fine. SMS access is optional; without it, you add payments by hand and every other feature works the same. You can turn it off at any time from your phone&rsquo;s settings. The full detail is in our <a href="../privacy-policy.html">privacy policy</a>.</p>
+</div>
+<div class="more"><h2>Keep reading</h2><div class="posts" style="padding:0"><a class="post-card" href="../blog/categories-that-learn.html"><span class="date mono">30 Sep 2026</span><div><span class="tag">Product</span><h2>Fix a category once, and never again</h2></div><span class="go">&rarr;</span></a><a class="post-card" href="../blog/what-happens-when-you-delete-your-account.html"><span class="date mono">30 Sep 2026</span><div><span class="tag">Your data</span><h2>What really happens when you delete your account</h2></div><span class="go">&rarr;</span></a></div></div>
+</div></div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="30" height="30"><span>Finzyy</span></a>
+        <p>An expense tracker that turns the payment SMS your bank already sends you into a clean ledger &mdash; read on your phone, never uploaded.</p>
+      </div>
+      <div><h3>Product</h3><ul><li><a href="../index.html">Home</a></li><li><a href="../blog/index.html">Blog</a></li></ul></div>
+      <div><h3>Help</h3><ul><li><a href="../support.html">Support &amp; FAQ</a></li><li><a href="../delete-account.html">Delete my account</a></li><li><a href="mailto:smartspend4support@gmail.com">Email us</a></li></ul></div>
+      <div><h3>Legal</h3><ul><li><a href="../privacy-policy.html">Privacy policy</a></li><li><a href="../terms.html">Terms of service</a></li></ul></div>
+    </div>
+    <div class="legal-line"><span>&copy; 2026 Harsh Rabadiya</span><span class="mono">Made in India &middot; smartspend4support@gmail.com</span></div>
+  </div>
+</footer>
+</body>
+</html>
