@@ -71,7 +71,7 @@ fun SplashScreen(onFinished: () -> Unit) {
                 0.55f to OnboardingColors.SplashMid,
                 1f to OnboardingColors.SplashDeep
             )
-            .semantics { contentDescription = "SmartSpend is starting" },
+            .semantics { contentDescription = "Finzyy is starting" },
         contentAlignment = Alignment.Center
     ) {
         // Ghost ₹ marks bleeding off opposite corners.
@@ -107,7 +107,7 @@ fun SplashScreen(onFinished: () -> Unit) {
             Spacer(Modifier.height(24.dp))
             FadeUp(clock.value, delay = 1100, duration = 600) {
                 Text(
-                    "SmartSpend",
+                    "Finzyy",
                     style = TextStyle(
                         fontFamily = DisplayFont,
                         fontWeight = FontWeight.Bold,

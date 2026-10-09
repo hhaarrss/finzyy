@@ -60,7 +60,7 @@ import com.smartspend.app.ui.components.Chip
 import com.smartspend.app.ui.components.Eyebrow
 import com.smartspend.app.ui.components.ScreenGutter
 import com.smartspend.app.ui.components.ScreenHeader
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -135,7 +135,7 @@ fun ProfileSetupScreen(
             val response = runCatching { RetrofitClient.apiService.updateProfile(payload) }.getOrNull()
             val body = response?.body()
             when {
-                response == null -> error = "Can't reach SmartSpend. Check your internet and try again."
+                response == null -> error = "Can't reach Finzyy. Check your internet and try again."
                 response.isSuccessful && body != null -> {
                     AuthSession.update(context, body)
                     onSaved(body)
@@ -173,9 +173,9 @@ fun ProfileSetupScreen(
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        "A few details help SmartSpend tailor your budgets and insights. Only your name is required.",
+                        "A few details help Finzyy tailor your budgets and insights. Only your name is required.",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = SmartSpendTheme.colors.inkMuted
+                        color = FinzyyTheme.colors.inkMuted
                     )
                 }
             }
@@ -199,13 +199,13 @@ fun ProfileSetupScreen(
                                 Text(
                                     formatIndianNumber(phone),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = SmartSpendTheme.colors.inkMuted
+                                    color = FinzyyTheme.colors.inkMuted
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 Icon(
                                     Icons.Default.CheckCircle,
                                     contentDescription = "Verified",
-                                    tint = SmartSpendTheme.colors.positive,
+                                    tint = FinzyyTheme.colors.positive,
                                     modifier = Modifier.size(14.dp)
                                 )
                             }
@@ -249,7 +249,7 @@ fun ProfileSetupScreen(
                     onClick = { pickingDob = true }
                 )
                 Spacer(Modifier.height(16.dp))
-                Text("Gender", style = MaterialTheme.typography.labelLarge, color = SmartSpendTheme.colors.inkMuted)
+                Text("Gender", style = MaterialTheme.typography.labelLarge, color = FinzyyTheme.colors.inkMuted)
                 Spacer(Modifier.height(8.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     GENDERS.forEach { (value, label) ->
@@ -273,7 +273,7 @@ fun ProfileSetupScreen(
                     shape = MaterialTheme.shapes.small
                 )
                 Spacer(Modifier.height(16.dp))
-                Text("Occupation", style = MaterialTheme.typography.labelLarge, color = SmartSpendTheme.colors.inkMuted)
+                Text("Occupation", style = MaterialTheme.typography.labelLarge, color = FinzyyTheme.colors.inkMuted)
                 Spacer(Modifier.height(8.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OCCUPATIONS.forEach { option ->
@@ -306,7 +306,7 @@ fun ProfileSetupScreen(
             Text(
                 "Your details are private to your account and never shared.",
                 style = MaterialTheme.typography.bodySmall,
-                color = SmartSpendTheme.colors.inkFaint,
+                color = FinzyyTheme.colors.inkFaint,
                 modifier = Modifier.padding(horizontal = 24.dp)
             )
         }

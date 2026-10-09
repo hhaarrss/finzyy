@@ -79,7 +79,7 @@ import com.smartspend.app.ui.components.RoundIconButton
 import com.smartspend.app.ui.components.ScreenGutter
 import com.smartspend.app.ui.components.SectionTitle
 import com.smartspend.app.ui.components.SkeletonBlocks
-import com.smartspend.app.ui.components.SmartSpendIcons
+import com.smartspend.app.ui.components.FinzyyIcons
 import com.smartspend.app.ui.components.TextAction
 import com.smartspend.app.ui.components.ThinProgress
 import com.smartspend.app.ui.components.TransactionRow
@@ -90,7 +90,7 @@ import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.components.monthName
 import com.smartspend.app.ui.components.toView
 import com.smartspend.app.ui.permission.rememberSmsPermissionsGranted
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import com.smartspend.app.ui.tour.LocalTourController
 import com.smartspend.app.ui.tour.TourController
 import com.smartspend.app.ui.tour.TourOverlay
@@ -162,7 +162,7 @@ fun HomeScreen(
                 }
             }
         } catch (e: Exception) {
-            (state as? HomeUiState.Loaded) ?: HomeUiState.Error(e.localizedMessage ?: "Can't reach SmartSpend right now.")
+            (state as? HomeUiState.Loaded) ?: HomeUiState.Error(e.localizedMessage ?: "Can't reach Finzyy right now.")
         }
         refreshing = false
     }
@@ -304,8 +304,8 @@ private fun HomeContent(
                 modifier = Modifier.padding(horizontal = ScreenGutter).tourTarget("links"),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LinkPill(SmartSpendIcons.Trends, "Trends", onTrends, Modifier.weight(1f))
-                LinkPill(SmartSpendIcons.Categories, "Categories", onCategories, Modifier.weight(1f))
+                LinkPill(FinzyyIcons.Trends, "Trends", onTrends, Modifier.weight(1f))
+                LinkPill(FinzyyIcons.Categories, "Categories", onCategories, Modifier.weight(1f))
             }
         }
 
@@ -352,7 +352,7 @@ private fun HomeContent(
                         "Nothing yet this month. Transactions from bank SMS land here automatically, or add one by hand.",
                         modifier = Modifier.padding(18.dp),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = SmartSpendTheme.colors.inkMuted
+                        color = FinzyyTheme.colors.inkMuted
                     )
                 } else {
                     data.recent_transactions.take(5).forEachIndexed { i, raw ->
@@ -435,7 +435,7 @@ private fun TopBar(
                 Text(
                     greetingFor(LocalTime.now().hour),
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
                 Text(
                     name ?: " ",
@@ -471,7 +471,7 @@ private fun TopBar(
  */
 @Composable
 private fun SpendHero(data: HomeData, overallBudget: Double?, modifier: Modifier = Modifier) {
-    val colors = SmartSpendTheme.colors
+    val colors = FinzyyTheme.colors
     val spent = data.overview.total_spent
     val ym = runCatching { YearMonth.of(data.year, data.month) }.getOrNull()
     val today = LocalDate.now()
@@ -543,7 +543,7 @@ private fun SpendHero(data: HomeData, overallBudget: Double?, modifier: Modifier
 /** Budget used, with a tick where "today" falls in the month — ahead of the tick means over pace. */
 @Composable
 private fun BudgetMeter(ratio: Float, dayFraction: Float) {
-    val colors = SmartSpendTheme.colors
+    val colors = FinzyyTheme.colors
     val fill = if (ratio > 1f) colors.negative else MaterialTheme.colorScheme.onSurface
     androidx.compose.foundation.Canvas(
         Modifier
@@ -575,7 +575,7 @@ private fun MomLine(momPercent: Double, spent: Double, onHero: Color) {
     Text(
         "${if (less) "▼" else "▲"} ${money(delta)} ${if (less) "less" else "more"} than last month so far",
         style = MaterialTheme.typography.bodySmall,
-        color = if (less) SmartSpendTheme.colors.positive else onHero
+        color = if (less) FinzyyTheme.colors.positive else onHero
     )
 }
 
@@ -587,7 +587,7 @@ private fun IncomeBudgetBlock(
     onBudget: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colors = SmartSpendTheme.colors
+    val colors = FinzyyTheme.colors
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
@@ -635,7 +635,7 @@ private fun LinkPill(icon: ImageVector, label: String, onClick: () -> Unit, modi
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .border(1.dp, SmartSpendTheme.colors.hairline, CircleShape)
+            .border(1.dp, FinzyyTheme.colors.hairline, CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(vertical = 11.dp),
         horizontalArrangement = Arrangement.Center,
@@ -668,13 +668,13 @@ private fun InsightTeaser(pace: Pace, overallBudget: Double?, onClick: () -> Uni
         shape = MaterialTheme.shapes.medium,
         padding = PaddingValues(16.dp),
         onClick = onClick,
-        color = if (over) SmartSpendTheme.colors.negativeContainer else MaterialTheme.colorScheme.surface
+        color = if (over) FinzyyTheme.colors.negativeContainer else MaterialTheme.colorScheme.surface
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                SmartSpendIcons.Insights,
+                FinzyyIcons.Insights,
                 contentDescription = null,
-                tint = if (over) SmartSpendTheme.colors.negative else MaterialTheme.colorScheme.primary,
+                tint = if (over) FinzyyTheme.colors.negative else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(22.dp)
             )
             Spacer(Modifier.width(12.dp))
@@ -691,7 +691,7 @@ private fun InsightTeaser(pace: Pace, overallBudget: Double?, onClick: () -> Uni
                         else -> "${money(overallBudget - pace.projected)} under your budget"
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
             }
             Text("Insights", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
@@ -706,7 +706,7 @@ private fun NeedsReviewBanner(count: Int, onClick: () -> Unit, modifier: Modifie
         shape = MaterialTheme.shapes.medium,
         padding = PaddingValues(16.dp),
         onClick = onClick,
-        color = SmartSpendTheme.colors.cautionContainer
+        color = FinzyyTheme.colors.cautionContainer
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -718,7 +718,7 @@ private fun NeedsReviewBanner(count: Int, onClick: () -> Unit, modifier: Modifie
                 Text(
                     "Tag them once — we'll remember the merchant",
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
             }
             Text("Review", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
@@ -730,14 +730,14 @@ private fun NeedsReviewBanner(count: Int, onClick: () -> Unit, modifier: Modifie
 private fun AutoSyncPrompt(onEnable: () -> Unit, modifier: Modifier = Modifier) {
     Block(modifier = modifier, shape = MaterialTheme.shapes.medium, padding = PaddingValues(16.dp), onClick = onEnable) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(SmartSpendIcons.Sms, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+            Icon(FinzyyIcons.Sms, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text("Auto-sync is off", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 Text(
                     "Log bank SMS automatically instead of by hand",
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
             }
             Text("Turn on", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
@@ -785,7 +785,7 @@ private fun SeeAllRow(label: String, onClick: () -> Unit) {
  */
 @Composable
 private fun WhereItWent(categories: List<HomeCategoryData>, onCategory: (String) -> Unit, modifier: Modifier = Modifier) {
-    val colors = SmartSpendTheme.colors
+    val colors = FinzyyTheme.colors
     val slices = remember(categories, colors) {
         foldToShares(categories, { it.spent }, { it.category }, colors.shareShades)
     }
@@ -815,12 +815,12 @@ private fun WhereItWent(categories: List<HomeCategoryData>, onCategory: (String)
 
 @Composable
 private fun SoonTag() {
-    Surface(shape = CircleShape, color = SmartSpendTheme.colors.subtleSurface) {
+    Surface(shape = CircleShape, color = FinzyyTheme.colors.subtleSurface) {
         Text(
             "COMING SOON",
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = SmartSpendTheme.colors.inkMuted
+            color = FinzyyTheme.colors.inkMuted
         )
     }
 }
@@ -844,14 +844,14 @@ private fun SplitsPreview(modifier: Modifier = Modifier) {
                             .offset(x = (i * 22).dp)
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(if (letter == "+") SmartSpendTheme.colors.subtleSurface else MaterialTheme.colorScheme.primaryContainer)
+                            .background(if (letter == "+") FinzyyTheme.colors.subtleSurface else MaterialTheme.colorScheme.primaryContainer)
                             .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             letter,
                             style = MaterialTheme.typography.titleMedium,
-                            color = if (letter == "+") SmartSpendTheme.colors.inkMuted else MaterialTheme.colorScheme.onPrimaryContainer
+                            color = if (letter == "+") FinzyyTheme.colors.inkMuted else MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
@@ -862,7 +862,7 @@ private fun SplitsPreview(modifier: Modifier = Modifier) {
                 Text(
                     "Add friends to a transaction and track who owes what",
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
             }
         }

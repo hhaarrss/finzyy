@@ -39,8 +39,8 @@ below is written to match all four. Change the app name once it is decided (see
 
 ## Links to fill in
 
-- Privacy policy: https://hhaarrss.github.io/smart-spend/privacy-policy.html
-- Account deletion page: https://hhaarrss.github.io/smart-spend/delete-account.html
+- Privacy policy: https://hhaarrss.github.io/finzyy/privacy-policy.html
+- Account deletion page: https://hhaarrss.github.io/finzyy/delete-account.html
 
 ## Keep these consistent
 

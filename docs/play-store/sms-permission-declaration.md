@@ -2,7 +2,7 @@
 
 Play Console → App content → **Sensitive app permissions → SMS and Call Log permissions**.
 
-## Does SmartSpend qualify?
+## Does Finzyy qualify?
 
 Yes, by a named exception. Google's policy ("Use of SMS or Call Log permission groups", checked
 Sept 2026) lists **"SMS-based money management — for example, apps that track and manage
@@ -10,7 +10,7 @@ budget"** as an exception eligible for `READ_SMS` and `RECEIVE_SMS`, subject to 
 the only two SMS permissions the app requests. It is not a guaranteed approval: the reviewer
 checks that SMS access is the app's *core* feature, that it's disclosed before the permission
 prompt, and the policy's spyware rule — *"budgeting apps may not exfiltrate or share
-non-financial or personal SMS history of a user."* SmartSpend's design meets that rule; the
+non-financial or personal SMS history of a user."* Finzyy's design meets that rule; the
 answers below say how.
 
 ## Form answers
@@ -21,7 +21,7 @@ answers below say how.
 
 **Describe how your app uses these permissions** (paste; ~250 words):
 
-> SmartSpend is an expense tracker for India. Its core feature is automatic expense tracking
+> Finzyy is an expense tracker for India. Its core feature is automatic expense tracking
 > from the payment alerts banks send by SMS: when a user pays by UPI or card, the bank's SMS is
 > turned into a categorised transaction so the user sees their spending and budgets without
 > typing anything in.

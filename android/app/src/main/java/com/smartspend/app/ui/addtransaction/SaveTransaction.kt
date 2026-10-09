@@ -36,12 +36,12 @@ suspend fun submitTransaction(payload: TransactionCreatePayload, day: LocalDate)
 
         response == null || response.code() >= 500 ->
             if (landed(payload, day)) SaveOutcome.Saved
-            else SaveOutcome.Failed("Couldn't reach SmartSpend, so nothing was saved. Check your connection and try again.")
+            else SaveOutcome.Failed("Couldn't reach Finzyy, so nothing was saved. Check your connection and try again.")
 
         // The backend fingerprints user + amount + day + card, so a second manual entry with
         // the same amount on the same day is rejected as a duplicate.
         response.code() == 409 ->
-            SaveOutcome.Failed("You already have ${money(payload.amount)} on this date — SmartSpend treats a second one as a duplicate.")
+            SaveOutcome.Failed("You already have ${money(payload.amount)} on this date — Finzyy treats a second one as a duplicate.")
 
         response.code() == 401 -> SaveOutcome.Failed("Your session expired. Sign in again to save.")
 

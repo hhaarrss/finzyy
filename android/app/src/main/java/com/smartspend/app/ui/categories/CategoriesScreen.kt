@@ -62,7 +62,7 @@ import com.smartspend.app.ui.components.ShareStrip
 import com.smartspend.app.ui.components.foldToShares
 import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.components.toView
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import com.smartspend.app.ui.theme.LedgerAmount
 import java.time.LocalDate
 import java.time.YearMonth
@@ -241,7 +241,7 @@ private fun LazyListScope.categoriesTab(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun DonutBlock(categories: List<CategoryTotal>, period: BreakdownPeriod) {
-    val colors = SmartSpendTheme.colors
+    val colors = FinzyyTheme.colors
     val slices = remember(categories, colors) {
         foldToShares(categories, { it.total }, { it.category }, colors.shareShades)
     }
@@ -298,12 +298,12 @@ private fun CategoryListRow(c: CategoryTotal, onClick: () -> Unit) {
             Text(
                 "${c.count} ${if (c.count == 1) "transaction" else "transactions"}",
                 style = MaterialTheme.typography.bodySmall,
-                color = SmartSpendTheme.colors.inkMuted
+                color = FinzyyTheme.colors.inkMuted
             )
         }
         Text(money(c.total), style = LedgerAmount, color = MaterialTheme.colorScheme.onSurface)
         Spacer(Modifier.width(4.dp))
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = SmartSpendTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FinzyyTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -355,7 +355,7 @@ private fun MerchantRow(m: MerchantTotal, onOpenTx: (TxView) -> Unit) {
                 Text(
                     "${m.txs.size} ${if (m.txs.size == 1) "payment" else "payments"} · ${m.category}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
             }
             Text(money(m.total), style = LedgerAmount, color = MaterialTheme.colorScheme.onSurface)
@@ -363,7 +363,7 @@ private fun MerchantRow(m: MerchantTotal, onOpenTx: (TxView) -> Unit) {
             Icon(
                 if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = if (expanded) "Hide payments" else "Show payments",
-                tint = SmartSpendTheme.colors.inkMuted,
+                tint = FinzyyTheme.colors.inkMuted,
                 modifier = Modifier.size(20.dp)
             )
         }

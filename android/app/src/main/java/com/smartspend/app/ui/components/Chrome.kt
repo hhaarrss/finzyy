@@ -55,7 +55,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.smartspend.app.ui.theme.CategoryIcon
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 
 /** Horizontal gutter every screen shares, so edges line up when moving between pages. */
 val ScreenGutter: Dp = 20.dp
@@ -120,7 +120,7 @@ fun ScreenHeader(
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkMuted,
+                    color = FinzyyTheme.colors.inkMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -146,7 +146,7 @@ fun RoundIconButton(
                 .size(44.dp)
                 .clip(CircleShape)
                 .then(
-                    if (filled) Modifier.border(1.dp, SmartSpendTheme.colors.hairline, CircleShape)
+                    if (filled) Modifier.border(1.dp, FinzyyTheme.colors.hairline, CircleShape)
                     else Modifier
                 )
                 .clickable(role = Role.Button, onClick = onClick)
@@ -166,7 +166,7 @@ fun RoundIconButton(
                     .align(Alignment.TopEnd)
                     .defaultMinSize(minWidth = 20.dp, minHeight = 20.dp)
                     .clip(CircleShape)
-                    .background(SmartSpendTheme.colors.accent)
+                    .background(FinzyyTheme.colors.accent)
                     .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
@@ -174,7 +174,7 @@ fun RoundIconButton(
                 Text(
                     if (badgeCount > 9) "9+" else badgeCount.toString(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = SmartSpendTheme.colors.onAccent,
+                    color = FinzyyTheme.colors.onAccent,
                     maxLines = 1
                 )
             }
@@ -186,7 +186,7 @@ fun RoundIconButton(
                     .padding(top = 6.dp, end = 6.dp)
                     .size(10.dp)
                     .clip(CircleShape)
-                    .background(SmartSpendTheme.colors.accent)
+                    .background(FinzyyTheme.colors.accent)
                     .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
             )
         }
@@ -207,7 +207,7 @@ fun Block(
     outlined: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val border = if (outlined) BorderStroke(1.dp, SmartSpendTheme.colors.hairline) else null
+    val border = if (outlined) BorderStroke(1.dp, FinzyyTheme.colors.hairline) else null
     if (onClick != null) {
         Surface(modifier = modifier.fillMaxWidth(), shape = shape, color = color, border = border, onClick = onClick) {
             Column(modifier = Modifier.padding(padding), content = content)
@@ -222,7 +222,7 @@ fun Block(
 /** 1dp rule between ledger rows. */
 @Composable
 fun Hairline(modifier: Modifier = Modifier) {
-    androidx.compose.material3.HorizontalDivider(modifier = modifier, thickness = 1.dp, color = SmartSpendTheme.colors.hairline)
+    androidx.compose.material3.HorizontalDivider(modifier = modifier, thickness = 1.dp, color = FinzyyTheme.colors.hairline)
 }
 
 @Composable
@@ -275,7 +275,7 @@ fun SegmentedControl(
         modifier = modifier
             .fillMaxWidth()
             .clip(CircleShape)
-            .border(1.dp, SmartSpendTheme.colors.hairline, CircleShape)
+            .border(1.dp, FinzyyTheme.colors.hairline, CircleShape)
             .padding(3.dp),
         horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
@@ -294,7 +294,7 @@ fun SegmentedControl(
                 Text(
                     label,
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (selected) MaterialTheme.colorScheme.background else SmartSpendTheme.colors.inkMuted
+                    color = if (selected) MaterialTheme.colorScheme.background else FinzyyTheme.colors.inkMuted
                 )
             }
         }
@@ -332,7 +332,7 @@ fun Chip(
     modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null
 ) {
-    val colors = SmartSpendTheme.colors
+    val colors = FinzyyTheme.colors
     Row(
         modifier = modifier
             .clip(CircleShape)
@@ -351,7 +351,7 @@ fun Chip(
         Text(
             label,
             style = MaterialTheme.typography.labelLarge,
-            color = if (selected) MaterialTheme.colorScheme.background else SmartSpendTheme.colors.inkMuted,
+            color = if (selected) MaterialTheme.colorScheme.background else FinzyyTheme.colors.inkMuted,
             maxLines = 1
         )
     }
@@ -369,7 +369,7 @@ fun CategoryChip(category: String, selected: Boolean, onClick: () -> Unit, modif
             Icon(
                 CategoryIcon(category),
                 contentDescription = null,
-                tint = if (selected) MaterialTheme.colorScheme.background else SmartSpendTheme.colors.inkMuted,
+                tint = if (selected) MaterialTheme.colorScheme.background else FinzyyTheme.colors.inkMuted,
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -416,7 +416,7 @@ fun SecondaryButton(
         enabled = enabled,
         modifier = modifier.heightIn(min = 52.dp),
         shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(1.dp, SmartSpendTheme.colors.hairline),
+        border = BorderStroke(1.dp, FinzyyTheme.colors.hairline),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
     ) {
         if (icon != null) {
@@ -449,7 +449,7 @@ fun EmptyNote(title: String, body: String? = null, modifier: Modifier = Modifier
             Text(
                 body,
                 style = MaterialTheme.typography.bodyMedium,
-                color = SmartSpendTheme.colors.inkMuted,
+                color = FinzyyTheme.colors.inkMuted,
                 textAlign = TextAlign.Center
             )
         }
@@ -473,7 +473,7 @@ fun ErrorPanel(message: String, onRetry: () -> Unit, modifier: Modifier = Modifi
                 Text(
                     message,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = SmartSpendTheme.colors.inkMuted,
+                    color = FinzyyTheme.colors.inkMuted,
                     textAlign = TextAlign.Center
                 )
                 SecondaryButton(label = "Try again", onClick = onRetry)
@@ -502,7 +502,7 @@ fun SkeletonBlocks(heights: List<Dp>, modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .height(h)
                     .clip(MaterialTheme.shapes.large)
-                    .background(SmartSpendTheme.colors.subtleSurface.copy(alpha = alpha))
+                    .background(FinzyyTheme.colors.subtleSurface.copy(alpha = alpha))
             )
         }
     }
@@ -511,9 +511,9 @@ fun SkeletonBlocks(heights: List<Dp>, modifier: Modifier = Modifier) {
 /** Budget-health colour, shared by every progress bar that measures spend against a limit. */
 @Composable
 fun budgetColor(percentUsed: Double) = when {
-    percentUsed > 100.0 -> SmartSpendTheme.colors.negative
-    percentUsed >= 80.0 -> SmartSpendTheme.colors.caution
-    else -> SmartSpendTheme.colors.positive
+    percentUsed > 100.0 -> FinzyyTheme.colors.negative
+    percentUsed >= 80.0 -> FinzyyTheme.colors.caution
+    else -> FinzyyTheme.colors.positive
 }
 
 /** Words for the same state, so colour never carries it alone. */
@@ -529,7 +529,7 @@ fun ThinProgress(
     color: androidx.compose.ui.graphics.Color,
     modifier: Modifier = Modifier,
     height: Dp = 4.dp,
-    track: androidx.compose.ui.graphics.Color = SmartSpendTheme.colors.hairline
+    track: androidx.compose.ui.graphics.Color = FinzyyTheme.colors.hairline
 ) {
     Box(
         modifier = modifier
@@ -549,7 +549,7 @@ fun ThinProgress(
 }
 
 @Composable
-fun Eyebrow(text: String, modifier: Modifier = Modifier, color: androidx.compose.ui.graphics.Color = SmartSpendTheme.colors.inkMuted) {
+fun Eyebrow(text: String, modifier: Modifier = Modifier, color: androidx.compose.ui.graphics.Color = FinzyyTheme.colors.inkMuted) {
     Text(
         text.uppercase(),
         modifier = modifier,

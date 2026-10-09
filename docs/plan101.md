@@ -1,7 +1,7 @@
-# SmartSpend — Implementation Plan
+# Finzyy — Implementation Plan
 
 ## Project Context
-SmartSpend is an AI-augmented personal finance tracker for the Indian market.
+Finzyy is an AI-augmented personal finance tracker for the Indian market.
 It automatically detects bank SMS transactions, categorizes spending, and
 provides real-time analytics via Android app and React web dashboard.
 
@@ -411,7 +411,7 @@ On app start in `MainActivity.onCreate()`:
 - Refresh token on FirebaseMessagingService.onNewToken()
 ```
 
-Create `SmartSpendFirebaseMessagingService.kt`:
+Create `FinzyyFirebaseMessagingService.kt`:
 ```kotlin
 - Extend FirebaseMessagingService
 - Override onMessageReceived(message: RemoteMessage)
@@ -431,7 +431,7 @@ Create `SmartSpendFirebaseMessagingService.kt`:
 ### 4.1 Family UI (Backend Already Exists)
 
 **Why:** Shared household finance is the #1 reason Indian families would
-choose SmartSpend over competitors. Backend create/join already works.
+choose Finzyy over competitors. Backend create/join already works.
 This phase builds the complete UI for it.
 
 **Backend additions:**
@@ -606,7 +606,7 @@ Add "Needs Review" badge on sidebar navigation item:
 
 NeedsReviewPage component:
 
-Header: "Fix {count} transactions → SmartSpend gets smarter 🧠"
+Header: "Fix {count} transactions → Finzyy gets smarter 🧠"
 Progress bar: showing how many reviewed out of total flagged today
 
 For each transaction show a card:
@@ -624,7 +624,7 @@ Bottom:
 
 "All done for today! 🎉" message when all reviewed
 Show how many merchants were learned:
-"SmartSpend learned 3 new merchants today"
+"Finzyy learned 3 new merchants today"
 
 **Android changes:**
 
@@ -646,13 +646,13 @@ Swipe right = mark as Other/skip
 Tap chip = categorize and advance to next card
 Progress indicator at top (3/7)
 Confetti animation when all done
-"Great job! SmartSpend learned {n} merchants today 🎉"
+"Great job! Finzyy learned {n} merchants today 🎉"
 
 Push notification for Needs Review:
 
 Trigger: Daily at 7 PM if user has > 3 unreviewed transactions
 Title: "🔍 3 transactions need your input"
-Body: "Fix them in under a minute → SmartSpend gets smarter"
+Body: "Fix them in under a minute → Finzyy gets smarter"
 Tap action: Opens NeedsReviewActivity directly
 
 

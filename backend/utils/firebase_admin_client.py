@@ -98,10 +98,10 @@ def verify_firebase_id_token(id_token: str) -> Dict[str, Any]:
 
 def delete_firebase_users(phone_number: Optional[str], email: Optional[str]) -> int:
     """
-    Removes the Firebase Authentication users behind a SmartSpend account, so deleting the
+    Removes the Firebase Authentication users behind a Finzyy account, so deleting the
     account also deletes the phone number / Google identity Firebase holds for it.
 
-    SmartSpend doesn't store Firebase UIDs; accounts are matched on the verified phone number
+    Finzyy doesn't store Firebase UIDs; accounts are matched on the verified phone number
     (phone sign-in) or email (Google sign-in) — the same keys firebase_login uses. Best effort
     and blocking: call it off the event loop, after the database deletion has committed.
 

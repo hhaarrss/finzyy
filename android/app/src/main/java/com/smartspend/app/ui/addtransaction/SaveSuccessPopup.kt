@@ -53,7 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.theme.CategoryIcon
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -75,9 +75,9 @@ private const val HOLD_MS = 1500L
 fun SaveSuccessPopup(saved: SavedTx, onDone: () -> Unit) {
     val done by rememberUpdatedState(onDone)
     val haptics = LocalHapticFeedback.current
-    val accent = if (saved.isCredit) SmartSpendTheme.colors.positive else MaterialTheme.colorScheme.onSurface
+    val accent = if (saved.isCredit) FinzyyTheme.colors.positive else MaterialTheme.colorScheme.onSurface
     // Ledger look: the burst is gold foil and ink, not a rainbow.
-    val confetti = listOf(SmartSpendTheme.colors.accent, MaterialTheme.colorScheme.onSurface, SmartSpendTheme.colors.inkMuted, SmartSpendTheme.colors.accent)
+    val confetti = listOf(FinzyyTheme.colors.accent, MaterialTheme.colorScheme.onSurface, FinzyyTheme.colors.inkMuted, FinzyyTheme.colors.accent)
 
     val scrim = remember { Animatable(0f) }
     val pop = remember { Animatable(0.6f) }
@@ -173,7 +173,7 @@ fun SaveSuccessPopup(saved: SavedTx, onDone: () -> Unit) {
                         Box(
                             Modifier
                                 .size(76.dp)
-                                .border(1.dp, SmartSpendTheme.colors.hairline, CircleShape),
+                                .border(1.dp, FinzyyTheme.colors.hairline, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(CategoryIcon(saved.category), contentDescription = null, tint = accent, modifier = Modifier.size(34.dp))
@@ -189,7 +189,7 @@ fun SaveSuccessPopup(saved: SavedTx, onDone: () -> Unit) {
                                     alpha = check.value
                                 }
                                 .size(28.dp)
-                                .background(SmartSpendTheme.colors.positive, CircleShape),
+                                .background(FinzyyTheme.colors.positive, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Canvas(Modifier.size(14.dp)) {
@@ -210,7 +210,7 @@ fun SaveSuccessPopup(saved: SavedTx, onDone: () -> Unit) {
                     Text(
                         (if (saved.isCredit) "+" else "") + money(saved.amount * count.value),
                         style = MaterialTheme.typography.displaySmall,
-                        color = if (saved.isCredit) SmartSpendTheme.colors.positive else MaterialTheme.colorScheme.onSurface,
+                        color = if (saved.isCredit) FinzyyTheme.colors.positive else MaterialTheme.colorScheme.onSurface,
                         maxLines = 1
                     )
                     Spacer(Modifier.height(6.dp))
@@ -223,7 +223,7 @@ fun SaveSuccessPopup(saved: SavedTx, onDone: () -> Unit) {
                     Text(
                         "${saved.category} · ${saved.merchant}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = SmartSpendTheme.colors.inkMuted,
+                        color = FinzyyTheme.colors.inkMuted,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

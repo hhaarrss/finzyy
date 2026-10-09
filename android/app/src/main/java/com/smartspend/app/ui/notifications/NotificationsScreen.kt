@@ -53,7 +53,7 @@ import com.smartspend.app.ui.components.rememberTransactionsVersion
 import com.smartspend.app.ui.components.shortDate
 import com.smartspend.app.ui.components.transactionDays
 import com.smartspend.app.ui.theme.LedgerAmount
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlin.math.roundToInt
 
 /**
@@ -85,7 +85,7 @@ fun NotificationsScreen(onBack: () -> Unit, onBudget: () -> Unit, onCategory: (S
             bundle = loaded
             AttentionRepository.markRead(context, loaded)
         } catch (e: Exception) {
-            if (bundle == null) error = e.localizedMessage ?: "Can't reach SmartSpend right now."
+            if (bundle == null) error = e.localizedMessage ?: "Can't reach Finzyy right now."
         }
     }
 
@@ -244,7 +244,7 @@ private fun SimpleRow(
             Box(
                 modifier = Modifier
                     .size(38.dp)
-                    .border(1.dp, SmartSpendTheme.colors.hairline, CircleShape),
+                    .border(1.dp, FinzyyTheme.colors.hairline, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(19.dp))
@@ -261,7 +261,7 @@ private fun SimpleRow(
                 Text(
                     meta,
                     style = MaterialTheme.typography.labelSmall,
-                    color = SmartSpendTheme.colors.inkMuted,
+                    color = FinzyyTheme.colors.inkMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -281,6 +281,6 @@ private fun NewDot(modifier: Modifier = Modifier) {
         modifier = modifier
             .padding(start = 7.dp)
             .size(6.dp)
-            .background(SmartSpendTheme.colors.accent, CircleShape)
+            .background(FinzyyTheme.colors.accent, CircleShape)
     )
 }

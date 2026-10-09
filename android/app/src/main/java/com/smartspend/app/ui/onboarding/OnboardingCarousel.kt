@@ -73,7 +73,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.smartspend.app.ui.components.Guilloche
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
@@ -85,7 +85,7 @@ private data class PageCopy(val headline: String, val subcopy: String)
 private val pages = listOf(
     PageCopy(
         "Detected the moment\nyou pay",
-        "SmartSpend reads your bank SMS and turns it into a categorized transaction — no typing, nothing to remember."
+        "Finzyy reads your bank SMS and turns it into a categorized transaction — no typing, nothing to remember."
     ),
     PageCopy(
         "Sorted into the\nright category",
@@ -143,7 +143,7 @@ fun OnboardingCarousel(
                                 .height(6.dp)
                                 .width(lerp(6f, 20f, active).dp)
                                 .background(
-                                    lerpColor(SmartSpendTheme.colors.hairline, MaterialTheme.colorScheme.primary, active),
+                                    lerpColor(FinzyyTheme.colors.hairline, MaterialTheme.colorScheme.primary, active),
                                     RoundedCornerShape(3.dp)
                                 )
                         )
@@ -276,7 +276,7 @@ private fun OnboardingPage(index: Int, isCurrent: Boolean) {
             Text(
                 copy.subcopy,
                 modifier = Modifier.widthIn(max = 300.dp),
-                style = TextStyle(fontSize = 14.5.sp, lineHeight = 22.5.sp, color = SmartSpendTheme.colors.inkMuted)
+                style = TextStyle(fontSize = 14.5.sp, lineHeight = 22.5.sp, color = FinzyyTheme.colors.inkMuted)
             )
         }
     }

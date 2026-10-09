@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
 import com.smartspend.app.ui.components.RoundIconButton
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -243,7 +243,7 @@ internal fun AuthTitle(title: String, subtitle: String) {
     Spacer(Modifier.height(20.dp))
     Text(title, style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onBackground)
     Spacer(Modifier.height(10.dp))
-    Text(subtitle, style = MaterialTheme.typography.bodyLarge, color = SmartSpendTheme.colors.inkMuted)
+    Text(subtitle, style = MaterialTheme.typography.bodyLarge, color = FinzyyTheme.colors.inkMuted)
     Spacer(Modifier.height(32.dp))
 }
 
@@ -260,7 +260,7 @@ internal fun BrandMark() {
             Text("S", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Black, fontSize = 18.sp)
         }
         Spacer(Modifier.width(10.dp))
-        Text("SmartSpend", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+        Text("Finzyy", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
     }
 }
 
@@ -307,14 +307,14 @@ internal fun ErrorText(message: String?) {
 @Composable
 internal fun OrDivider() {
     Row(Modifier.fillMaxWidth().padding(vertical = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.weight(1f).height(1.dp).background(SmartSpendTheme.colors.hairline))
+        Box(Modifier.weight(1f).height(1.dp).background(FinzyyTheme.colors.hairline))
         Text(
             "or",
             modifier = Modifier.padding(horizontal = 14.dp),
             style = MaterialTheme.typography.bodySmall,
-            color = SmartSpendTheme.colors.inkMuted
+            color = FinzyyTheme.colors.inkMuted
         )
-        Box(Modifier.weight(1f).height(1.dp).background(SmartSpendTheme.colors.hairline))
+        Box(Modifier.weight(1f).height(1.dp).background(FinzyyTheme.colors.hairline))
     }
 }
 
@@ -346,7 +346,7 @@ internal fun OtpInput(
                         isError -> MaterialTheme.colorScheme.error
                         active -> MaterialTheme.colorScheme.primary
                         char != null -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                        else -> SmartSpendTheme.colors.hairline
+                        else -> FinzyyTheme.colors.hairline
                     }
                     Box(
                         Modifier

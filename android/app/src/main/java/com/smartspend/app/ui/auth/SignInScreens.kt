@@ -51,7 +51,7 @@ import com.smartspend.app.RetrofitClient
 import com.smartspend.app.UserData
 import com.smartspend.app.ui.components.SecondaryButton
 import com.smartspend.app.ui.permission.findComponentActivity
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import retrofit2.Response
@@ -76,7 +76,7 @@ fun SignInScreen(
 
     val verifier = rememberPhoneVerifier { idToken ->
         val response = runCatching { RetrofitClient.apiService.firebaseLogin(FirebaseTokenPayload(idToken)) }
-            .getOrElse { return@rememberPhoneVerifier "Can't reach SmartSpend. Check your internet and try again." }
+            .getOrElse { return@rememberPhoneVerifier "Can't reach Finzyy. Check your internet and try again." }
         val body = response.body()
         if (response.isSuccessful && body != null) {
             AuthSession.save(context, body)
@@ -111,16 +111,16 @@ fun SignInScreen(
                 TextButton(onClick = { mode = SignInMode.Email }, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         buildAnnotatedString {
-                            withStyle(SpanStyle(color = SmartSpendTheme.colors.inkMuted)) { append("Signed up with email earlier? ") }
+                            withStyle(SpanStyle(color = FinzyyTheme.colors.inkMuted)) { append("Signed up with email earlier? ") }
                             withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)) { append("Use email") }
                         },
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 Text(
-                    "By continuing, you agree to SmartSpend's Terms of Service and Privacy Policy.",
+                    "By continuing, you agree to Finzyy's Terms of Service and Privacy Policy.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = SmartSpendTheme.colors.inkFaint,
+                    color = FinzyyTheme.colors.inkFaint,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -142,7 +142,7 @@ fun LinkPhoneScreen(
     val context = LocalContext.current
     val verifier = rememberPhoneVerifier { idToken ->
         val response = runCatching { RetrofitClient.apiService.linkPhone(FirebaseTokenPayload(idToken)) }
-            .getOrElse { return@rememberPhoneVerifier "Can't reach SmartSpend. Check your internet and try again." }
+            .getOrElse { return@rememberPhoneVerifier "Can't reach Finzyy. Check your internet and try again." }
         val body = response.body()
         if (response.isSuccessful && body != null) {
             AuthSession.update(context, body)
@@ -159,13 +159,13 @@ fun LinkPhoneScreen(
         PhoneStep(
             verifier = verifier,
             title = "Add your mobile number",
-            subtitle = "SmartSpend now signs you in with your phone. Verify your number once and it's linked to this account and all its data.",
+            subtitle = "Finzyy now signs you in with your phone. Verify your number once and it's linked to this account and all its data.",
             onBack = onBack,
             showBrand = false,
             footer = {
                 if (onSkip != null) {
                     TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
-                        Text("Skip for now", color = SmartSpendTheme.colors.inkMuted, style = MaterialTheme.typography.titleMedium)
+                        Text("Skip for now", color = FinzyyTheme.colors.inkMuted, style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
@@ -257,7 +257,7 @@ private fun OtpStep(verifier: PhoneVerifier, onBack: () -> Unit) {
                 Text(
                     "Resend code in 0:%02d".format(verifier.resendIn),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = SmartSpendTheme.colors.inkMuted
+                    color = FinzyyTheme.colors.inkMuted
                 )
             } else {
                 Text(
@@ -299,7 +299,7 @@ private fun EmailSignIn(onSignedIn: (AuthResponse) -> Unit, onBack: () -> Unit) 
             val response = runCatching { RetrofitClient.apiService.login(email.trim(), password) }.getOrNull()
             val body = response?.body()
             when {
-                response == null -> error = "Can't reach SmartSpend. Check your internet and try again."
+                response == null -> error = "Can't reach Finzyy. Check your internet and try again."
                 response.isSuccessful && body != null -> {
                     AuthSession.save(context, body)
                     onSignedIn(body)

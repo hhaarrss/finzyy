@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.dp
  * Radii by role, not one radius on everything: fields and small controls 12, grouped
  * blocks 16, sheets 20, the hero note 22. Rows inside a block have no radius at all.
  */
-val SmartSpendShapes = Shapes(
+val FinzyyShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
     small = RoundedCornerShape(12.dp),
     medium = RoundedCornerShape(16.dp),

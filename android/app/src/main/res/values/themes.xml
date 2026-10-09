@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.SmartSpend" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Theme.Finzyy" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/indigo_primary</item>
         <item name="colorPrimaryDark">@color/indigo_dark</item>
         <item name="colorAccent">@color/violet_accent</item>
@@ -17,7 +17,7 @@
 
     <!-- CategorizeActivity: no window of its own, so only the bottom sheet shows over whatever
          the user was doing when they tapped the notification action. -->
-    <style name="Theme.SmartSpend.Overlay" parent="Theme.SmartSpend">
+    <style name="Theme.Finzyy.Overlay" parent="Theme.Finzyy">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>

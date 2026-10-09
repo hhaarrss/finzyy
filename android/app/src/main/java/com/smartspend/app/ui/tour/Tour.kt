@@ -78,7 +78,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.smartspend.app.ui.components.Eyebrow
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -187,7 +187,7 @@ fun TourOverlay(
         animationSpec = infiniteRepeatable(tween(1400), RepeatMode.Reverse),
         label = "ring"
     )
-    val ring = SmartSpendTheme.colors.accent
+    val ring = FinzyyTheme.colors.accent
     val scrim = Color.Black.copy(alpha = 0.74f)
 
     Box(
@@ -312,7 +312,7 @@ private fun TooltipCard(
                     StepDots(number, total)
                 }
                 Text(s.title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
-                Text(s.body, style = MaterialTheme.typography.bodyMedium, color = SmartSpendTheme.colors.inkMuted)
+                Text(s.body, style = MaterialTheme.typography.bodyMedium, color = FinzyyTheme.colors.inkMuted)
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -322,7 +322,7 @@ private fun TooltipCard(
                             .padding(vertical = 8.dp)
                             .clickableNoRipple(onSkip),
                         style = MaterialTheme.typography.labelMedium,
-                        color = SmartSpendTheme.colors.inkMuted
+                        color = FinzyyTheme.colors.inkMuted
                     )
                     Surface(
                         onClick = onNext,
@@ -350,7 +350,7 @@ private fun StepDots(number: Int, total: Int) {
                 Modifier
                     .size(width = if (i == number - 1) 12.dp else 5.dp, height = 5.dp)
                     .background(
-                        if (i < number) MaterialTheme.colorScheme.onSurface else SmartSpendTheme.colors.hairline,
+                        if (i < number) MaterialTheme.colorScheme.onSurface else FinzyyTheme.colors.hairline,
                         CircleShape
                     )
             )

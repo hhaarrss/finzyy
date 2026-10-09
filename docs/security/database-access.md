@@ -71,7 +71,7 @@ A connection string for it is the one Neon shows under **Connect** with the user
 swapped: `postgresql://smartspend_app:<password-1>@<same host>/neondb?sslmode=require`
 (URL-encode the password if it has special characters).
 
-Render dashboard → SmartSpend web service:
+Render dashboard → Finzyy web service:
 
 1. **Environment**
    - `DATABASE_URL` → the `smartspend_app` connection string.

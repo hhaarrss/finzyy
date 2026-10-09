@@ -6,7 +6,7 @@ There is no `render.yaml`; the Render service (`firstproject-smartspend.onrender
 configured in the Render dashboard. As of 28 Sep 2026 it was still serving an old build hours
 after merges to `main`, so auto-deploy appears to be **off**.
 
-1. Render dashboard → the SmartSpend web service → **Settings → Build & Deploy**: check the
+1. Render dashboard → the Finzyy web service → **Settings → Build & Deploy**: check the
    repository is `smartspend4support-eng/firstproject` and the branch is `main`. Turn
    **Auto-Deploy** on if you want merges to go live by themselves.
 2. **Manual Deploy → Deploy latest commit**, and watch **Events/Logs** until it's *Live*.
@@ -71,7 +71,7 @@ Upload `android/app/build/outputs/bundle/release/app-release.aab`.
 - Data safety → [data-safety.md](data-safety.md)
 - Privacy policy (must be a public URL) → [privacy-policy.md](privacy-policy.md)
 - Permissions Declaration Form for SMS → [sms-permission-declaration.md](sms-permission-declaration.md)
-- Account deletion web link: `https://hhaarrss.github.io/smart-spend/delete-account.html` (email request, which Play accepts) — corrected and live.
+- Account deletion web link: `https://hhaarrss.github.io/finzyy/delete-account.html` (email request, which Play accepts) — corrected and live.
 
 ## 5. Before every release
 

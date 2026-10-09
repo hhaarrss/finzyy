@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SmartSpend"
+rootProject.name = "Finzyy"
 include(":app")

@@ -48,7 +48,7 @@ import com.smartspend.app.ui.components.budgetColor
 import com.smartspend.app.ui.components.budgetWord
 import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.components.monthName
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import com.smartspend.app.ui.theme.TabularAmount
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -92,7 +92,7 @@ fun InsightsScreen(onBack: () -> Unit, onBudget: () -> Unit, onCategory: (String
                 }
             }
         } catch (e: Exception) {
-            error = e.localizedMessage ?: "Can't reach SmartSpend right now."
+            error = e.localizedMessage ?: "Can't reach Finzyy right now."
         }
     }
 
@@ -206,7 +206,7 @@ private fun PaceBlock(home: HomeData, budget: Double?, onBudget: () -> Unit) {
         Text(
             "${money(spent / elapsed.coerceAtLeast(1))} a day on average · day $elapsed of $daysIn",
             style = MaterialTheme.typography.bodySmall,
-            color = SmartSpendTheme.colors.inkMuted
+            color = FinzyyTheme.colors.inkMuted
         )
         Spacer(Modifier.height(16.dp))
 
@@ -219,14 +219,14 @@ private fun PaceBlock(home: HomeData, budget: Double?, onBudget: () -> Unit) {
                 Text(budgetWord(pct), style = MaterialTheme.typography.labelLarge, color = budgetColor(pct))
             }
             Spacer(Modifier.height(16.dp))
-            HorizontalDivider(color = SmartSpendTheme.colors.hairline)
+            HorizontalDivider(color = FinzyyTheme.colors.hairline)
             Spacer(Modifier.height(16.dp))
             Row {
                 PaceFact(
                     caption = "Projected",
                     value = money(projected),
                     note = if (projected > budget) "${money(projected - budget)} over" else "${money(budget - projected)} under",
-                    noteColor = if (projected > budget) SmartSpendTheme.colors.negative else SmartSpendTheme.colors.positive,
+                    noteColor = if (projected > budget) FinzyyTheme.colors.negative else FinzyyTheme.colors.positive,
                     modifier = Modifier.weight(1f)
                 )
                 val remaining = budget - spent
@@ -234,7 +234,7 @@ private fun PaceBlock(home: HomeData, budget: Double?, onBudget: () -> Unit) {
                     caption = "Safe to spend",
                     value = if (remaining > 0 && daysLeft > 0) money(remaining / daysLeft) + "/day" else money(0.0),
                     note = if (remaining > 0) "for the next $daysLeft days" else "budget used up",
-                    noteColor = SmartSpendTheme.colors.inkMuted,
+                    noteColor = FinzyyTheme.colors.inkMuted,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -248,7 +248,7 @@ private fun PaceBlock(home: HomeData, budget: Double?, onBudget: () -> Unit) {
             Text(
                 "Set a monthly budget and this becomes a daily spending limit.",
                 style = MaterialTheme.typography.bodySmall,
-                color = SmartSpendTheme.colors.inkMuted
+                color = FinzyyTheme.colors.inkMuted
             )
             Spacer(Modifier.height(14.dp))
             PrimaryButton("Set monthly budget", onClick = onBudget, modifier = Modifier.fillMaxWidth())
@@ -279,12 +279,12 @@ private fun Quiet(text: String) {
         text,
         modifier = Modifier.padding(16.dp),
         style = MaterialTheme.typography.bodyMedium,
-        color = SmartSpendTheme.colors.inkMuted
+        color = FinzyyTheme.colors.inkMuted
     )
 }
 
 @Composable
-private fun Divider() = HorizontalDivider(Modifier.padding(start = 16.dp), color = SmartSpendTheme.colors.hairline)
+private fun Divider() = HorizontalDivider(Modifier.padding(start = 16.dp), color = FinzyyTheme.colors.hairline)
 
 @Composable
 private fun AlertRow(raw: Map<String, Any>) {
@@ -303,7 +303,7 @@ private fun AlertRow(raw: Map<String, Any>) {
         Text(
             if (spent > limit) "${money(spent - limit)} over the ${money(limit)} limit" else "${money(limit - spent)} left of ${money(limit)}",
             style = MaterialTheme.typography.bodySmall,
-            color = SmartSpendTheme.colors.inkMuted
+            color = FinzyyTheme.colors.inkMuted
         )
     }
 }
@@ -325,10 +325,10 @@ private fun MoverRow(item: SpendingChangeItem, onClick: () -> Unit) {
         Text(
             "${if (up) "▲" else "▼"} ${pct.roundToInt()}%",
             style = MaterialTheme.typography.titleMedium.merge(TabularAmount),
-            color = if (up) SmartSpendTheme.colors.negative else SmartSpendTheme.colors.positive
+            color = if (up) FinzyyTheme.colors.negative else FinzyyTheme.colors.positive
         )
         Spacer(Modifier.width(6.dp))
-        Text(if (up) "more" else "less", style = MaterialTheme.typography.bodySmall, color = SmartSpendTheme.colors.inkMuted)
+        Text(if (up) "more" else "less", style = MaterialTheme.typography.bodySmall, color = FinzyyTheme.colors.inkMuted)
     }
 }
 
@@ -341,7 +341,7 @@ private fun RecurringRow(raw: Map<String, Any>) {
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(merchant, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(frequency, style = MaterialTheme.typography.bodySmall, color = SmartSpendTheme.colors.inkMuted)
+            Text(frequency, style = MaterialTheme.typography.bodySmall, color = FinzyyTheme.colors.inkMuted)
         }
         Text(money(num(raw["amount"])), style = MaterialTheme.typography.titleMedium.merge(TabularAmount), color = MaterialTheme.colorScheme.onSurface)
     }
@@ -360,14 +360,14 @@ private fun SpikeRow(raw: Map<String, Any>) {
             Text(
                 if (avg > 0) "${money(amount)} vs your usual ${money(avg)}" else money(amount),
                 style = MaterialTheme.typography.bodySmall,
-                color = SmartSpendTheme.colors.inkMuted
+                color = FinzyyTheme.colors.inkMuted
             )
         }
         if (avg > 0) {
             Text(
                 "${(amount / avg).let { if (it >= 10) it.roundToInt().toString() else "%.1f".format(it) }}×",
                 style = MaterialTheme.typography.titleMedium,
-                color = SmartSpendTheme.colors.caution
+                color = FinzyyTheme.colors.caution
             )
         }
     }

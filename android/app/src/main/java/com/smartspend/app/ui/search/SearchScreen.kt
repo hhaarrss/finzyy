@@ -63,7 +63,7 @@ import com.smartspend.app.ui.components.money
 import com.smartspend.app.ui.components.needsReview
 import com.smartspend.app.ui.components.toView
 import com.smartspend.app.ui.components.transactionDays
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import java.time.LocalDate
 
 private enum class SearchFilter(val label: String) {
@@ -97,7 +97,7 @@ fun SearchScreen(onBack: () -> Unit, startWithReview: Boolean) {
             val end = LocalDate.now()
             SpendData.transactions(end.minusMonths(SEARCH_WINDOW_MONTHS), end)
         } catch (e: Exception) {
-            error = e.localizedMessage ?: "Can't reach SmartSpend right now."
+            error = e.localizedMessage ?: "Can't reach Finzyy right now."
             null
         }
     }
@@ -131,7 +131,7 @@ fun SearchScreen(onBack: () -> Unit, startWithReview: Boolean) {
                         .padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = SmartSpendTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Search, contentDescription = null, tint = FinzyyTheme.colors.inkMuted, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(10.dp))
                     // Placeholder sits on top of the field. Stacked in a Column the two took two
                     // lines, which overflowed the pill at larger font sizes.
@@ -140,7 +140,7 @@ fun SearchScreen(onBack: () -> Unit, startWithReview: Boolean) {
                             Text(
                                 "Merchant, category, bank or amount",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = SmartSpendTheme.colors.inkMuted,
+                                color = FinzyyTheme.colors.inkMuted,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -160,7 +160,7 @@ fun SearchScreen(onBack: () -> Unit, startWithReview: Boolean) {
                     }
                     if (query.isNotEmpty()) {
                         IconButton(onClick = { query = "" }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear search", tint = SmartSpendTheme.colors.inkMuted, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Close, contentDescription = "Clear search", tint = FinzyyTheme.colors.inkMuted, modifier = Modifier.size(18.dp))
                         }
                     }
                 }

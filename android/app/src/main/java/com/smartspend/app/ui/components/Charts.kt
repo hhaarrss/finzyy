@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smartspend.app.ui.theme.MonoFamily
-import com.smartspend.app.ui.theme.SmartSpendTheme
+import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
@@ -65,8 +65,8 @@ fun SpendBarChart(
     barColor: Color = MaterialTheme.colorScheme.primary,
     accessibilitySummary: String = ""
 ) {
-    val grid = SmartSpendTheme.colors.hairline
-    val muted = SmartSpendTheme.colors.inkMuted
+    val grid = FinzyyTheme.colors.hairline
+    val muted = FinzyyTheme.colors.inkMuted
     val measurer = rememberTextMeasurer()
     val tickStyle = TextStyle(fontFamily = MonoFamily, fontSize = 9.5.sp, color = muted, fontFeatureSettings = "tnum")
     val labelStyle = TextStyle(fontFamily = MonoFamily, fontSize = 9.5.sp, color = muted)

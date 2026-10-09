@@ -1,4 +1,4 @@
-# 💸 SmartSpend
+# 💸 Finzyy
 
 An AI-augmented personal expense tracker built for the Indian UPI/banking ecosystem — turns passive bank SMS alerts into structured, categorized financial analytics in real time.
 
@@ -13,7 +13,7 @@ An AI-augmented personal expense tracker built for the Indian UPI/banking ecosys
 
 Most personal budgeting apps fail for one simple reason: **users hate manually typing every transaction**. People download a budgeting app with good intentions and abandon it within weeks because logging every coffee, grocery run, and UPI transfer by hand is friction nobody sticks with.
 
-**SmartSpend** removes that friction entirely. It listens for the SMS your bank already sends you on every transaction, and turns that into a categorized, analyzed entry — automatically.
+**Finzyy** removes that friction entirely. It listens for the SMS your bank already sends you on every transaction, and turns that into a categorized, analyzed entry — automatically.
 
 ---
 

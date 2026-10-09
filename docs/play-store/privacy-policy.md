@@ -1,8 +1,8 @@
-# SmartSpend Privacy Policy (draft)
+# Finzyy Privacy Policy (draft)
 
 > **Published version:** [`docs/privacy-policy.html`](../privacy-policy.html) is the finished
-> page, in the same style as the live site. Copy it to the `hhaarrss/smart-spend` repo, which
-> serves `https://hhaarrss.github.io/smart-spend/privacy-policy.html` (the URL the app and Play
+> page, in the same style as the live site. Copy it to the `hhaarrss/finzyy` repo, which
+> serves `https://hhaarrss.github.io/finzyy/privacy-policy.html` (the URL the app and Play
 > Console use). This Markdown file is the readable source — keep the two in step, and keep both
 > in step with [data-safety.md](data-safety.md).
 >
@@ -10,10 +10,10 @@
 > region to the providers table once you've checked it in the Render dashboard.
 
 **Effective date:** 28 September 2026
-**Who we are:** SmartSpend is developed and operated by Harsh Rabadiya ("we").
+**Who we are:** Finzyy is developed and operated by Harsh Rabadiya ("we").
 **Contact:** smartspend4support@gmail.com
 
-SmartSpend is an expense tracker. It reads the payment SMS your bank sends you, turns them into
+Finzyy is an expense tracker. It reads the payment SMS your bank sends you, turns them into
 transactions, and shows you where your money goes.
 
 ## 1. The short version
@@ -46,7 +46,7 @@ or advertising tools, and we don't track how you use the app.
 
 ## 3. How the app uses SMS
 
-If you allow it, SmartSpend reads SMS as they arrive, checks your inbox in the background for
+If you allow it, Finzyy reads SMS as they arrive, checks your inbox in the background for
 bank messages it may have missed (for example while your phone was offline), and — when you ask
 it to — imports older ones already in your inbox. It checks who each message is from and
 ignores everything that isn't from a known bank or payment sender.
@@ -65,13 +65,13 @@ We don't use your data for advertising and we don't sell it.
 
 ## 5. Who processes your data for us
 
-We use these providers to run SmartSpend. They process data on our instructions and not for
+We use these providers to run Finzyy. They process data on our instructions and not for
 their own purposes:
 
 | Provider | What for | Where |
 |---|---|---|
 | Neon (database) | Stores your account, profile and transactions | Singapore |
-| Render (server hosting) | Runs the SmartSpend backend | Render cloud data centres |
+| Render (server hosting) | Runs the Finzyy backend | Render cloud data centres |
 | Google Firebase | Phone-number verification, Google sign-in, push notifications | Google's global infrastructure |
 
 We may disclose data if the law requires it (for example a valid order from a court or government
@@ -100,7 +100,7 @@ Deleted data may remain in our database provider's short-term recovery history f
 
 - **See and correct** your data in the app (Account, and each transaction).
 - **Delete your account** in the app (Account → Privacy & legal → Delete account) or by requesting it at
-  https://hhaarrss.github.io/smart-spend/delete-account.html.
+  https://hhaarrss.github.io/finzyy/delete-account.html.
 - **Stop SMS reading** by removing the permission in your phone settings.
 - **Turn off notifications** in the app or in your phone settings.
 - **Withdraw consent, ask a question or raise a grievance** by writing to Harsh Rabadiya at
@@ -108,7 +108,7 @@ Deleted data may remain in our database provider's short-term recovery history f
 
 ## 9. Children
 
-SmartSpend is not meant for anyone under 18, and we don't knowingly collect data from children.
+Finzyy is not meant for anyone under 18, and we don't knowingly collect data from children.
 
 ## 10. Changes
 

@@ -1,4 +1,4 @@
-# SmartSpend — Account Deletion Endpoint (`DELETE /users/me`)
+# Finzyy — Account Deletion Endpoint (`DELETE /users/me`)
 
 Implements the Play Store-required in-app account deletion. Cascades across every table that stores user data, per the audit's known schema: `transactions`, `budget_limits`, and the merchant-correction store (the audit noted this exists as both a `merchant_mappings` DB table per the handbook and `user_corrections.json` per the categorizer audit — confirm which is actually authoritative in your codebase and adjust Step 3 below accordingly; possibly both need clearing).
 
@@ -132,8 +132,8 @@ Google requires this **in addition to** the in-app flow, for users who've alread
 
 ```html
 <!-- A minimal hosted page, e.g. on GitHub Pages -->
-<h1>Delete your SmartSpend account</h1>
-<p>To request deletion of your SmartSpend account and all associated data,
+<h1>Delete your Finzyy account</h1>
+<p>To request deletion of your Finzyy account and all associated data,
    email <a href="mailto:your.email@example.com?subject=Account Deletion Request">
    your.email@example.com</a> from the email address associated with your account.
    We will process your request and confirm deletion within [X] business days.</p>
