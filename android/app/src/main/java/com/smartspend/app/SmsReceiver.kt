@@ -137,17 +137,6 @@ class SmsReceiver : BroadcastReceiver() {
             }
         }
 
-        fun hasQueuedSms(context: Context): Boolean {
-            val sharedPrefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            synchronized(queueLock) {
-                return try {
-                    readQueue(sharedPrefs).length() > 0
-                } catch (e: Exception) {
-                    false
-                }
-            }
-        }
-
         /**
          * The queue holds parsed payments (amount, merchant, account digits, UPI ref) until they
          * sync, so it is stored encrypted like the login token. A queue written unencrypted by an

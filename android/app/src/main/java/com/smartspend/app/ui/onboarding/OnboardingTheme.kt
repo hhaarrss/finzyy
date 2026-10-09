@@ -61,8 +61,6 @@ internal val EaseInOut: Easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
 internal val CardEase: Easing = CubicBezierEasing(0.2f, 0.8f, 0.2f, 1f)
 internal val PulseEase: Easing = CubicBezierEasing(0.2f, 0.7f, 0.3f, 1f)
 internal val RingEase: Easing = CubicBezierEasing(0.3f, 0.8f, 0.3f, 1f)
-internal val Standard: Easing = FastOutSlowInEasing
-
 /** Milliseconds since this composable entered composition (or since [key] last changed). */
 @Composable
 internal fun rememberClock(key: Any? = Unit): State<Long> {

@@ -135,8 +135,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    // Only the @Preview annotation; previews live in ui/preview/LayoutPreviews.kt and R8 drops them.
-    implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
 

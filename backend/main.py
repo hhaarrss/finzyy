@@ -185,7 +185,7 @@ async def ensure_auth_schema() -> None:
 async def on_startup() -> None:
     print("Initializing Smart Expense Tracker Backend...")
 
-    if APP_ENV == "production":
+    if IS_PRODUCTION:
         # In production, schema is managed by Alembic migrations (pre-deploy command).
         # Skip dev-only ALTER TABLE mutations and seed user creation.
         print("Production mode — skipping dev schema mutations and seed user.")
@@ -227,18 +227,22 @@ async def on_startup() -> None:
         await ensure_auth_schema()
         print("Database connection successfully established, schema migrated, and tables verified.")
 
-        async with AsyncSessionLocal() as db:
-            res = await db.execute(select(User).where(User.email == "your1_email@example.com"))
-            if not res.scalars().first():
-                user = User(
-                    email="your1_email@example.com",
-                    hashed_password=hash_password("YourPassword123!"),
-                    full_name="User One",
-                    is_active=True
-                )
-                db.add(user)
-                await db.commit()
-                print("Default seed user created: your1_email@example.com")
+        # Local-development convenience only (never reached when IS_PRODUCTION). The sign-in
+        # password is never written in the source: set DEV_SEED_PASSWORD in your own .env to
+        # get a dev user; leave it unset and no user is created.
+        dev_password = os.getenv("DEV_SEED_PASSWORD", "").strip()
+        if dev_password:
+            async with AsyncSessionLocal() as db:
+                res = await db.execute(select(User).where(User.email == "dev@localhost.test"))
+                if not res.scalars().first():
+                    db.add(User(
+                        email="dev@localhost.test",
+                        hashed_password=hash_password(dev_password),
+                        full_name="Dev User",
+                        is_active=True,
+                    ))
+                    await db.commit()
+                    print("Dev seed user created: dev@localhost.test")
     except Exception as e:
         print(f"Warning: Database initialization during startup error: {e}")
 
