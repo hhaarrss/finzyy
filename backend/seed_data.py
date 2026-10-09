@@ -13,6 +13,9 @@ from models.user import User
 from models.transaction import Transaction
 from models.budget import BudgetLimit
 from models.family import FamilyGroup
+import os
+import secrets
+
 from utils.auth import hash_password
 
 
@@ -24,7 +27,8 @@ async def seed_database() -> None:
         print("[SEED] Starting database seeding process...")
 
         # 1. Check or create demo user
-        user_email = "demo@example.com"
+        user_email = "demo@localhost.test"
+        demo_password = os.getenv("DEMO_SEED_PASSWORD", "").strip() or secrets.token_urlsafe(12)
         result = await session.execute(select(User).where(User.email == user_email))
         user = result.scalars().first()
 
@@ -32,9 +36,10 @@ async def seed_database() -> None:
             print(f"[SEED] Creating demo user: {user_email}")
             user = User(
                 email=user_email,
-                hashed_password=hash_password("Password123!"),
+                hashed_password=hash_password(demo_password),
                 full_name="Test User",
             )
+            print(f"[SEED] Demo password (shown once): {demo_password}")
             session.add(user)
             await session.flush()
         else:
@@ -486,7 +491,8 @@ async def seed_database() -> None:
 
         await session.commit()
         print(f"[SEED] Successfully populated {len(transactions_data)} transactions across June, July & August 2026!")
-        print("[SEED] Database seeding complete! You can log in with demo@example.com / Password123!")
+        print("[SEED] Database seeding complete! Demo login: demo@localhost.test "
+              "(password: DEMO_SEED_PASSWORD, or the one-time value printed when the user was created)")
 
 
 if __name__ == "__main__":

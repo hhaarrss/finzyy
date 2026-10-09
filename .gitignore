@@ -37,6 +37,12 @@ logs/
 *.pem
 *.key
 secrets/
+.env.*
+!.env.example
+*service-account*.json
+*serviceAccount*.json
+*firebase-adminsdk*.json
+*.p12
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

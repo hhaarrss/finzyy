@@ -5,7 +5,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in backend/.env}
       POSTGRES_DB: ${POSTGRES_DB:-expense_db}
     ports:
       - "5432:5432"
@@ -29,8 +29,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@db:5432/expense_db}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - DATABASE_URL=${DATABASE_URL:?set DATABASE_URL in backend/.env}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?set JWT_SECRET_KEY in backend/.env}
       - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
       - JWT_EXPIRY_MINUTES=${JWT_EXPIRY_MINUTES:-60}
       - APP_ENV=${APP_ENV:-development}
