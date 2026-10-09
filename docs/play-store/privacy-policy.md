@@ -41,8 +41,12 @@ app categorises that merchant the same way next time.
 
 **Budgets and family groups** you create.
 
-**Device data.** A notification token so we can send you budget alerts. We don't use analytics
-or advertising tools, and we don't track how you use the app.
+**Device data.** A notification token so we can send you budget alerts.
+
+**Crash reports.** If the app crashes, a report is sent so we can fix it: what went wrong in the
+code, your phone model, Android version, app version and an install identifier. It does not
+include your SMS, your transactions, your name or your phone number. We don't use advertising
+tools, and we don't track how you use the app.
 
 ## 3. How the app uses SMS
 
@@ -72,7 +76,7 @@ their own purposes:
 |---|---|---|
 | Neon (database) | Stores your account, profile and transactions | Singapore |
 | Render (server hosting) | Runs the Finzyy backend | Render cloud data centres |
-| Google Firebase | Phone-number verification, Google sign-in, push notifications | Google's global infrastructure |
+| Google Firebase | Phone-number verification, Google sign-in, push notifications, crash reports | Google's global infrastructure |
 
 We may disclose data if the law requires it (for example a valid order from a court or government
 authority).
