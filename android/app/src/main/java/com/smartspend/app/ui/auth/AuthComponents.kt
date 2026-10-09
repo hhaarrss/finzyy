@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
+import com.smartspend.app.ui.components.BrandLoader
 import com.smartspend.app.ui.components.RoundIconButton
 import com.smartspend.app.ui.theme.SmartSpendTheme
 import kotlinx.coroutines.CoroutineScope
@@ -390,15 +391,8 @@ internal fun InitialsAvatar(name: String, size: Int = 72) {
     }
 }
 
-/** Plain spinner page while the app decides where a signed-in user goes. */
+/** Shown while the app decides where a signed-in user goes. */
 @Composable
 fun LoadingPage() {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-    }
+    BrandLoader()
 }

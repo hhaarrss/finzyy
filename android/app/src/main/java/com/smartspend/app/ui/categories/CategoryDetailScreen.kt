@@ -156,7 +156,7 @@ fun CategoryDetailScreen(category: String, onBack: () -> Unit) {
             }
             val list = txs
             when {
-                list == null -> item { SkeletonBlocks(listOf(200.dp)) }
+                list == null -> item { SkeletonBlocks(listOf(200.dp), note = false) }
                 list.isEmpty() -> item { EmptyNote("Nothing in $monthLong", "Tap another month above.") }
                 else -> transactionDays(list.map { it.toView() }, onClick = { openTx = it })
             }

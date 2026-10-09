@@ -28,8 +28,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Warning
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
@@ -312,20 +310,6 @@ fun AccountScreen(
                     subtitle = "Erase your account and all its data",
                     tint = SmartSpendTheme.colors.negative,
                     onClick = { showDelete = true }
-                )
-            }
-
-            // ── Developer / Crash Testing ──────────────────────────────
-            Group("Developer & Testing") {
-                SettingRow(
-                    Icons.Default.Warning,
-                    "Test Crash",
-                    subtitle = "Triggers a test RuntimeException for Firebase Crashlytics",
-                    tint = SmartSpendTheme.colors.negative,
-                    onClick = {
-                        FirebaseCrashlytics.getInstance().log("Manual test crash triggered from AccountScreen")
-                        throw RuntimeException("Test Crash - Firebase Crashlytics")
-                    }
                 )
             }
 
