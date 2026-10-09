@@ -482,32 +482,6 @@ fun ErrorPanel(message: String, onRetry: () -> Unit, modifier: Modifier = Modifi
     }
 }
 
-/** Placeholder blocks while a screen's first load is in flight. Heights mirror the real layout. */
-@Composable
-fun SkeletonBlocks(heights: List<Dp>, modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "skeleton")
-    val alpha by transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
-        label = "skeleton-alpha"
-    )
-    Column(
-        modifier = modifier.padding(horizontal = ScreenGutter, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        heights.forEach { h ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(h)
-                    .clip(MaterialTheme.shapes.large)
-                    .background(FinzyyTheme.colors.subtleSurface.copy(alpha = alpha))
-            )
-        }
-    }
-}
-
 /** Budget-health colour, shared by every progress bar that measures spend against a limit. */
 @Composable
 fun budgetColor(percentUsed: Double) = when {

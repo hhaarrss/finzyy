@@ -11,15 +11,15 @@ below is written to match all four. Change the app name once it is decided (see
 
 ## Full description
 
-> SmartSpend is an expense tracker for Android that builds your spending ledger from the payment
+> Finzyy is an expense tracker for Android that builds your spending ledger from the payment
 > SMS your bank already sends you.
 >
 > **How it works**
-> - With your permission, SmartSpend reads SMS from recognized bank senders on your phone and picks
+> - With your permission, Finzyy reads SMS from recognized bank senders on your phone and picks
 >   out each payment: the amount, the merchant, the date, the bank and the last 4 digits of the
 >   account.
 > - Each payment is categorized (food, groceries, travel and so on). If a category is wrong, change
->   it once and SmartSpend files that merchant the same way next time.
+>   it once and Finzyy files that merchant the same way next time.
 > - See your spending by day, week and month, set budgets, and get an alert as you approach one.
 >
 > **What leaves your phone**
@@ -34,7 +34,7 @@ below is written to match all four. Change the app name once it is decided (see
 > - You can delete your account and all its data from the app (Account → Privacy & legal → Delete
 >   account), or on our website.
 >
-> SmartSpend reads SMS permission (READ_SMS, RECEIVE_SMS) only for this purpose: tracking and
+> Finzyy reads SMS permission (READ_SMS, RECEIVE_SMS) only for this purpose: tracking and
 > managing your budget from bank payment messages.
 
 ## Links to fill in

@@ -86,16 +86,10 @@ data class AuthResponse(
 /** A Firebase ID token from Phone (OTP) or Google sign-in, verified by the backend. */
 data class FirebaseTokenPayload(val id_token: String)
 
-/** Details sent from the profile setup / edit screen. Dates are ISO yyyy-MM-dd. */
+/** Details sent from the profile setup / edit screen. */
 data class ProfilePayload(
     val full_name: String,
-    val email: String? = null,
-    val date_of_birth: String? = null,
-    val gender: String? = null,
-    val city: String? = null,
-    val occupation: String? = null,
-    val monthly_income: Double? = null,
-    val monthly_budget: Double? = null
+    val email: String? = null
 )
 
 /**
@@ -106,12 +100,6 @@ data class UserData(
     val email: String? = null,
     val phone_number: String? = null,
     val full_name: String? = null,
-    val date_of_birth: String? = null,
-    val gender: String? = null,
-    val city: String? = null,
-    val occupation: String? = null,
-    val monthly_income: Double? = null,
-    val monthly_budget: Double? = null,
     val profile_complete: Boolean = false
 )
 
