@@ -93,6 +93,22 @@ data class ProfilePayload(
 )
 
 /**
+ * Today's question about the user's own spending. Everything but [available] is null or
+ * empty when the backend has nothing to ask about yet.
+ */
+data class DailyQuestionData(
+    val available: Boolean = false,
+    val date: String? = null,
+    val category: String? = null,
+    val prompt: String? = null,
+    val options: List<Int> = emptyList(),
+    val answer: Int? = null,
+    val actual_amount: Double? = null,
+    val transaction_count: Int = 0,
+    val comparison: String? = null
+)
+
+/**
  * Data model for a User profile.
  */
 data class UserData(
@@ -246,6 +262,10 @@ interface BackendService {
     suspend fun deleteMyAccountNoAuth(
         @Body payload: DeleteAccountPayload
     ): Response<DeleteAccountResponse>
+
+    /** Today's guess-your-own-spending question; `available` is false when there isn't enough data. */
+    @GET("engagement/daily-question")
+    suspend fun getDailyQuestion(): Response<DailyQuestionData>
 
     /**
      * Fetch consolidated Home screen data. Auth is bypassed by the backend while AUTH_STUB=true.

@@ -79,6 +79,7 @@ import com.smartspend.app.ui.components.RoundIconButton
 import com.smartspend.app.ui.components.ScreenGutter
 import com.smartspend.app.ui.components.SectionTitle
 import com.smartspend.app.ui.components.SkeletonBlocks
+import com.smartspend.app.ui.money.MoneyMinuteCard
 import com.smartspend.app.ui.components.FinzyyIcons
 import com.smartspend.app.ui.components.TextAction
 import com.smartspend.app.ui.components.ThinProgress
@@ -207,7 +208,8 @@ fun HomeScreen(
                     onInsights = onInsights,
                     onEnableAutoSync = onEnableAutoSync,
                     onOpenTx = { openTx = it },
-                    listState = listState
+                    listState = listState,
+                    refreshKey = refreshKey
                 )
             }
         }
@@ -259,7 +261,8 @@ private fun HomeContent(
     onInsights: () -> Unit,
     onEnableAutoSync: () -> Unit,
     onOpenTx: (TxView) -> Unit,
-    listState: LazyListState
+    listState: LazyListState,
+    refreshKey: Int
 ) {
     val data = bundle.home
     val autoSyncOn = rememberSmsPermissionsGranted()
@@ -307,6 +310,14 @@ private fun HomeContent(
                 LinkPill(FinzyyIcons.Trends, "Trends", onTrends, Modifier.weight(1f))
                 LinkPill(FinzyyIcons.Categories, "Categories", onCategories, Modifier.weight(1f))
             }
+        }
+
+        item {
+            MoneyMinuteCard(
+                refreshKey = refreshKey,
+                onCategory = onCategory,
+                modifier = Modifier.padding(horizontal = ScreenGutter)
+            )
         }
 
         if (pace != null) {
