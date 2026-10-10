@@ -258,7 +258,8 @@ internal fun BrandMark() {
                 .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Text("S", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Black, fontSize = 18.sp)
+            // A rupee, matching the launcher icon and the splash mark — not an initial.
+            Text("₹", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Black, fontSize = 20.sp)
         }
         Spacer(Modifier.width(10.dp))
         Text("Finzyy", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
