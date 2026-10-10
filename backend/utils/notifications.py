@@ -32,9 +32,16 @@ async def send_fcm_notification(
         return False
 
     try:
-        # If Firebase Admin SDK is installed and initialized
-        import firebase_admin
         from firebase_admin import messaging
+        from starlette.concurrency import run_in_threadpool
+
+        # Makes sure the Admin SDK has been initialised with the service account; without it
+        # messaging.send() raises about a missing default app.
+        from utils.firebase_admin_client import ensure_firebase_app
+
+        if ensure_firebase_app() is None:
+            print("[Notifications] FCM not configured (no service account); alert not delivered")
+            return False
 
         message = messaging.Message(
             notification=messaging.Notification(
@@ -44,12 +51,14 @@ async def send_fcm_notification(
             data=data or {},
             token=fcm_token,
         )
-        messaging.send(message)
+        # messaging.send() is a blocking HTTP call; off the event loop so one slow send
+        # doesn't stall every other request (the daily recap sends one per user in a loop).
+        await run_in_threadpool(messaging.send, message)
         return True
     except Exception as e:
         # No title, body or token here: the alert text carries the user's spending figures.
         print(f"[Notifications] FCM send failed ({type(e).__name__}); alert not delivered")
-        return True
+        return False
 
 
 async def check_budget_and_alert(

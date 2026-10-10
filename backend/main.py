@@ -70,6 +70,7 @@ from routers.seed import router as seed_router
 from routers.categories import router as categories_router
 from routers.users import router as users_router
 from routers.home import router as home_router
+from routers.engagement import router as engagement_router
 
 # Import database engine for startup check
 from database import engine
@@ -146,6 +147,7 @@ if not IS_PRODUCTION:
 app.include_router(categories_router)
 app.include_router(users_router)
 app.include_router(home_router)
+app.include_router(engagement_router)
 
 
 # Phone sign-in + profile columns. Every statement is idempotent, so this is safe to run on

@@ -60,6 +60,14 @@ def _initialize() -> Optional[Any]:
     return _firebase_app
 
 
+def ensure_firebase_app() -> Optional[Any]:
+    """
+    The initialised Admin app, or None when no service account is configured. Push sending
+    uses this to fail loudly instead of raising about a missing default app.
+    """
+    return _initialize()
+
+
 def verify_firebase_id_token(id_token: str) -> Dict[str, Any]:
     """
     Verifies a Firebase ID token and returns its decoded claims.

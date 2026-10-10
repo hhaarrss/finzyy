@@ -1,0 +1,49 @@
+# Sends every user their evening spending recap.
+#
+# Render's free plan has no scheduler, and Celery would need Redis plus an always-on worker,
+# so the schedule lives here (free, and every run is visible in the Actions tab) and the
+# backend does the work behind a shared secret.
+#
+# Setup, once:
+#   1. Generate a secret:  python -c "import secrets; print(secrets.token_hex(32))"
+#   2. Render → the web service → Environment → add CRON_SECRET with that value.
+#   3. GitHub → repo → Settings → Secrets and variables → Actions → New repository secret,
+#      also named CRON_SECRET, same value.
+# Until both are set the endpoint answers 403 (or 503) and this job fails loudly, which is
+# the point: a silent scheduler is worse than none.
+name: Daily recap
+
+on:
+  schedule:
+    # 15:30 UTC = 21:00 IST. GitHub runs scheduled jobs late when busy, by 5-15 minutes
+    # typically, which is fine for an evening summary.
+    - cron: "30 15 * * *"
+  workflow_dispatch: # lets you fire one by hand from the Actions tab to test
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the recap endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE_URL: https://firstproject-smartspend.onrender.com
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "CRON_SECRET repository secret is not set; nothing would be sent." >&2
+            exit 1
+          fi
+          # --max-time 300: the free Render service sleeps when idle and can take a minute
+          # to wake before it even starts sending.
+          code=$(curl -sS -o response.json -w '%{http_code}' --max-time 300 \
+            -X POST "${BASE_URL}/internal/daily-recap" \
+            -H "X-Cron-Secret: ${CRON_SECRET}")
+          echo "HTTP ${code}"
+          cat response.json
+          echo
+          # The body carries counts only (users, sent, skipped, failed) — no names, no amounts.
+          if [ "${code}" != "200" ]; then
+            echo "Recap run failed." >&2
+            exit 1
+          fi

@@ -15,3 +15,6 @@ psycopg2-binary>=2.9.9
 email-validator
 python-multipart
 firebase-admin>=6.5.0
+# Timezone database for zoneinfo (Asia/Kolkata in the daily recap). Not guaranteed
+# to be present in slim container images or on Windows, so pin it explicitly.
+tzdata
