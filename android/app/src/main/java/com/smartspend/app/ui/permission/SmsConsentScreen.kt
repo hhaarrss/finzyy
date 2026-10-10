@@ -246,7 +246,7 @@ private fun ScanningContent() {
         Text("Scanning your messages...", fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(6.dp))
         Text(
-            "Importing recent bank SMS. Only amounts, merchants and dates leave your phone.",
+            "Importing this month's bank SMS. Only amounts, merchants and dates leave your phone.",
             color = FinzyyTheme.colors.inkMuted,
             style = MaterialTheme.typography.bodySmall
         )

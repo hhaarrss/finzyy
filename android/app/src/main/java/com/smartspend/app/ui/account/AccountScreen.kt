@@ -135,10 +135,15 @@ fun AccountScreen(
         if (on && !systemAllows) openAppNotificationSettings(context)
     }
     var syncing by remember { mutableStateOf(false) }
+    // What "Sync this month" would actually look at, so the row can say so before it's tapped.
+    var syncScope by remember { mutableStateOf<HistoricalSmsSync.Scope?>(null) }
     var confirmLogout by remember { mutableStateOf(false) }
     var showDelete by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        if (smsPermissionsGranted(context)) {
+            syncScope = runCatching { HistoricalSmsSync.scope(context) }.getOrNull()
+        }
         profile = runCatching { RetrofitClient.apiService.getMyProfile().body() }.getOrNull()
         profile?.let { AuthSession.update(context, it) }
     }
@@ -171,8 +176,13 @@ fun AccountScreen(
         scope.launch {
             val result = runCatching { HistoricalSmsSync.run(context) }
             syncing = false
-            result.onSuccess { toast(if (it.synced == 0) "Checked ${it.scanned} messages — nothing new" else "Added ${it.synced} transactions from SMS") }
-                .onFailure { toast("Sync failed: ${it.localizedMessage}") }
+            result.onSuccess {
+                toast(
+                    if (it.synced == 0) "Checked ${it.monthLabel}'s messages — nothing new"
+                    else "Added ${it.synced} transaction${if (it.synced == 1) "" else "s"} from ${it.monthLabel}"
+                )
+                syncScope = runCatching { HistoricalSmsSync.scope(context) }.getOrNull()
+            }.onFailure { toast("Sync failed: ${it.localizedMessage}") }
         }
     }
 
@@ -273,10 +283,20 @@ fun AccountScreen(
                     )
                 }
                 RowDivider()
+                val scope = syncScope
                 SettingRow(
                     icon = Icons.Default.Refresh,
-                    title = if (syncing) "Syncing SMS…" else "Sync existing SMS",
-                    subtitle = "Import bank messages already in your inbox",
+                    title = when {
+                        syncing -> "Syncing SMS…"
+                        scope != null -> "Sync ${scope.monthLabel}'s SMS"
+                        else -> "Sync this month's SMS"
+                    },
+                    subtitle = when {
+                        syncing -> "Reading this month's bank messages"
+                        scope == null -> "Import bank messages from this month already in your inbox"
+                        scope.bankMessages == 0 -> "No bank messages in your inbox this month"
+                        else -> "${scope.bankMessages} bank message${if (scope.bankMessages == 1) "" else "s"} in your inbox since 1 ${scope.monthLabel}"
+                    },
                     onClick = if (syncing) null else ({ syncInbox() })
                 )
             }
