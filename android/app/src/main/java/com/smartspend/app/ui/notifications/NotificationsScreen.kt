@@ -106,7 +106,7 @@ fun NotificationsScreen(onBack: () -> Unit, onBudget: () -> Unit, onCategory: (S
                         item {
                             EmptyNote(
                                 title = "Nothing needs your attention",
-                                body = "New transactions will show up here.",
+                                body = "Budgets that go over their limit and unusual spending will show up here.",
                                 modifier = Modifier.padding(horizontal = ScreenGutter, vertical = 12.dp)
                             )
                         }
@@ -128,19 +128,6 @@ fun NotificationsScreen(onBack: () -> Unit, onBudget: () -> Unit, onCategory: (S
                         }
                     }
 
-                    item { Spacer(Modifier.size(20.dp)) }
-                    item { SectionLabel("Recent activity", null) }
-                    if (loaded.recent.isEmpty()) {
-                        item {
-                            EmptyNote(
-                                title = "No payments detected yet",
-                                body = "Payments picked up from your bank SMS will be listed here.",
-                                modifier = Modifier.padding(horizontal = ScreenGutter, vertical = 12.dp)
-                            )
-                        }
-                    } else {
-                        transactionDays(loaded.recent, onClick = { openTx = it }, keyPrefix = "recent")
-                    }
                 }
                 error != null -> item { ErrorPanel(error.orEmpty(), onRetry = { reloadKey++ }) }
                 else -> item { SkeletonBlocks(listOf(72.dp, 72.dp, 72.dp, 160.dp)) }

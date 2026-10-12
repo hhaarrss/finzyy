@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -188,7 +189,9 @@ fun BudgetScreen(onBack: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("₹", style = MaterialTheme.typography.displaySmall, color = FinzyyTheme.colors.inkMuted)
                     Spacer(Modifier.width(6.dp))
-                    Column(Modifier.weight(1f)) {
+                    // A Box, not a Column: the "0" hint must sit exactly where the typed amount
+                    // goes. Stacked above the field it pushed the amount line below the rupee sign.
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                         if (overallInput.isEmpty()) {
                             Text("0", style = MaterialTheme.typography.displaySmall, color = FinzyyTheme.colors.hairline)
                         }

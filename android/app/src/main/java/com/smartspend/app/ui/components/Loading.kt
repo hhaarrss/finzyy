@@ -220,6 +220,7 @@ fun BrandLoader(modifier: Modifier = Modifier) {
                 Modifier
                     .size(64.dp)
                     .graphicsLayer { scaleX = breath; scaleY = breath }
+                    .clearAndSetSemantics { contentDescription = "Loading" }
             )
             Spacer(Modifier.height(26.dp))
             LoadingNote(Modifier.widthIn(max = 260.dp), centered = true)
@@ -229,10 +230,10 @@ fun BrandLoader(modifier: Modifier = Modifier) {
 
 /** The launcher mark (rounded tile, rupee), in the theme's ink on the theme's ground. */
 @Composable
-private fun RupeeTile(modifier: Modifier = Modifier) {
+fun RupeeTile(modifier: Modifier = Modifier) {
     val tile = MaterialTheme.colorScheme.onBackground
     val glyph = MaterialTheme.colorScheme.background
-    Canvas(modifier.clearAndSetSemantics { contentDescription = "Loading" }) {
+    Canvas(modifier) {
         // Same numbers as ic_launcher_foreground.xml: the tile spans 30..78 of a 108 viewport,
         // and the rupee is scaled 0.82 about the centre (54, 54).
         val u = size.minDimension / 48f
