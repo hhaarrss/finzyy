@@ -59,6 +59,8 @@ import androidx.compose.ui.unit.dp
 import com.smartspend.app.CategoryListsResponse
 import com.smartspend.app.RetrofitClient
 import com.smartspend.app.TransactionCreatePayload
+import com.smartspend.app.ui.components.NewCategoryChip
+import com.smartspend.app.ui.components.CustomCategoryDialog
 import com.smartspend.app.ui.components.Block
 import com.smartspend.app.ui.components.CategoryCache
 import com.smartspend.app.ui.components.CategoryChip
@@ -85,11 +87,19 @@ fun AddTransactionScreen(onBack: () -> Unit) {
     val amountFocus = remember { FocusRequester() }
 
     var lists by remember { mutableStateOf<CategoryListsResponse?>(CategoryCache.lists) }
+    var addingCategory by remember { mutableStateOf(false) }
     var isCredit by rememberSaveable { mutableStateOf(false) }
     var amount by rememberSaveable { mutableStateOf("") }
     var payee by rememberSaveable { mutableStateOf("") }
     var dateEpochDay by rememberSaveable { mutableStateOf(LocalDate.now().toEpochDay()) }
     var category by rememberSaveable { mutableStateOf<String?>(null) }
+    if (addingCategory) {
+        CustomCategoryDialog(
+            onDismiss = { addingCategory = false },
+            onCreated = { name -> category = name },
+            onListsChanged = { lists = it }
+        )
+    }
     var notes by rememberSaveable { mutableStateOf("") }
     var showErrors by rememberSaveable { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
@@ -262,6 +272,7 @@ fun AddTransactionScreen(onBack: () -> Unit) {
                         options.forEach { name ->
                             CategoryChip(category = name, selected = name == category, onClick = { category = name })
                         }
+                        if (!isCredit) NewCategoryChip(onClick = { addingCategory = true })
                     }
                 }
             }
