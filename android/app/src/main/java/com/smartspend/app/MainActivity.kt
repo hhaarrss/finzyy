@@ -29,6 +29,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.smartspend.app.ui.components.CategoryCache
 import com.smartspend.app.ui.auth.LinkPhoneScreen
 import com.smartspend.app.ui.auth.LoadingPage
 import com.smartspend.app.ui.auth.PhoneAuthController
@@ -405,6 +406,7 @@ class MainActivity : ComponentActivity() {
     private fun handleUnauthorized() {
         if (!mainAppShown) return
         AuthSession.clear(this)
+        CategoryCache.invalidate()
         Toast.makeText(this, "Session expired. Please sign in again.", Toast.LENGTH_LONG).show()
         showSignIn()
     }
@@ -413,6 +415,7 @@ class MainActivity : ComponentActivity() {
         PhoneAuthController.signOut()
         runCatching { googleSignInClient.signOut() }
         AuthSession.clear(this)
+        CategoryCache.invalidate()
         showSignIn()
     }
 

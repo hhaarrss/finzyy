@@ -15,6 +15,7 @@ from models.budget import BudgetLimit, OverallBudgetLimit
 from models.budget_alert_log import BudgetAlertLog
 from models.family import FamilyGroup
 from models.merchant_mapping import MerchantMapping
+from models.user_category import UserCategory
 from models.transaction import Transaction
 from models.user import User
 from schemas.account import DeleteAccountRequest, DeleteAccountResponse
@@ -153,6 +154,7 @@ async def delete_my_account(
     await db.execute(delete(Transaction).where(Transaction.user_id == user_id))
     await db.execute(delete(BudgetLimit).where(BudgetLimit.user_id == user_id))
     await db.execute(delete(MerchantMapping).where(MerchantMapping.user_id == user_id))
+    await db.execute(delete(UserCategory).where(UserCategory.user_id == user_id))
     await db.execute(delete(BudgetAlertLog).where(BudgetAlertLog.user_id == user_id))
     await db.execute(delete(OverallBudgetLimit).where(OverallBudgetLimit.user_id == user_id))
     # A family group this user runs with nobody else in it would outlive the account (the FK

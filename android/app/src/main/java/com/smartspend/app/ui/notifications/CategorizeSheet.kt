@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import com.smartspend.app.RecategorizePayload
 import com.smartspend.app.RetrofitClient
 import com.smartspend.app.TransactionEvents
+import com.smartspend.app.ui.components.NewCategoryChip
+import com.smartspend.app.ui.components.CustomCategoryDialog
 import com.smartspend.app.ui.components.CategoryCache
 import com.smartspend.app.ui.components.CategoryChip
 import com.smartspend.app.ui.components.Eyebrow
@@ -75,6 +77,25 @@ fun CategorizeSheet(
     var lists by remember { mutableStateOf(CategoryCache.lists) }
     var busy by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var addingCategory by remember { mutableStateOf(false) }
+
+    if (addingCategory) {
+        CustomCategoryDialog(
+            onDismiss = { addingCategory = false },
+            onCreated = { name ->
+                // Same as tapping a chip: file this payment under the new category.
+                busy = name
+                error = null
+                scope.launch {
+                    if (!onPick(name)) {
+                        busy = null
+                        error = "Couldn't save — check your connection and try again."
+                    }
+                }
+            },
+            onListsChanged = { lists = it }
+        )
+    }
 
     LaunchedEffect(Unit) {
         if (lists == null) lists = runCatching { CategoryCache.get() }.getOrNull()
@@ -127,6 +148,7 @@ fun CategorizeSheet(
                         }
                     )
                 }
+                if (!credit) NewCategoryChip(onClick = { if (busy == null) addingCategory = true })
             }
             error?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)

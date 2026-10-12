@@ -29,9 +29,16 @@ data class PaginatedTransactionResponse(
 )
 
 data class CategoryListsResponse(
+    /** Built-in spending categories plus the user's own (see [custom]). */
     val debit: List<String>,
-    val credit: List<String>
+    val credit: List<String>,
+    /** The user's own spending categories, with ids for deleting. Null from an older server. */
+    val custom: List<CustomCategory>? = null
 )
+
+data class CustomCategory(val id: Int, val name: String)
+
+data class CustomCategoryPayload(val name: String)
 
 data class BudgetUtilizationData(
     val category: String,
