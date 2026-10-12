@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
 import com.smartspend.app.ui.components.BrandLoader
+import com.smartspend.app.ui.components.RupeeTile
 import com.smartspend.app.ui.components.RoundIconButton
 import com.smartspend.app.ui.theme.FinzyyTheme
 import kotlinx.coroutines.CoroutineScope
@@ -252,15 +253,8 @@ internal fun AuthTitle(title: String, subtitle: String) {
 @Composable
 internal fun BrandMark() {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier
-                .size(36.dp)
-                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(10.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            // A rupee, matching the launcher icon and the splash mark — not an initial.
-            Text("₹", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Black, fontSize = 20.sp)
-        }
+        // The real mark (the launcher icon's tile and rupee), not a letter or a text glyph.
+        RupeeTile(Modifier.size(36.dp))
         Spacer(Modifier.width(10.dp))
         Text("Finzyy", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
     }
@@ -370,26 +364,6 @@ internal fun OtpInput(
             }
         }
     )
-}
-
-/** Small circular avatar with the user's initials. */
-@Composable
-internal fun InitialsAvatar(name: String, size: Int = 72) {
-    val initials = name.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
-        .take(2).joinToString("") { it.first().uppercase() }.ifEmpty { "?" }
-    Box(
-        Modifier
-            .size(size.dp)
-            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            initials,
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            fontWeight = FontWeight.Bold
-        )
-    }
 }
 
 /** Shown while the app decides where a signed-in user goes. */

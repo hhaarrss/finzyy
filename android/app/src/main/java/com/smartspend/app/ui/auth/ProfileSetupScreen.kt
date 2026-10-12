@@ -43,6 +43,7 @@ import com.smartspend.app.AuthSession
 import com.smartspend.app.ProfilePayload
 import com.smartspend.app.RetrofitClient
 import com.smartspend.app.UserData
+import com.smartspend.app.ui.components.EditableProfileAvatar
 import com.smartspend.app.ui.components.Block
 import com.smartspend.app.ui.components.Eyebrow
 import com.smartspend.app.ui.components.ScreenGutter
@@ -135,7 +136,7 @@ fun ProfileSetupScreen(
             // ── Identity ─────────────────────────────────────────────
             Block(modifier = Modifier.padding(horizontal = ScreenGutter)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    InitialsAvatar(name = name, size = 60)
+                    EditableProfileAvatar(name = name, size = 60.dp)
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
                         Text(

@@ -53,10 +53,9 @@ data class AttentionBundle(
 }
 
 /**
- * Loads what the Notifications page shows, entirely from existing endpoints:
- *   GET /transactions/needs-review  - payments needing a category
- *   GET /insights/summary           - budget alerts and anomalies
- *   GET /transactions/              - recent payments
+ * Loads what the Notifications page shows: budgets that are over their limit and unusual
+ * spending, both from GET /insights/summary. Payments needing a category and ordinary
+ * payments are deliberately not listed here.
  * and keeps the unread count the Home bell shows.
  *
  * "Unread" is local: the set of attention items the user has already seen on the page. The
@@ -92,26 +91,16 @@ object AttentionRepository {
     private fun seen(context: Context): Set<String> = prefs(context).getStringSet(KEY_SEEN, emptySet()) ?: emptySet()
 
     private suspend fun fetch(): AttentionBundle = coroutineScope {
-        val today = LocalDate.now()
         val month = YearMonth.now().toString()
 
-        val review = async { RetrofitClient.apiService.getNeedsReviewTransactions("") }
-        val insights = async { runCatching { RetrofitClient.apiService.getInsightsSummaryNoAuth() }.getOrNull() }
-        val recent = async {
-            runCatching { SpendData.transactions(today.minusDays(30), today, maxPages = 1) }.getOrDefault(emptyList())
+        // Alerts only. Payments that need a category have their own place (the Review banner
+        // on Home), and ordinary payments are in the ledger - neither belongs in this list.
+        val insightsResponse = RetrofitClient.apiService.getInsightsSummaryNoAuth()
+        val summary = insightsResponse.body()
+        if (!insightsResponse.isSuccessful || summary == null) {
+            throw IOException("Notifications failed to load (${insightsResponse.code()})")
         }
-
-        val reviewResponse = review.await()
-        val reviewBody = reviewResponse.body()
-        if (!reviewResponse.isSuccessful || reviewBody == null) {
-            throw IOException("Notifications failed to load (${reviewResponse.code()})")
-        }
-        // The endpoint also returns anything filed under "Other"; only payments the app itself
-        // marks as unsorted count, so a payment you filed under Other doesn't nag forever.
-        val needs = reviewBody.transactions.filter { it.needsReview }.map { NeedsCategoryItem(it.toView()) }
-
-        val summary = insights.await()?.takeIf { it.isSuccessful }?.body()
-        val budgets = summary?.budget_alerts.orEmpty().mapNotNull { alert ->
+        val budgets = summary.budget_alerts.orEmpty().mapNotNull { alert ->
             val percent = alert.number("percent") ?: return@mapNotNull null
             if (percent <= 100.0) return@mapNotNull null // "over limit", not merely close
             OverBudgetItem(
@@ -124,7 +113,7 @@ object AttentionRepository {
         }
         // Budget breaches also come back as "budget" anomalies; they are the same thing as the
         // budgets above, so only spending spikes are listed here.
-        val spikes = summary?.anomalies.orEmpty().mapNotNull { anomaly ->
+        val spikes = summary.anomalies.orEmpty().mapNotNull { anomaly ->
             if (anomaly["kind"] != "spike") return@mapNotNull null
             SpikeItem(
                 category = anomaly["category"] as? String ?: return@mapNotNull null,
@@ -134,13 +123,7 @@ object AttentionRepository {
             )
         }
 
-        val detected = recent.await()
-            .filter { it.isFromSms }
-            .sortedByDescending { it.date }
-            .take(40)
-            .map { it.toView() }
-
-        AttentionBundle(attention = needs + budgets + spikes, recent = detected)
+        AttentionBundle(attention = budgets + spikes, recent = emptyList())
     }
 }
 

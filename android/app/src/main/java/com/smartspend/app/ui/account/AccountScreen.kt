@@ -73,6 +73,7 @@ import com.smartspend.app.RetrofitClient
 import com.smartspend.app.UserData
 import com.smartspend.app.ui.auth.formatIndianNumber
 import com.smartspend.app.sms.HistoricalSmsSync
+import com.smartspend.app.ui.components.ProfileAvatar
 import com.smartspend.app.ui.components.Block
 import com.smartspend.app.ui.components.Eyebrow
 import com.smartspend.app.ui.components.ScreenGutter
@@ -209,20 +210,7 @@ fun AccountScreen(
                         .padding(18.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            displayName.first().uppercase(),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Black
-                        )
-                    }
+                    ProfileAvatar(displayName, 56.dp)
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
                         Text(displayName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)

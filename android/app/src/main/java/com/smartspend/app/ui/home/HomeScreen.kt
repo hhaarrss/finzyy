@@ -1,6 +1,7 @@
 package com.smartspend.app.ui.home
 
 import android.widget.Toast
+import com.smartspend.app.ui.components.ProfileAvatar
 import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -427,20 +428,7 @@ private fun TopBar(
                 .clickable(role = Role.Button, onClick = onAccount),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    name?.firstOrNull()?.uppercase() ?: "",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontWeight = FontWeight.Black
-                )
-            }
+            ProfileAvatar(name, 44.dp)
             Spacer(Modifier.width(12.dp))
             Column {
                 Text(
