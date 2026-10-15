@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Per-computer Android Studio state: the device you last ran on, the Device Manager table.
+/.idea/deploymentTargetSelector.xml
+/.idea/deviceManager.xml

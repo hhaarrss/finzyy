@@ -267,3 +267,6 @@ __marimo__/
 backend/scratch/
 scratch/
 .vscode/
+
+# Per-computer IDE state for the repo-level project (window layout, recent files, run history).
+/.idea/workspace.xml
