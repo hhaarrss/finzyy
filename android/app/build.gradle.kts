@@ -48,7 +48,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.smartspend.app"
+        // What Play and phones know the app as. The code package (namespace) stays com.smartspend.app.
+        applicationId = "com.finzyy.app"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
