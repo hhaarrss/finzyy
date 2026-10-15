@@ -293,6 +293,14 @@ interface BackendService {
     @GET("categories")
     suspend fun getCategoryLists(): Response<CategoryListsResponse>
 
+    /** Adds one of the user's own spending categories. */
+    @POST("categories/custom")
+    suspend fun createCustomCategory(@Body payload: CustomCategoryPayload): Response<CustomCategory>
+
+    /** Deletes one; its payments move to "Other" on the server. */
+    @retrofit2.http.DELETE("categories/custom/{id}")
+    suspend fun deleteCustomCategory(@Path("id") id: Int): Response<Map<String, Any>>
+
     /**
      * The server's health check. Called once when the app opens, only to wake the server
      * (it sleeps when idle) while the splash screen is still showing. The answer is ignored.

@@ -200,12 +200,22 @@ fun LazyListScope.transactionDays(
     }
 }
 
-/** Category lists change only with a backend deploy, so one fetch per process is plenty. */
+/**
+ * The category lists, fetched once per process. They include the signed-in user's own
+ * categories, so they are re-fetched after one is added ([refresh]) and dropped when the
+ * account changes ([invalidate]).
+ */
 object CategoryCache {
     var lists: CategoryListsResponse? = null
         private set
 
-    suspend fun get(): CategoryListsResponse = lists ?: SpendData.categoryLists().also { lists = it }
+    suspend fun get(): CategoryListsResponse = lists ?: refresh()
+
+    suspend fun refresh(): CategoryListsResponse = SpendData.categoryLists().also { lists = it }
+
+    fun invalidate() {
+        lists = null
+    }
 }
 
 /**

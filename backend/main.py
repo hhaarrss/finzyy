@@ -176,10 +176,24 @@ TRANSACTION_SCHEMA_STATEMENTS = [
 ]
 
 
+# A user's own spending categories (models/user_category.py). Idempotent, same as above.
+CATEGORY_SCHEMA_STATEMENTS = [
+    """CREATE TABLE IF NOT EXISTS user_categories (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(30) NOT NULL,
+        name_key VARCHAR(30) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+        CONSTRAINT uq_user_categories_user_name UNIQUE (user_id, name_key)
+    )""",
+    "CREATE INDEX IF NOT EXISTS ix_user_categories_user_id ON user_categories (user_id)",
+]
+
+
 async def ensure_auth_schema() -> None:
     from sqlalchemy import text
     async with engine.begin() as conn:
-        for statement in AUTH_SCHEMA_STATEMENTS + TRANSACTION_SCHEMA_STATEMENTS:
+        for statement in AUTH_SCHEMA_STATEMENTS + TRANSACTION_SCHEMA_STATEMENTS + CATEGORY_SCHEMA_STATEMENTS:
             await conn.execute(text(statement))
 
 
@@ -214,6 +228,7 @@ async def on_startup() -> None:
         from models.transaction import Transaction
         from models.budget import BudgetLimit, OverallBudgetLimit
         from models.merchant_mapping import MerchantMapping
+        from models.user_category import UserCategory  # noqa: F401  (registers the table for create_all)
         from utils.auth import hash_password
         from sqlalchemy import select
 

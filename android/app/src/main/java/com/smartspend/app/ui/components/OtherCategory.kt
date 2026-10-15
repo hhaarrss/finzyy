@@ -16,6 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import com.smartspend.app.CustomCategoryPayload
+import com.smartspend.app.RetrofitClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 
 /*
@@ -26,8 +32,10 @@ import org.json.JSONArray
  * a plain name, so a typed one behaves like a built-in one everywhere: totals, the category
  * screens, budgets, and the "file this merchant the same way next time" learning.
  *
- * The names a user has typed are remembered on this phone (per account) so they show up as
- * chips next time. That list is a convenience only: the payments themselves are on the server.
+ * A typed name is also added to the account's own category list on the server
+ * (POST /categories/custom), so it is offered on any phone the user signs in on. That is best
+ * effort: if the server can't take it (not reachable, the 20-name limit), the name is still
+ * remembered on this phone, and the payment itself is saved under it either way.
  */
 
 const val MAX_CUSTOM_CATEGORY_LENGTH = 30
@@ -87,6 +95,20 @@ object CustomCategoryStore {
             .putString(KEY, JSONArray(names).toString())
             .putString(KEY_OWNER, owner(context))
             .apply()
+        saveToAccount(name)
+    }
+
+    private val sync = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Adds the name to the account's list on the server; the next picker shows it on every phone. */
+    private fun saveToAccount(name: String) {
+        sync.launch {
+            runCatching {
+                val response = RetrofitClient.apiService.createCustomCategory(CustomCategoryPayload(name))
+                // 201 = added; 409 = the account already has it. Either way the server list is current.
+                if (response.isSuccessful || response.code() == 409) CategoryCache.refresh()
+            }
+        }
     }
 
     private fun read(json: String?): List<String> = runCatching {
