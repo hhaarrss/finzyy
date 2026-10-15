@@ -231,6 +231,10 @@ fun TransactionSheet(
     var amount by remember { mutableStateOf(plainAmount(tx.amount)) }
     var busy by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    // "Other" was tapped: show the naming field instead of filing straight away.
+    var namingOther by remember { mutableStateOf(false) }
+    var otherName by remember { mutableStateOf("") }
+    val customNames = rememberCustomCategories()
 
     LaunchedEffect(Unit) {
         if (categories == null) categories = runCatching { CategoryCache.get() }.getOrNull()
@@ -355,7 +359,12 @@ fun TransactionSheet(
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Eyebrow("Category")
-                val options = categories?.let { if (tx.isCredit) it.credit else it.debit }?.pickable()
+                // Spending pickers also offer the names this user typed before, and the payment's
+                // own category when it is one of those (so the current choice is always visible).
+                val options = categories?.let {
+                    if (tx.isCredit) it.credit
+                    else it.debit.withCustomCategories(customNames + listOfNotNull(category.takeIf { c -> c.isNotBlank() && !tx.needsReview }))
+                }?.pickable()
                 if (options == null) {
                     Text("Loading categories…", style = MaterialTheme.typography.bodyMedium, color = FinzyyTheme.colors.inkMuted)
                 } else {
@@ -364,12 +373,33 @@ fun TransactionSheet(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         options.forEach { name ->
+                            val isOther = !tx.isCredit && name == "Other"
                             CategoryChip(
                                 category = name,
-                                selected = name.equals(category, ignoreCase = true),
-                                onClick = { recategorize(name) }
+                                selected = if (namingOther) isOther else name.equals(category, ignoreCase = true),
+                                onClick = {
+                                    if (isOther) namingOther = true
+                                    else { namingOther = false; recategorize(name) }
+                                }
                             )
                         }
+                    }
+                    if (namingOther) {
+                        fun fileUnderOther() {
+                            val builtIn = categories?.debit.orEmpty()
+                            val named = customCategoryFor(otherName, builtIn)
+                            if (named != null && builtIn.none { it.equals(named, ignoreCase = true) }) {
+                                CustomCategoryStore.remember(context, named)
+                            }
+                            recategorize(named ?: "Other")
+                        }
+                        OtherCategoryField(value = otherName, onValueChange = { otherName = it }, onDone = { fileUnderOther() })
+                        PrimaryButton(
+                            label = if (otherName.isBlank()) "Keep under Other" else "Save category",
+                            onClick = { fileUnderOther() },
+                            enabled = !busy,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package com.smartspend.app.ui.home
 
 import android.widget.Toast
+import com.smartspend.app.ui.components.LedgerProgressLine
 import com.smartspend.app.ui.components.ProfileAvatar
 import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.background
@@ -134,7 +135,12 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val attentionCount by AttentionRepository.unread.collectAsState()
-    var state by remember { mutableStateOf<HomeUiState>(HomeUiState.Loading) }
+    // The last Home saved on this phone, shown at once while fresh numbers load (see HomeCache).
+    val saved = remember { HomeCache.read(context) }
+    var state by remember {
+        mutableStateOf<HomeUiState>(saved?.let { (home, budget) -> HomeUiState.Loaded(HomeBundle(home, budget)) } ?: HomeUiState.Loading)
+    }
+    var showingSaved by remember { mutableStateOf(saved != null) }
     val listState = rememberLazyListState()
     val tour = remember(showTour) { if (showTour) TourController() else null }
     var tourVisible by remember { mutableStateOf(false) }
@@ -157,14 +163,22 @@ fun HomeScreen(
                 val homeResponse = home.await()
                 val body = homeResponse.body()
                 if (homeResponse.isSuccessful && body != null) {
-                    val limit = overall.await()?.takeIf { it.isSuccessful }?.body()?.monthly_limit
-                    HomeUiState.Loaded(HomeBundle(body, limit?.takeIf { it > 0 }))
+                    val limit = overall.await()?.takeIf { it.isSuccessful }?.body()?.monthly_limit?.takeIf { it > 0 }
+                    HomeCache.write(context, body, limit)
+                    showingSaved = false
+                    HomeUiState.Loaded(HomeBundle(body, limit))
                 } else {
-                    HomeUiState.Error("The server answered ${homeResponse.code()}. Pull down to retry.")
+                    (state as? HomeUiState.Loaded)
+                        ?: HomeUiState.Error("The server answered ${homeResponse.code()}. Pull down to retry.")
                 }
             }
         } catch (e: Exception) {
             (state as? HomeUiState.Loaded) ?: HomeUiState.Error(e.localizedMessage ?: "Can't reach Finzyy right now.")
+        }
+        if (showingSaved) {
+            // Still the saved copy: the refresh failed. Say so once instead of pretending it is live.
+            showingSaved = false
+            android.widget.Toast.makeText(context, "Couldn't refresh. Showing your last saved numbers.", android.widget.Toast.LENGTH_SHORT).show()
         }
         refreshing = false
     }
@@ -211,6 +225,14 @@ fun HomeScreen(
                     onOpenTx = { openTx = it },
                     listState = listState,
                     refreshKey = refreshKey
+                )
+            }
+            // The saved copy is on screen and fresh numbers are on their way.
+            if (showingSaved && state is HomeUiState.Loaded) {
+                LedgerProgressLine(
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
                 )
             }
         }

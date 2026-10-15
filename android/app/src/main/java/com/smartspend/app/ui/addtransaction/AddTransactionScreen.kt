@@ -59,6 +59,11 @@ import androidx.compose.ui.unit.dp
 import com.smartspend.app.CategoryListsResponse
 import com.smartspend.app.RetrofitClient
 import com.smartspend.app.TransactionCreatePayload
+import com.smartspend.app.ui.components.withCustomCategories
+import com.smartspend.app.ui.components.rememberCustomCategories
+import com.smartspend.app.ui.components.customCategoryFor
+import com.smartspend.app.ui.components.OtherCategoryField
+import com.smartspend.app.ui.components.CustomCategoryStore
 import com.smartspend.app.ui.components.Block
 import com.smartspend.app.ui.components.CategoryCache
 import com.smartspend.app.ui.components.CategoryChip
@@ -90,6 +95,10 @@ fun AddTransactionScreen(onBack: () -> Unit) {
     var payee by rememberSaveable { mutableStateOf("") }
     var dateEpochDay by rememberSaveable { mutableStateOf(LocalDate.now().toEpochDay()) }
     var category by rememberSaveable { mutableStateOf<String?>(null) }
+    // Typed under "Other": saved as the payment's category when not empty.
+    var otherName by rememberSaveable { mutableStateOf("") }
+    val customNames = rememberCustomCategories()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var notes by rememberSaveable { mutableStateOf("") }
     var showErrors by rememberSaveable { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
@@ -123,11 +132,14 @@ fun AddTransactionScreen(onBack: () -> Unit) {
             return
         }
         saving = true
+        // "Other" with a name typed under it is saved as that name; empty stays "Other".
+        val named = if (!isCredit && category == "Other") customCategoryFor(otherName, lists?.debit.orEmpty()) else null
+        val finalCategory = named ?: category!!
         scope.launch {
             val payload = TransactionCreatePayload(
                 amount = amountValue!!,
                 type = if (isCredit) "credit" else "debit",
-                category = category!!,
+                category = finalCategory,
                 merchant = payee.trim(),
                 date = "${date}T12:00:00Z",
                 notes = notes.trim().ifEmpty { null }
@@ -136,6 +148,11 @@ fun AddTransactionScreen(onBack: () -> Unit) {
             saving = false
             when (outcome) {
                 SaveOutcome.Saved -> {
+                    // Offer it as a chip next time (only names that are not built-in).
+                    if (named != null && lists?.debit.orEmpty().none { it.equals(named, ignoreCase = true) }) {
+                        CustomCategoryStore.remember(context, named)
+                    }
+                    otherName = ""
                     pendingAddAnother = addAnother
                     saved = SavedTx(payload.amount, isCredit, payload.category, payload.merchant.orEmpty())
                 }
@@ -251,7 +268,7 @@ fun AddTransactionScreen(onBack: () -> Unit) {
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                val options = lists?.let { if (isCredit) it.credit else it.debit }?.pickable()
+                val options = lists?.let { if (isCredit) it.credit else it.debit.withCustomCategories(customNames) }?.pickable()
                 if (options == null) {
                     Text("Loading categories…", style = MaterialTheme.typography.bodyMedium, color = FinzyyTheme.colors.inkMuted)
                 } else {
@@ -262,6 +279,11 @@ fun AddTransactionScreen(onBack: () -> Unit) {
                         options.forEach { name ->
                             CategoryChip(category = name, selected = name == category, onClick = { category = name })
                         }
+                    }
+                    // Picking "Other" for spending lets you say what it really was.
+                    if (!isCredit && category == "Other") {
+                        Spacer(Modifier.height(12.dp))
+                        OtherCategoryField(value = otherName, onValueChange = { otherName = it })
                     }
                 }
             }

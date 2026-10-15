@@ -358,6 +358,7 @@ fun AccountScreen(
             onDismiss = { showDelete = false },
             onDeleted = {
                 showDelete = false
+                com.smartspend.app.ui.home.HomeCache.clear(context)
                 Toast.makeText(context, "Your account has been deleted.", Toast.LENGTH_LONG).show()
                 onLogout()
             }

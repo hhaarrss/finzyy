@@ -294,6 +294,13 @@ interface BackendService {
     suspend fun getCategoryLists(): Response<CategoryListsResponse>
 
     /**
+     * The server's health check. Called once when the app opens, only to wake the server
+     * (it sleeps when idle) while the splash screen is still showing. The answer is ignored.
+     */
+    @GET("/")
+    suspend fun wakeUp(): Response<okhttp3.ResponseBody>
+
+    /**
      * Partially edit a transaction (category, merchant, amount, date, notes).
      */
     @PATCH("transactions/{id}")

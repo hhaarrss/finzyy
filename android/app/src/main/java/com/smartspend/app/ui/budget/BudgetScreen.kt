@@ -1,6 +1,8 @@
 package com.smartspend.app.ui.budget
 
 import androidx.compose.animation.AnimatedVisibility
+import com.smartspend.app.ui.components.withCustomCategories
+import com.smartspend.app.ui.components.rememberCustomCategories
 import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -94,6 +96,8 @@ fun BudgetScreen(onBack: () -> Unit) {
     var monthSpent by remember { mutableStateOf<Double?>(null) }
     var utilization by remember { mutableStateOf<List<BudgetUtilizationData>>(emptyList()) }
     var debitCategories by remember { mutableStateOf<List<String>>(emptyList()) }
+    // Names typed under "Other" can get a budget too.
+    val customNames = rememberCustomCategories()
 
     var formOpen by remember { mutableStateOf(false) }
     var formCategory by remember { mutableStateOf<String?>(null) }
@@ -266,7 +270,7 @@ fun BudgetScreen(onBack: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        debitCategories.forEach { name ->
+                        debitCategories.withCustomCategories(customNames).forEach { name ->
                             CategoryChip(
                                 category = name,
                                 selected = name == formCategory,

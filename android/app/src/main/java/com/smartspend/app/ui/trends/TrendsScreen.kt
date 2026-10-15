@@ -1,6 +1,8 @@
 package com.smartspend.app.ui.trends
 
 import androidx.activity.compose.BackHandler
+import com.smartspend.app.ui.components.withCustomCategories
+import com.smartspend.app.ui.components.rememberCustomCategories
 import com.smartspend.app.ui.components.rememberTransactionsVersion
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -346,6 +348,7 @@ private fun FilterPanel(
     var draft by remember(initial) { mutableStateOf(initial) }
     var lists by remember { mutableStateOf(CategoryCache.lists) }
     LaunchedEffect(Unit) { if (lists == null) lists = runCatching { CategoryCache.get() }.getOrNull() }
+    val customNames = rememberCustomCategories()
 
     Column(
         modifier = Modifier
@@ -386,7 +389,7 @@ private fun FilterPanel(
                 "Categories",
                 hint = if (draft.categories.isEmpty()) "All categories" else "${draft.categories.size} selected"
             ) {
-                val options = lists?.let { if (draft.flow == Flow.Income) it.credit else it.debit }?.pickable()
+                val options = lists?.let { if (draft.flow == Flow.Income) it.credit else it.debit.withCustomCategories(customNames) }?.pickable()
                 if (options == null) {
                     Text("Loading…", style = MaterialTheme.typography.bodyMedium, color = FinzyyTheme.colors.inkMuted)
                 } else {

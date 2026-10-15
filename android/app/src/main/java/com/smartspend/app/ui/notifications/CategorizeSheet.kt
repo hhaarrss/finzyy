@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -26,6 +27,12 @@ import androidx.compose.ui.unit.dp
 import com.smartspend.app.RecategorizePayload
 import com.smartspend.app.RetrofitClient
 import com.smartspend.app.TransactionEvents
+import com.smartspend.app.ui.components.withCustomCategories
+import com.smartspend.app.ui.components.rememberCustomCategories
+import com.smartspend.app.ui.components.customCategoryFor
+import com.smartspend.app.ui.components.PrimaryButton
+import com.smartspend.app.ui.components.OtherCategoryField
+import com.smartspend.app.ui.components.CustomCategoryStore
 import com.smartspend.app.ui.components.CategoryCache
 import com.smartspend.app.ui.components.CategoryChip
 import com.smartspend.app.ui.components.Eyebrow
@@ -75,12 +82,29 @@ fun CategorizeSheet(
     var lists by remember { mutableStateOf(CategoryCache.lists) }
     var busy by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var namingOther by remember { mutableStateOf(false) }
+    var otherName by remember { mutableStateOf("") }
+    val customNames = rememberCustomCategories()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    fun pick(name: String) {
+        if (busy != null) return
+        busy = name
+        error = null
+        scope.launch {
+            if (!onPick(name)) {
+                busy = null
+                error = "Couldn't save — check your connection and try again."
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (lists == null) lists = runCatching { CategoryCache.get() }.getOrNull()
     }
     // Backend list when we have it (same as the app); the built-in list if it can't be reached.
-    val options = (lists?.let { if (credit) it.credit else it.debit } ?: if (credit) Categories.credit else Categories.debit).pickable()
+    val builtIn = lists?.let { if (credit) it.credit else it.debit } ?: if (credit) Categories.credit else Categories.debit
+    val options = (if (credit) builtIn else builtIn.withCustomCategories(customNames)).pickable()
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -111,22 +135,32 @@ fun CategorizeSheet(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 options.forEach { name ->
+                    val isOther = !credit && name == "Other"
                     CategoryChip(
                         category = name,
-                        selected = name == busy || (busy == null && name.equals(current, ignoreCase = true)),
+                        selected = if (namingOther && busy == null) isOther
+                        else name == busy || (busy == null && name.equals(current, ignoreCase = true)),
                         onClick = {
-                            if (busy != null) return@CategoryChip
-                            busy = name
-                            error = null
-                            scope.launch {
-                                if (!onPick(name)) {
-                                    busy = null
-                                    error = "Couldn't save — check your connection and try again."
-                                }
-                            }
+                            if (isOther) { if (busy == null) namingOther = true }
+                            else { namingOther = false; pick(name) }
                         }
                     )
                 }
+            }
+            if (namingOther && busy == null) {
+                fun fileUnderOther() {
+                    val named = customCategoryFor(otherName, builtIn)
+                    if (named != null && builtIn.none { it.equals(named, ignoreCase = true) }) {
+                        CustomCategoryStore.remember(context, named)
+                    }
+                    pick(named ?: "Other")
+                }
+                OtherCategoryField(value = otherName, onValueChange = { otherName = it }, onDone = { fileUnderOther() })
+                PrimaryButton(
+                    label = if (otherName.isBlank()) "Keep under Other" else "Save category",
+                    onClick = { fileUnderOther() },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
             error?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)

@@ -105,6 +105,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         SessionStore.init(this)
+        // Start waking the server now, so it is up by the time Home asks for data.
+        if (savedInstanceState == null) {
+            lifecycleScope.launch { runCatching { RetrofitClient.apiService.wakeUp().body()?.close() } }
+        }
         ThemePreference.load(this)
         // Older builds kept the last synced payment here in plain text; nothing reads it now.
         getSharedPreferences("smart_spend_prefs", Context.MODE_PRIVATE).edit().remove("last_sms").apply()
