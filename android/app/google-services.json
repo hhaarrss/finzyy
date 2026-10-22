@@ -14,11 +14,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "1054030131838-5ce55g7f2178hc5pdd8oedi2v207q6ef.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.finzyy.app",
+            "certificate_hash": "cc43cf4b13f738b0cdcd3f9df4de0eb194b3e41c"
+          }
+        },
+        {
           "client_id": "1054030131838-m6lub028smsvg0luntnbll8s1eg9nv9i.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.finzyy.app",
             "certificate_hash": "cc9516b0c1b343f3c98134988fcd52d3d620ed05"
+          }
+        },
+        {
+          "client_id": "1054030131838-ul1s30opqgeogfdbs0tt5evn050vjfm9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.finzyy.app",
+            "certificate_hash": "340b31d4562b6e231c27e8cd06ed4858a1152fe7"
           }
         },
         {

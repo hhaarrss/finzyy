@@ -17,6 +17,7 @@ postgres_data/
 
 # Node
 node_modules/
+.vite/
 
 # Android
 android/.gradle/
