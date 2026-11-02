@@ -110,9 +110,9 @@ Every transaction runs through a 5-layer waterfall until it finds a confident ma
 
 > _Live dashboard, add transaction, budget limits, and AI insights views._
 
-| Dashboard | Add Transaction | Budget Limits | AI Insights |
+| Dashboard | Insights | Limits | Add Transaction |
 |:---:|:---:|:---:|:---:|
-| ![dashboard](docs/screenshots/dashboard.png) | ![add-transaction](docs/screenshots/add-transaction.png) | ![budget](docs/screenshots/budget.png) | ![insights](docs/screenshots/insights.png) |
+| ![dashboard](docs/screenshots/finzyy-1-home.png) | ![add-transaction](docs/screenshots/finzyy-3-insights.png) | ![budget](docs/screenshots/finzyy-4-trends.png) | ![insights](docs/screenshots/finzyy-6-add.png) |
 
 ---
 
